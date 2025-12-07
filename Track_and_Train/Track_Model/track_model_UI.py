@@ -415,14 +415,33 @@ class TrackModelUI(ttk.Frame):
         self.load_static_after_upload(selected_line)
 
         full_line_name = f"{selected_line} Line"
-        self.line_network = LineNetwork(full_line_name, self.block_manager)
-        self.visualizer.line_network = self.line_network
+
+        # Build LineNetwork using LineNetworkBuilder to ensure skip_connections are set
+        if (
+            hasattr(self, "visualizer")
+            and self.visualizer
+            and self.visualizer.track_data
+        ):
+            df = self.visualizer.track_data.get(full_line_name)
+            if df is not None:
+                from LineNetwork import LineNetworkBuilder
+
+                builder = LineNetworkBuilder(df, full_line_name)
+                self.line_network = builder.build()
+                self.line_network.block_manager = self.block_manager
+            else:
+                # Fallback to empty LineNetwork if no data
+                self.line_network = LineNetwork(full_line_name, self.block_manager)
+        else:
+            # Fallback to empty LineNetwork if visualizer not ready
+            self.line_network = LineNetwork(full_line_name, self.block_manager)
 
         if hasattr(self, "visualizer") and self.visualizer:
             try:
+                # Update visualizer to use shared LineNetwork instance
+                self.visualizer.line_network = self.line_network
+
                 if getattr(self.visualizer, "current_line", None) != full_line_name:
-                    # Pass the line_network to visualizer
-                    self.visualizer.line_network = self.line_network
                     self.visualizer.display_line(full_line_name)
             except Exception as e:
                 print(f"[Visualizer] Failed to display {selected_line}: {e}")
@@ -473,6 +492,11 @@ class TrackModelUI(ttk.Frame):
             block_name = self.block_selector.get()
         if not self.visualizer.track_data:
             self.visualizer.load_excel_data(self.excel_file_path)
+
+        # Ensure line_network is created before displaying
+        if line_name and not self.line_network:
+            self.on_line_selected()
+
         full_line_name = f"{line_name} Line" if line_name else None
         self.visualizer.display_line(full_line_name, highlighted_block=block_name)
 

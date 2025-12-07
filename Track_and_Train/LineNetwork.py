@@ -169,9 +169,6 @@ class LineNetwork:
                 pos = train_model_data[train_key]["motion"].get("position_yds", 0)
                 trains.append({"train_id": i + 1, "motion": motion})
                 self.train_positions[i + 1] = pos
-                print(
-                    f"[write_to_train_model_json] Train {i+1}: Read position_yds={pos:.2f} from {train_key}"
-                )
 
                 train_model_data[train_key]["block"]["commanded speed"] = (
                     commanded_speeds[i]
@@ -368,19 +365,11 @@ class LineNetwork:
             return "Stopped"
 
     def get_next_block(self, train_id, current, previous=None):
-        print(
-            f"[get_next_block] Train {train_id}: current={current}, previous={previous}"
-        )
-
         if not self.should_advance_block(train_id, current):
-            print(
-                f"[get_next_block] Train {train_id}: Not enough yards to advance, staying at {current}"
-            )
             return current
 
         # Read motion and handle stopped/undispatched (stays here)
         motion = self._read_train_motion(train_id)
-        print(f"[get_next_block] Train {train_id}: motion={motion}")
         if motion == "Stopped":
             return current
         elif motion == "Undispatched":
@@ -391,8 +380,6 @@ class LineNetwork:
             next_block = self._get_green_line_next_block(current, previous)
         elif self.line_name == "Red":
             next_block = self._get_red_line_next_block(current, previous)
-
-        print(f"[get_next_block] Train {train_id}: Determined next_block={next_block}")
 
         self._handle_station_arrival(next_block)
         self._finalize_block_transition(next_block, current, train_id)
@@ -766,9 +753,6 @@ class LineNetwork:
 
         # Read current position from train_positions (already populated by write_to_train_model_json)
         current_position_yds = self.train_positions.get(train_id, 0)
-        print(
-            f"[should_advance_block] Train {train_id}: train_positions dict = {self.train_positions}"
-        )
 
         # Calculate delta
         delta = current_position_yds - self.previous_position_yds[train_id]
@@ -777,7 +761,7 @@ class LineNetwork:
         self.yards_into_current_block[train_id] += delta
 
         print(
-            f"[should_advance_block] Train {train_id}: current_position={current_position_yds:.2f} yds, delta={delta:.2f}, yards_in_block={self.yards_into_current_block[train_id]:.2f}"
+            f"[DEBUG] Train {train_id} Block {current_block}: pos={current_position_yds:.2f}, prev_pos={self.previous_position_yds[train_id]:.2f}, delta={delta:.2f}, yards_in_block={self.yards_into_current_block[train_id]:.2f}"
         )
 
         # Get block length from static JSON
@@ -797,32 +781,19 @@ class LineNetwork:
                     break
 
             if block_length_yards is None:
-                print(
-                    f"[should_advance_block] Block {current_block} length unknown, allowing advance"
-                )
                 # Default to allowing advance if block length unknown
                 self.previous_position_yds[train_id] = current_position_yds
                 return True
-
-            print(
-                f"[should_advance_block] Block {current_block} length={block_length_yards:.2f} yds"
-            )
 
             # Check if enough yards traveled to advance
             if self.yards_into_current_block[train_id] >= block_length_yards:
                 # Subtract block length and carry overflow
                 self.yards_into_current_block[train_id] -= block_length_yards
                 self.previous_position_yds[train_id] = current_position_yds
-                print(
-                    f"[should_advance_block] ADVANCE! Yards sufficient. Remaining overflow: {self.yards_into_current_block[train_id]:.2f}"
-                )
                 return True
             else:
                 # Not enough yards traveled, stay in current block
                 self.previous_position_yds[train_id] = current_position_yds
-                print(
-                    f"[should_advance_block] STAY! Need {block_length_yards - self.yards_into_current_block[train_id]:.2f} more yards"
-                )
                 return False
 
         except Exception as e:

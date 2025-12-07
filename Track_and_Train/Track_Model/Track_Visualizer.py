@@ -216,6 +216,7 @@ class RailwayDiagram:
             additional_connections, skip_connections = (
                 self.line_network.get_red_line_visualizer_info()
             )
+            print(f"[Red Line] skip_connections = {skip_connections}")
 
         # Convert skip_connections from block numbers to section letters
         skip_sections = set()
@@ -627,6 +628,7 @@ class RailwayDiagram:
             additional_connections, skip_connections = (
                 self.line_network.get_green_line_visualizer_info()
             )
+            print(f"[Green Line] skip_connections = {skip_connections}")
 
         # Convert skip_connections from block numbers to section letters
         skip_sections = set()
@@ -1144,14 +1146,12 @@ class RailwayDiagram:
         self.current_line = line_name
         self.highlighted_block = highlighted_block
 
-        # Use existing LineNetwork if available, otherwise build new one
+        # Note: line_network should be set by track_model_UI before calling display_line
+        # If it's not set, we can't display properly - skip_connections won't be correct
         if not self.line_network:
-            df = self.track_data[line_name]
-            from LineNetwork import LineNetworkBuilder
-
-            builder = LineNetworkBuilder(df, line_name)
-            self.line_network = builder.build()
-            self.line_network.block_manager = self.block_manager
+            print(
+                f"Warning: No line_network set for {line_name}, visualization may be incomplete"
+            )
 
         # Draw based on line type
         if line_name == "Red Line":

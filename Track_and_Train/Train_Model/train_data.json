@@ -29,9 +29,9 @@
             "passengers_onboard": 0
         },
         "outputs": {
-            "velocity_mph": 9.023174806695407,
+            "velocity_mph": 9.030177782378523,
             "acceleration_ftps2": 0.0,
-            "position_yds": 1219.8152263623815,
+            "position_yds": 547.3506481691436,
             "authority_yds": 2004.0
         },
         "specs": {
