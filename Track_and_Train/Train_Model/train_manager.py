@@ -1,13 +1,7 @@
 """Train Manager Module - Consolidated Version
 
-This module manages multiple trains, where each train consists of:
-- One TrainModel instance (physics simulation)
-- One train_controller instance (control logic)
-- UI windows for both
-
-All state management, controller logic, and UI are consolidated in this single file.
-
-Author: Consolidated from multiple modules
+Manages multiple trains with TrainModel and train_controller instances.
+All state management, controller logic, and UI consolidated in one file.
 """
 
 import os
@@ -17,29 +11,17 @@ import time
 import tkinter as tk
 from tkinter import ttk
 import threading
-from typing import Dict, Optional
 
-# Add paths for imports
+# Paths
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
-sys.path.append(current_dir)
-sys.path.append(parent_dir)
-
-# Import TrainModel components
 train_model_dir = os.path.join(parent_dir, "Train_Model")
-sys.path.append(train_model_dir)
+sys.path.extend([current_dir, parent_dir, train_model_dir])
 
-# Global file lock for thread-safe JSON access
 _file_lock = threading.Lock()
 
 
-# ============================================================================
-# STATE MANAGEMENT (from train_controller_api)
-# ============================================================================
-
-
 def safe_read_json(path: str) -> dict:
-    """Safely read JSON file with error handling."""
     try:
         with open(path, "r") as f:
             data = json.load(f)
@@ -49,58 +31,46 @@ def safe_read_json(path: str) -> dict:
 
 
 def safe_write_json(path: str, data: dict):
-    """Safely write JSON file with error handling."""
     try:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w") as f:
             json.dump(data, f, indent=4)
     except Exception as e:
-        print(f"Error writing JSON to {path}: {e}")
-
-
-# ============================================================================
-# CONTROLLER CLASSES (from train_controller_sw_ui)
-# ============================================================================
+        print(f"Error writing JSON: {e}")
 
 
 class beacon:
-    """Beacon information for station announcements."""
-
     def __init__(self, next_stop: str = "", station_side: str = ""):
         self.next_stop = next_stop
         self.station_side = station_side
 
-    def update_from_state(self, state: dict) -> None:
+    def update_from_state(self, state: dict):
         self.next_stop = state.get("next_stop", "")
         self.station_side = state.get("station_side", "")
 
 
 class commanded_speed_authority:
-    """Commanded speed and authority from wayside/CTC."""
-
     def __init__(self, commanded_speed: int = 0, commanded_authority: int = 0):
         self.commanded_speed = commanded_speed
         self.commanded_authority = commanded_authority
 
-    def update_from_state(self, state: dict) -> None:
+    def update_from_state(self, state: dict):
         self.commanded_speed = int(state.get("commanded_speed", 0))
         self.commanded_authority = int(state.get("commanded_authority", 0))
 
 
 class vital_train_controls:
-    """Vital train controls for safety-critical operations."""
-
     def __init__(
         self,
-        kp: float = 0.0,
-        ki: float = 0.0,
-        train_velocity: float = 0.0,
-        driver_velocity: float = 0.0,
-        emergency_brake: bool = False,
-        service_brake: bool = False,
-        power_command: float = 0.0,
-        commanded_authority: float = 0.0,
-        speed_limit: float = 0.0,
+        kp=0.0,
+        ki=0.0,
+        train_velocity=0.0,
+        driver_velocity=0.0,
+        emergency_brake=False,
+        service_brake=False,
+        power_command=0.0,
+        commanded_authority=0.0,
+        speed_limit=0.0,
     ):
         self.kp = kp
         self.ki = ki
@@ -112,18 +82,13 @@ class vital_train_controls:
         self.commanded_authority = commanded_authority
         self.speed_limit = speed_limit
 
-    def calculate_power_command(
-        self, accumulated_error: float, last_update_time: float
-    ) -> tuple:
-        """Calculate power command using PI control."""
+    def calculate_power_command(self, accumulated_error, last_update_time):
         speed_error = self.driver_velocity - self.train_velocity
-
         if speed_error <= 0.01:
             return (0.0, 0.0, time.time())
 
         current_time = time.time()
-        dt = current_time - last_update_time
-        dt = max(0.001, min(dt, 1.0))
+        dt = max(0.001, min(current_time - last_update_time, 1.0))
 
         new_accumulated_error = accumulated_error + speed_error * dt
         max_integral = 120000 / self.ki if self.ki != 0 else 0
@@ -133,8 +98,7 @@ class vital_train_controls:
 
         proportional = self.kp * speed_error
         integral = self.ki * new_accumulated_error
-        power = proportional + integral
-        power = max(0, min(power, 120000))
+        power = max(0, min(proportional + integral, 120000))
 
         if power == 120000 and integral > 0:
             new_accumulated_error = (
@@ -147,9 +111,7 @@ class vital_train_controls:
 
 
 class vital_validator_first_check:
-    """First validator for vital train controls."""
-
-    def validate(self, v: vital_train_controls) -> bool:
+    def validate(self, v):
         if v.speed_limit > 0 and v.train_velocity > v.speed_limit:
             return False
         if v.power_command < 0 or v.power_command > 120000:
@@ -162,30 +124,20 @@ class vital_validator_first_check:
 
 
 class vital_validator_second_check:
-    """Second validator with margins."""
-
-    def validate(self, v: vital_train_controls) -> bool:
-        if v.speed_limit > 0:
-            safe_speed = v.speed_limit * 1.02
-            if v.train_velocity > safe_speed:
-                return False
+    def validate(self, v):
+        if v.speed_limit > 0 and v.train_velocity > v.speed_limit * 1.02:
+            return False
         if v.service_brake and v.emergency_brake:
             return False
-        if v.commanded_authority > 0 or v.power_command == 0:
-            return True
-        else:
-            return False
+        return v.commanded_authority > 0 or v.power_command == 0
 
 
 class train_controller:
-    """Train controller logic and calculations."""
-
     def __init__(self, train_id: int, state_file: str):
         self.train_id = train_id
         self.state_file = state_file
         self._accumulated_error = 0.0
         self._last_update_time = time.time()
-
         self.beacon_info = beacon()
         self.cmd_speed_auth = commanded_speed_authority()
         self.validators = [
@@ -193,15 +145,12 @@ class train_controller:
             vital_validator_second_check(),
         ]
 
-    def get_state(self) -> dict:
-        """Get train state from JSON."""
+    def get_state(self):
         with _file_lock:
             all_states = safe_read_json(self.state_file)
-            train_key = f"train_{self.train_id}"
-            return all_states.get(train_key, {})
+            return all_states.get(f"train_{self.train_id}", {})
 
-    def update_state(self, updates: dict) -> None:
-        """Update train state in JSON."""
+    def update_state(self, updates: dict):
         with _file_lock:
             all_states = safe_read_json(self.state_file)
             train_key = f"train_{self.train_id}"
@@ -210,14 +159,12 @@ class train_controller:
             all_states[train_key].update(updates)
             safe_write_json(self.state_file, all_states)
 
-    def update_from_train_model(self) -> None:
-        """Update beacon and commanded speed/authority from state."""
+    def update_from_train_model(self):
         state = self.get_state()
         self.beacon_info.update_from_state(state)
         self.cmd_speed_auth.update_from_state(state)
 
-    def vital_control_check_and_update(self, changes: dict) -> bool:
-        """Run validators and apply changes if accepted."""
+    def vital_control_check_and_update(self, changes: dict):
         state = self.get_state().copy()
         candidate = vital_train_controls(
             kp=changes.get("kp", state.get("kp", 0.0)),
@@ -246,8 +193,7 @@ class train_controller:
         self.update_state(changes)
         return True
 
-    def calculate_power_command(self, state: dict) -> float:
-        """Calculate power command using vital controls."""
+    def calculate_power_command(self, state: dict):
         controls = vital_train_controls(
             kp=state["kp"],
             ki=state["ki"],
@@ -266,230 +212,138 @@ class train_controller:
 
         self._accumulated_error = new_error
         self._last_update_time = new_time
-
         return power
 
 
 class train_controller_ui(tk.Toplevel):
-    """Train controller user interface."""
-
     def __init__(self, train_id: int, state_file: str):
         super().__init__()
-
         self.train_id = train_id
         self.state_file = state_file
         self.controller = train_controller(train_id, state_file)
 
-        self._last_beacon_for_announcement = None
-
-        self.title(f"Train {train_id} - Train Controller")
-        self.geometry("1200x800")
+        self.title(f"Train {train_id} - Controller")
+        self.geometry("550x450")
         self.configure(bg="lightgray")
 
         self.active_color = "#ff4444"
         self.normal_color = "lightgray"
 
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_rowconfigure(0, weight=3)
-        self.grid_rowconfigure(1, weight=2)
-        self.grid_rowconfigure(2, weight=1)
+        main_frame = ttk.Frame(self)
+        main_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
-        self.top_frame = ttk.Frame(self)
-        self.top_frame.grid(
-            row=0, column=0, columnspan=2, sticky="nsew", padx=10, pady=5
-        )
-        self.top_frame.grid_columnconfigure(0, weight=1)
-        self.top_frame.grid_columnconfigure(1, weight=1)
-
-        self.control_frame = ttk.Frame(self)
-        self.control_frame.grid(
-            row=1, column=0, columnspan=2, sticky="nsew", padx=10, pady=5
-        )
-
-        self.engineering_frame = ttk.Frame(self)
-        self.engineering_frame.grid(
-            row=2, column=0, columnspan=2, sticky="nsew", padx=10, pady=5
-        )
-
-        self.create_speed_section()
-        self.create_info_table()
-        self.create_control_section()
-        self.create_engineering_panel()
+        self.create_speed_section(main_frame)
+        self.create_info_table(main_frame)
+        self.create_control_section(main_frame)
 
         self.update_interval = 500
         self.periodic_update()
 
-    def create_speed_section(self):
-        """Create speed control section."""
-        speed_frame = ttk.LabelFrame(self.top_frame, text="Speed Control")
-        speed_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
+    def create_speed_section(self, parent):
+        speed_frame = ttk.LabelFrame(parent, text="Speed Control")
+        speed_frame.pack(fill="x", padx=5, pady=5)
 
-        speed_display_frame = ttk.Frame(speed_frame)
-        speed_display_frame.pack(expand=True, fill="both", pady=20)
-
-        ttk.Label(speed_display_frame, text="Current Speed", font=("Arial", 14)).pack()
-        self.speed_display = ttk.Label(
-            speed_display_frame, text="0 MPH", font=("Arial", 36, "bold")
+        display_frame = ttk.Frame(speed_frame)
+        display_frame.pack(fill="x", pady=5)
+        ttk.Label(display_frame, text="Current:", font=("Arial", 10)).pack(
+            side="left", padx=5
         )
-        self.speed_display.pack(pady=10)
+        self.speed_display = ttk.Label(
+            display_frame, text="0 MPH", font=("Arial", 14, "bold")
+        )
+        self.speed_display.pack(side="left", padx=5)
 
-        set_speed_frame = ttk.Frame(speed_frame)
-        set_speed_frame.pack(fill="x", padx=20, pady=10)
-
-        ttk.Label(set_speed_frame, text="Set Driver Speed (mph):").pack()
-
-        input_frame = ttk.Frame(set_speed_frame)
-        input_frame.pack(pady=5)
-
-        self.speed_entry = ttk.Entry(input_frame, width=10, font=("Arial", 14))
+        input_frame = ttk.Frame(speed_frame)
+        input_frame.pack(fill="x", pady=5)
+        ttk.Label(input_frame, text="Set Speed:", font=("Arial", 10)).pack(
+            side="left", padx=5
+        )
+        self.speed_entry = ttk.Entry(input_frame, width=8, font=("Arial", 12))
         self.speed_entry.pack(side="left", padx=5)
         self.speed_entry.insert(0, "0")
         self.speed_entry.bind("<Return>", lambda e: self.set_driver_speed())
-
-        self.set_speed_btn = ttk.Button(
-            input_frame, text="Set Speed", command=self.set_driver_speed
-        )
-        self.set_speed_btn.pack(side="left", padx=5)
+        ttk.Button(
+            input_frame, text="Set", command=self.set_driver_speed, width=6
+        ).pack(side="left", padx=5)
 
         self.set_speed_label = ttk.Label(
-            set_speed_frame, text="Current Set: 0 MPH", font=("Arial", 12, "bold")
+            speed_frame, text="Set: 0 MPH", font=("Arial", 10)
         )
-        self.set_speed_label.pack(pady=5)
+        self.set_speed_label.pack(pady=2)
 
-    def create_info_table(self):
-        """Create information table."""
-        table_frame = ttk.LabelFrame(self.top_frame, text="Train Information")
-        table_frame.grid(row=0, column=1, padx=10, pady=5, sticky="nsew")
+    def create_info_table(self, parent):
+        table_frame = ttk.LabelFrame(parent, text="Train Information")
+        table_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
         self.info_table = ttk.Treeview(
-            table_frame, columns=("Name", "Value", "Unit"), show="headings", height=10
+            table_frame, columns=("Name", "Value"), show="headings", height=6
         )
         self.info_table.heading("Name", text="Parameter")
         self.info_table.heading("Value", text="Value")
-        self.info_table.heading("Unit", text="Unit")
-
-        self.info_table.column("Name", width=200)
-        self.info_table.column("Value", width=150)
-        self.info_table.column("Unit", width=100)
+        self.info_table.column("Name", width=180)
+        self.info_table.column("Value", width=120)
 
         self.info_table.insert(
-            "", "end", "commanded_speed", values=("Commanded Speed", "0", "mph")
+            "", "end", "commanded_speed", values=("Commanded Speed", "0 mph")
         )
         self.info_table.insert(
-            "", "end", "speed_limit", values=("Speed Limit", "0", "mph")
+            "", "end", "speed_limit", values=("Speed Limit", "0 mph")
         )
-        self.info_table.insert(
-            "", "end", "authority", values=("Commanded Authority", "0", "yds")
-        )
-        self.info_table.insert(
-            "", "end", "current_station", values=("Current Station", "--", "")
-        )
-        self.info_table.insert("", "end", "next_stop", values=("Next Stop", "--", ""))
-        self.info_table.insert("", "end", "power", values=("Power Command", "0", "W"))
-        self.info_table.insert(
-            "", "end", "station_side", values=("Station Side", "--", "")
-        )
+        self.info_table.insert("", "end", "authority", values=("Authority", "0 yds"))
+        self.info_table.insert("", "end", "next_stop", values=("Next Stop", "--"))
+        self.info_table.insert("", "end", "power", values=("Power Command", "0 W"))
+        self.info_table.insert("", "end", "station_side", values=("Door Side", "--"))
 
-        self.info_table.pack(padx=5, pady=5, expand=True, fill="both")
+        self.info_table.pack(padx=5, pady=5, fill="both", expand=True)
 
-    def create_control_section(self):
-        """Create control buttons."""
-        controls_label_frame = ttk.LabelFrame(self.control_frame, text="Train Controls")
-        controls_label_frame.pack(fill="both", expand=True, padx=10, pady=5)
+    def create_control_section(self, parent):
+        controls_frame = ttk.LabelFrame(parent, text="Controls")
+        controls_frame.pack(fill="x", padx=5, pady=5)
 
-        button_frame = ttk.Frame(controls_label_frame)
-        button_frame.pack(expand=True, fill="both", padx=5, pady=5)
-
-        for i in range(2):
-            button_frame.grid_rowconfigure(i, weight=1)
-        for i in range(4):
-            button_frame.grid_columnconfigure(i, weight=1)
-
-        button_width = 15
-        button_height = 2
-        padding = 5
+        button_frame = ttk.Frame(controls_frame)
+        button_frame.pack(padx=10, pady=10)
 
         self.service_brake_btn = tk.Button(
             button_frame,
             text="Service Brake",
             command=self.toggle_service_brake,
             bg=self.normal_color,
-            width=button_width,
-            height=button_height,
+            width=14,
+            height=1,
         )
-        self.service_brake_btn.grid(row=0, column=0, padx=padding, pady=padding)
+        self.service_brake_btn.grid(row=0, column=0, padx=3, pady=3)
 
         self.emergency_brake_btn = tk.Button(
             button_frame,
             text="Emergency Brake",
             command=self.emergency_brake,
             bg=self.normal_color,
-            width=button_width,
-            height=button_height,
+            width=14,
+            height=1,
         )
-        self.emergency_brake_btn.grid(row=0, column=1, padx=padding, pady=padding)
-
-        self.manual_mode_btn = tk.Button(
-            button_frame,
-            text="Manual Mode",
-            command=self.toggle_manual_mode,
-            bg=self.normal_color,
-            width=button_width,
-            height=button_height,
-        )
-        self.manual_mode_btn.grid(row=0, column=2, padx=padding, pady=padding)
-
-    def create_engineering_panel(self):
-        """Create engineering panel."""
-        eng_frame = ttk.LabelFrame(self.engineering_frame, text="Engineering Panel")
-        eng_frame.pack(fill="x", expand=True, padx=10, pady=5)
-
-        ttk.Label(eng_frame, text="Kp:").grid(row=0, column=0, padx=5, pady=5)
-        self.kp_entry = ttk.Entry(eng_frame)
-        self.kp_entry.grid(row=0, column=1, padx=5, pady=5)
-        self.kp_entry.insert(0, "1500.0")
-
-        ttk.Label(eng_frame, text="Ki:").grid(row=0, column=2, padx=5, pady=5)
-        self.ki_entry = ttk.Entry(eng_frame)
-        self.ki_entry.grid(row=0, column=3, padx=5, pady=5)
-        self.ki_entry.insert(0, "50.0")
-
-        self.lock_btn = ttk.Button(
-            eng_frame, text="Lock Values", command=self.lock_engineering_values
-        )
-        self.lock_btn.grid(row=0, column=4, padx=20, pady=5)
+        self.emergency_brake_btn.grid(row=0, column=1, padx=3, pady=3)
 
     def periodic_update(self):
-        """Update display periodically."""
         try:
             self.controller.update_from_train_model()
-            current_state = self.controller.get_state()
+            state = self.controller.get_state()
 
-            manual_mode = current_state.get("manual_mode", False)
-
-            if not manual_mode:
-                if current_state["driver_velocity"] != current_state["commanded_speed"]:
+            if not state.get("manual_mode", False):
+                if state["driver_velocity"] != state["commanded_speed"]:
                     self.controller.update_state(
-                        {"driver_velocity": current_state["commanded_speed"]}
+                        {"driver_velocity": state["commanded_speed"]}
                     )
-                    current_state = self.controller.get_state()
+                    state = self.controller.get_state()
 
-            if (
-                current_state["emergency_brake"]
-                and current_state["train_velocity"] == 0.0
-            ):
+            if state["emergency_brake"] and state["train_velocity"] == 0.0:
                 self.controller.vital_control_check_and_update(
                     {"emergency_brake": False}
                 )
-                current_state = self.controller.get_state()
+                state = self.controller.get_state()
 
-            if (
-                not current_state["emergency_brake"]
-                and current_state["service_brake"] == 0
-            ):
-                power = self.controller.calculate_power_command(current_state)
-                if power != current_state["power_command"]:
+            if not state["emergency_brake"] and state["service_brake"] == 0:
+                power = self.controller.calculate_power_command(state)
+                if power != state["power_command"]:
                     self.controller.vital_control_check_and_update(
                         {"power_command": power}
                     )
@@ -499,76 +353,53 @@ class train_controller_ui(tk.Toplevel):
                     {"power_command": 0, "driver_velocity": 0}
                 )
 
-            self.speed_display.config(text=f"{current_state['train_velocity']:.1f} MPH")
+            self.speed_display.config(text=f"{state['train_velocity']:.1f} MPH")
             self.info_table.set(
                 "commanded_speed",
                 column="Value",
-                value=f"{current_state['commanded_speed']:.1f}",
+                value=f"{state['commanded_speed']:.1f} mph",
             )
             self.info_table.set(
-                "speed_limit",
-                column="Value",
-                value=f"{current_state['speed_limit']:.1f}",
+                "speed_limit", column="Value", value=f"{state['speed_limit']:.1f} mph"
             )
             self.info_table.set(
                 "authority",
                 column="Value",
-                value=f"{current_state['commanded_authority']:.1f}",
+                value=f"{state['commanded_authority']:.1f} yds",
+            )
+            self.info_table.set("next_stop", column="Value", value=state["next_stop"])
+            self.info_table.set(
+                "power", column="Value", value=f"{state['power_command']:.1f} W"
             )
             self.info_table.set(
-                "current_station",
-                column="Value",
-                value=current_state.get("current_station", "--"),
+                "station_side", column="Value", value=state["station_side"]
             )
-            self.info_table.set(
-                "next_stop", column="Value", value=current_state["next_stop"]
-            )
-            self.info_table.set(
-                "power", column="Value", value=f"{current_state['power_command']:.1f}"
-            )
-            self.info_table.set(
-                "station_side", column="Value", value=current_state["station_side"]
-            )
-
-            self.set_speed_label.config(
-                text=f"Current Set: {current_state['driver_velocity']:.1f} MPH"
-            )
+            self.set_speed_label.config(text=f"Set: {state['driver_velocity']:.1f} MPH")
 
             if self.speed_entry.focus_get() != self.speed_entry:
                 try:
-                    current_entry = self.speed_entry.get()
-                    if float(current_entry) != current_state["driver_velocity"]:
+                    if float(self.speed_entry.get()) != state["driver_velocity"]:
                         self.speed_entry.delete(0, tk.END)
-                        self.speed_entry.insert(
-                            0, f"{current_state['driver_velocity']:.1f}"
-                        )
+                        self.speed_entry.insert(0, f"{state['driver_velocity']:.1f}")
                 except ValueError:
                     self.speed_entry.delete(0, tk.END)
-                    self.speed_entry.insert(
-                        0, f"{current_state['driver_velocity']:.1f}"
-                    )
+                    self.speed_entry.insert(0, f"{state['driver_velocity']:.1f}")
 
-            self.update_button_states(current_state)
-
+            self.update_button_states(state)
         except Exception as e:
             print(f"Update error: {e}")
         finally:
             self.after(self.update_interval, self.periodic_update)
 
     def update_button_states(self, state):
-        """Update button colors."""
         self.service_brake_btn.configure(
             bg=self.active_color if state["service_brake"] > 0 else self.normal_color
         )
         self.emergency_brake_btn.configure(
             bg=self.active_color if state["emergency_brake"] else self.normal_color
         )
-        self.manual_mode_btn.configure(
-            bg=self.active_color if state["manual_mode"] else self.normal_color
-        )
 
     def set_driver_speed(self):
-        """Set driver speed from input."""
         try:
             desired_speed = float(self.speed_entry.get())
             state = self.controller.get_state()
@@ -576,16 +407,15 @@ class train_controller_ui(tk.Toplevel):
             speed_limit = state["speed_limit"]
 
             if state.get("manual_mode", False) or commanded_speed == 0:
-                max_allowed_speed = speed_limit if speed_limit > 0 else 100
+                max_allowed = speed_limit if speed_limit > 0 else 100
             else:
-                max_allowed_speed = (
+                max_allowed = (
                     min(commanded_speed, speed_limit)
                     if speed_limit > 0
                     else commanded_speed
                 )
 
-            new_speed = max(0, min(max_allowed_speed, desired_speed))
-
+            new_speed = max(0, min(max_allowed, desired_speed))
             state_copy = state.copy()
             state_copy["driver_velocity"] = new_speed
             power = self.controller.calculate_power_command(state_copy)
@@ -593,24 +423,14 @@ class train_controller_ui(tk.Toplevel):
             self.controller.vital_control_check_and_update(
                 {"driver_velocity": new_speed, "power_command": power}
             )
-
             self.speed_entry.delete(0, tk.END)
             self.speed_entry.insert(0, f"{new_speed:.1f}")
-
         except ValueError:
             state = self.controller.get_state()
             self.speed_entry.delete(0, tk.END)
             self.speed_entry.insert(0, f"{state['driver_velocity']:.1f}")
 
-    def toggle_manual_mode(self):
-        """Toggle manual mode."""
-        state = self.controller.get_state()
-        self.controller.update_state(
-            {"manual_mode": not state.get("manual_mode", False)}
-        )
-
     def toggle_service_brake(self):
-        """Toggle service brake."""
         state = self.controller.get_state()
         activate = state["service_brake"] == 0
         self.controller.vital_control_check_and_update(
@@ -621,7 +441,6 @@ class train_controller_ui(tk.Toplevel):
         )
 
     def emergency_brake(self):
-        """Toggle emergency brake."""
         state = self.controller.get_state()
         activate = not state.get("emergency_brake", False)
         self.controller.vital_control_check_and_update(
@@ -632,34 +451,10 @@ class train_controller_ui(tk.Toplevel):
             }
         )
 
-    def lock_engineering_values(self):
-        """Lock Kp and Ki values."""
-        try:
-            kp = float(self.kp_entry.get())
-            ki = float(self.ki_entry.get())
-
-            self.controller.update_state(
-                {"kp": kp, "ki": ki, "engineering_panel_locked": True}
-            )
-
-            self.kp_entry.configure(state="disabled")
-            self.ki_entry.configure(state="disabled")
-            self.lock_btn.configure(state="disabled")
-
-        except ValueError:
-            pass
-
-
-# ============================================================================
-# TRAIN MANAGER
-# ============================================================================
-
 
 class TrainPair:
-    """Represents a paired TrainModel and train_controller instance with UIs."""
-
     def __init__(
-        self, train_id: int, model, controller=None, model_ui=None, controller_ui=None
+        self, train_id, model, controller=None, model_ui=None, controller_ui=None
     ):
         self.train_id = train_id
         self.model = model
@@ -667,11 +462,21 @@ class TrainPair:
         self.model_ui = model_ui
         self.controller_ui = controller_ui
 
+    def show_windows(self):
+        if self.model_ui and hasattr(self.model_ui, "master"):
+            self.model_ui.master.deiconify()
+        if self.controller_ui:
+            self.controller_ui.deiconify()
+
+    def hide_windows(self):
+        if self.model_ui and hasattr(self.model_ui, "master"):
+            self.model_ui.master.withdraw()
+        if self.controller_ui:
+            self.controller_ui.withdraw()
+
 
 class TrainManager:
-    """Manages multiple trains (TrainModel + train_controller pairs)."""
-
-    def __init__(self, state_file: str = None):
+    def __init__(self, state_file=None):
         self.trains = {}
         self.next_train_id = 1
 
@@ -687,33 +492,28 @@ class TrainManager:
             train_model_dir, "track_model_Train_Model.json"
         )
 
-        self._initialize_state_file()
-
-    def _initialize_state_file(self):
-        """Initialize train_states.json if it doesn't exist."""
         if not os.path.exists(self.state_file):
             safe_write_json(self.state_file, {})
 
-    def add_train(self, train_specs: dict = None, create_uis: bool = True) -> int:
-        """Add a new train with software controller."""
+    def add_train(self, train_specs=None, create_uis=True):
         try:
             from train_model_core import TrainModel
             from train_model_ui import TrainModelUI
         except ImportError:
             import importlib.util
 
-            core_spec = importlib.util.spec_from_file_location(
+            spec = importlib.util.spec_from_file_location(
                 "train_model_core", os.path.join(train_model_dir, "train_model_core.py")
             )
-            core_module = importlib.util.module_from_spec(core_spec)
-            core_spec.loader.exec_module(core_module)
-            ui_spec = importlib.util.spec_from_file_location(
+            core = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(core)
+            spec2 = importlib.util.spec_from_file_location(
                 "train_model_ui", os.path.join(train_model_dir, "train_model_ui.py")
             )
-            ui_module = importlib.util.module_from_spec(ui_spec)
-            ui_spec.loader.exec_module(ui_module)
-            TrainModel = core_module.TrainModel
-            TrainModelUI = ui_module.TrainModelUI
+            ui_mod = importlib.util.module_from_spec(spec2)
+            spec2.loader.exec_module(ui_mod)
+            TrainModel = core.TrainModel
+            TrainModelUI = ui_mod.TrainModelUI
 
         train_id = self.next_train_id
         self.next_train_id += 1
@@ -733,7 +533,6 @@ class TrainManager:
             }
 
         model = TrainModel(train_specs)
-
         model_ui = None
         controller_ui = None
         controller = None
@@ -748,122 +547,78 @@ class TrainManager:
             model_ui_window.geometry(f"350x700+{x_offset}+{y_offset}")
 
             controller_ui = train_controller_ui(train_id, self.state_file)
-            controller_ui.geometry(f"1200x800+{x_offset + 360}+{y_offset}")
-
+            controller_ui.geometry(f"550x450+{x_offset + 360}+{y_offset}")
             controller = controller_ui.controller
-
-            print(f"Train {train_id} UIs created")
 
         train_pair = TrainPair(train_id, model, controller, model_ui, controller_ui)
         self.trains[train_id] = train_pair
 
         self._initialize_train_state(train_id)
+        self._initialize_train_data_entry(train_id, train_id - 1)
 
-        try:
-            self._initialize_train_data_entry(train_id, index=train_id - 1)
-        except Exception as e:
-            print(
-                f"Warning: failed to initialize train_data.json for train {train_id}: {e}"
-            )
-
-        print(f"Train {train_id} created successfully")
+        print(f"Train {train_id} created")
         return train_id
 
-    def _initialize_train_state(self, train_id: int):
-        """Initialize state for a train."""
+    def _initialize_train_state(self, train_id):
         all_states = safe_read_json(self.state_file)
-        train_key = f"train_{train_id}"
-
         track = safe_read_json(self.track_model_file)
-        block = {}
-        beacon = {}
 
+        block, beacon = {}, {}
         if isinstance(track, dict) and track:
             keys = sorted([k for k in track.keys() if "_train_" in k])
-            idx = max(0, train_id - 1)
             if keys:
-                entry = track.get(keys[idx if idx < len(keys) else 0], {})
+                entry = track.get(keys[max(0, min(train_id - 1, len(keys) - 1))], {})
                 if isinstance(entry, dict):
                     block = (
                         entry.get("block", {})
-                        if isinstance(entry.get("block", {}), dict)
+                        if isinstance(entry.get("block"), dict)
                         else {}
                     )
                     beacon = (
                         entry.get("beacon", {})
-                        if isinstance(entry.get("beacon", {}), dict)
+                        if isinstance(entry.get("beacon"), dict)
                         else {}
                     )
 
-        commanded_speed = float(block.get("commanded speed", 0.0) or 0.0)
-        commanded_authority = float(block.get("commanded authority", 0.0) or 0.0)
-        speed_limit = float(beacon.get("speed limit", 0.0) or 0.0)
-        next_stop = beacon.get("next station", "") or ""
-        station_side = beacon.get("side_door", "") or ""
-
-        all_states[train_key] = {
+        all_states[f"train_{train_id}"] = {
             "train_id": train_id,
-            "commanded_speed": commanded_speed,
-            "commanded_authority": commanded_authority,
-            "speed_limit": speed_limit,
+            "commanded_speed": float(block.get("commanded speed", 0.0) or 0.0),
+            "commanded_authority": float(block.get("commanded authority", 0.0) or 0.0),
+            "speed_limit": float(beacon.get("speed limit", 0.0) or 0.0),
             "train_velocity": 0.0,
-            "next_stop": next_stop,
-            "station_side": station_side,
+            "next_stop": beacon.get("next station", "") or "",
+            "station_side": beacon.get("side_door", "") or "",
             "manual_mode": False,
             "driver_velocity": 0.0,
             "service_brake": False,
             "emergency_brake": False,
             "kp": 1500.0,
             "ki": 50.0,
-            "engineering_panel_locked": False,
             "power_command": 0.0,
-            "current_station": next_stop,
+            "current_station": beacon.get("next station", "") or "",
         }
-
         safe_write_json(self.state_file, all_states)
 
-    def _initialize_train_data_entry(self, train_id: int, index: int):
-        """Initialize train_data.json entry for this train."""
+    def _initialize_train_data_entry(self, train_id, index):
         track = safe_read_json(self.track_model_file)
         train_data = safe_read_json(self.train_data_file)
 
-        block = {}
-        beacon = {}
+        block, beacon = {}, {}
         if isinstance(track, dict) and track:
             keys = sorted([k for k in track.keys() if "_train_" in k])
-            idx = index if 0 <= index < len(keys) else 0
             if keys:
-                entry = track.get(keys[idx], {})
+                entry = track.get(keys[max(0, min(index, len(keys) - 1))], {})
                 if isinstance(entry, dict):
                     block = (
                         entry.get("block", {})
-                        if isinstance(entry.get("block", {}), dict)
+                        if isinstance(entry.get("block"), dict)
                         else {}
                     )
                     beacon = (
                         entry.get("beacon", {})
-                        if isinstance(entry.get("beacon", {}), dict)
+                        if isinstance(entry.get("beacon"), dict)
                         else {}
                     )
-
-        cmd_speed = float(block.get("commanded speed", 0.0) or 0.0)
-        cmd_auth = float(block.get("commanded authority", 0.0) or 0.0)
-        speed_lim = float(beacon.get("speed limit", 0.0) or 0.0)
-
-        inputs = {
-            "commanded speed": cmd_speed,
-            "commanded authority": cmd_auth,
-            "speed limit": speed_lim,
-            "current station": beacon.get("current station", "") or "",
-            "next station": beacon.get("next station", "") or "",
-            "side_door": beacon.get("side_door", "") or "",
-            "passengers_boarding": int(beacon.get("passengers_boarding", 0) or 0),
-            "train_model_engine_failure": False,
-            "train_model_signal_failure": False,
-            "train_model_brake_failure": False,
-            "emergency_brake": False,
-            "passengers_onboard": 0,
-        }
 
         if "specs" not in train_data:
             train_data["specs"] = {
@@ -879,78 +634,85 @@ class TrainManager:
                 "crew_count": 2,
             }
 
-        train_key = f"train_{train_id}"
-        train_data[train_key] = {
-            "inputs": inputs,
+        train_data[f"train_{train_id}"] = {
+            "inputs": {
+                "commanded speed": float(block.get("commanded speed", 0.0) or 0.0),
+                "commanded authority": float(
+                    block.get("commanded authority", 0.0) or 0.0
+                ),
+                "speed limit": float(beacon.get("speed limit", 0.0) or 0.0),
+                "current station": beacon.get("current station", "") or "",
+                "next station": beacon.get("next station", "") or "",
+                "side_door": beacon.get("side_door", "") or "",
+                "passengers_boarding": int(beacon.get("passengers_boarding", 0) or 0),
+                "train_model_engine_failure": False,
+                "train_model_signal_failure": False,
+                "train_model_brake_failure": False,
+                "emergency_brake": False,
+                "passengers_onboard": 0,
+            },
             "outputs": {
                 "velocity_mph": 0.0,
                 "acceleration_ftps2": 0.0,
                 "position_yds": 0.0,
-                "authority_yds": float(inputs["commanded authority"]),
-                "station_name": inputs["current station"],
-                "next_station": inputs["next station"],
+                "authority_yds": float(block.get("commanded authority", 0.0) or 0.0),
+                "station_name": beacon.get("current station", "") or "",
+                "next_station": beacon.get("next station", "") or "",
                 "left_door_open": False,
                 "right_door_open": False,
-                "door_side": inputs["side_door"],
+                "door_side": beacon.get("side_door", "") or "",
                 "passengers_onboard": 0,
-                "passengers_boarding": inputs["passengers_boarding"],
+                "passengers_boarding": int(beacon.get("passengers_boarding", 0) or 0),
                 "passengers_disembarking": 0,
             },
         }
-
         safe_write_json(self.train_data_file, train_data)
 
-    def remove_train(self, train_id: int) -> bool:
-        """Remove a train."""
+    def remove_train(self, train_id):
         if train_id not in self.trains:
             return False
 
-        train_pair = self.trains[train_id]
-        if train_pair.model_ui:
+        train = self.trains[train_id]
+        if train.model_ui:
             try:
-                train_pair.model_ui.master.destroy()
+                train.model_ui.master.destroy()
             except:
                 pass
-        if train_pair.controller_ui:
+        if train.controller_ui:
             try:
-                train_pair.controller_ui.destroy()
+                train.controller_ui.destroy()
             except:
                 pass
 
         del self.trains[train_id]
 
         all_states = safe_read_json(self.state_file)
-        train_key = f"train_{train_id}"
-        if train_key in all_states:
-            del all_states[train_key]
+        if f"train_{train_id}" in all_states:
+            del all_states[f"train_{train_id}"]
         safe_write_json(self.state_file, all_states)
 
         print(f"Train {train_id} removed")
         return True
 
-    def get_train(self, train_id: int) -> TrainPair:
-        """Get train by ID."""
-        return self.trains.get(train_id, None)
+    def get_train(self, train_id):
+        return self.trains.get(train_id)
 
-    def get_all_train_ids(self) -> list:
-        """Get all train IDs."""
+    def get_all_train_ids(self):
         return list(self.trains.keys())
 
-    def get_train_count(self) -> int:
-        """Get number of trains."""
+    def get_train_count(self):
         return len(self.trains)
 
 
 class TrainManagerUI(tk.Tk):
-    """UI for managing multiple trains."""
-
     def __init__(self):
         super().__init__()
-
-        self.title("Train Manager - System Control")
+        self.title("Train Manager")
         self.geometry("400x600+50+50")
 
         self.manager = TrainManager()
+        self.visibility_buttons = {}
+        self.selected_train_id = None
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
@@ -959,35 +721,29 @@ class TrainManagerUI(tk.Tk):
         self.create_train_list()
         self.create_control_buttons()
         self.create_status_bar()
-
         self.update_train_list()
 
     def create_header(self):
-        """Create header."""
-        header_frame = tk.Frame(self, bg="#2c3e50", height=80)
-        header_frame.grid(row=0, column=0, sticky="EW")
-        header_frame.columnconfigure(0, weight=1)
+        header = tk.Frame(self, bg="#2c3e50", height=80)
+        header.grid(row=0, column=0, sticky="EW")
+        header.columnconfigure(0, weight=1)
 
-        title = tk.Label(
-            header_frame,
+        tk.Label(
+            header,
             text="Train Manager",
             font=("Arial", 18, "bold"),
             bg="#2c3e50",
             fg="white",
-        )
-        title.grid(row=0, column=0, pady=(10, 0))
-
-        subtitle = tk.Label(
-            header_frame,
+        ).grid(row=0, column=0, pady=(10, 0))
+        tk.Label(
+            header,
             text="Multi-Train System Control",
             font=("Arial", 10),
             bg="#2c3e50",
             fg="#bdc3c7",
-        )
-        subtitle.grid(row=1, column=0, pady=(0, 10))
+        ).grid(row=1, column=0, pady=(0, 10))
 
     def create_train_list(self):
-        """Create train list."""
         list_frame = tk.LabelFrame(
             self, text="Active Trains", font=("Arial", 11, "bold")
         )
@@ -995,27 +751,26 @@ class TrainManagerUI(tk.Tk):
         list_frame.columnconfigure(0, weight=1)
         list_frame.rowconfigure(0, weight=1)
 
-        scrollbar = tk.Scrollbar(list_frame)
-        scrollbar.grid(row=0, column=1, sticky="NS")
+        canvas = tk.Canvas(list_frame)
+        scrollbar = tk.Scrollbar(list_frame, orient="vertical", command=canvas.yview)
+        self.train_items_frame = ttk.Frame(canvas)
 
-        self.train_listbox = tk.Listbox(
-            list_frame,
-            font=("Courier", 10),
-            yscrollcommand=scrollbar.set,
-            selectmode=tk.SINGLE,
-            height=15,
+        self.train_items_frame.bind(
+            "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
-        self.train_listbox.grid(row=0, column=0, sticky="NSEW", padx=5, pady=5)
-        scrollbar.config(command=self.train_listbox.yview)
+
+        canvas.create_window((0, 0), window=self.train_items_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        scrollbar.pack(side="right", fill="y")
 
     def create_control_buttons(self):
-        """Create control buttons."""
         button_frame = tk.Frame(self)
         button_frame.grid(row=2, column=0, sticky="EW", padx=10, pady=(0, 10))
         button_frame.columnconfigure(0, weight=1)
-        button_frame.columnconfigure(1, weight=1)
 
-        self.add_button = tk.Button(
+        tk.Button(
             button_frame,
             text="➕ Add New Train",
             font=("Arial", 12, "bold"),
@@ -1024,10 +779,9 @@ class TrainManagerUI(tk.Tk):
             command=self.add_train,
             height=2,
             cursor="hand2",
-        )
-        self.add_button.grid(row=0, column=0, columnspan=2, sticky="EW", pady=(0, 10))
+        ).grid(row=0, column=0, columnspan=2, sticky="EW", pady=(0, 10))
 
-        self.remove_button = tk.Button(
+        tk.Button(
             button_frame,
             text="Remove Selected",
             font=("Arial", 10),
@@ -1035,11 +789,9 @@ class TrainManagerUI(tk.Tk):
             fg="white",
             command=self.remove_selected_train,
             cursor="hand2",
-        )
-        self.remove_button.grid(row=1, column=0, sticky="EW", padx=(0, 5))
+        ).grid(row=1, column=0, sticky="EW")
 
     def create_status_bar(self):
-        """Create status bar."""
         status_frame = tk.Frame(self, bg="#34495e", height=30)
         status_frame.grid(row=3, column=0, sticky="EW")
 
@@ -1054,39 +806,61 @@ class TrainManagerUI(tk.Tk):
         self.status_label.pack(side="left", padx=10, pady=5)
 
     def add_train(self):
-        """Add new train."""
         try:
             train_id = self.manager.add_train(create_uis=True)
             self.update_train_list()
             self.update_status(f"Train {train_id} added")
         except Exception as e:
             self.update_status(f"Error: {e}")
+            print(f"Error adding train: {e}")
 
     def remove_selected_train(self):
-        """Remove selected train."""
-        selection = self.train_listbox.curselection()
-        if not selection:
+        if self.selected_train_id is None:
+            self.update_status("No train selected")
             return
 
-        selected_text = self.train_listbox.get(selection[0])
         try:
-            train_id = int(selected_text.split()[1])
-            if self.manager.remove_train(train_id):
+            if self.manager.remove_train(self.selected_train_id):
                 self.update_train_list()
-                self.update_status(f"Train {train_id} removed")
+                self.update_status(f"Train {self.selected_train_id} removed")
+                self.selected_train_id = None
         except Exception as e:
             self.update_status(f"Error: {e}")
 
     def update_train_list(self):
-        """Update train list."""
-        self.train_listbox.delete(0, tk.END)
+        for widget in self.train_items_frame.winfo_children():
+            widget.destroy()
 
+        self.visibility_buttons.clear()
         train_ids = self.manager.get_all_train_ids()
+
         if not train_ids:
-            self.train_listbox.insert(tk.END, "  No trains active")
+            ttk.Label(
+                self.train_items_frame,
+                text="No trains active",
+                font=("Arial", 10, "italic"),
+            ).pack(pady=10)
         else:
             for train_id in train_ids:
-                self.train_listbox.insert(tk.END, f"Train {train_id} - Active")
+                train_frame = ttk.Frame(self.train_items_frame)
+                train_frame.pack(fill="x", padx=5, pady=3)
+
+                ttk.Radiobutton(
+                    train_frame,
+                    text=f"Train {train_id}",
+                    value=train_id,
+                    command=lambda tid=train_id: self.select_train(tid),
+                ).pack(side="left", padx=5)
+
+                btn = ttk.Button(
+                    train_frame,
+                    text="Hide",
+                    width=8,
+                    command=lambda tid=train_id: self.toggle_train_visibility(tid),
+                )
+                btn.pack(side="right", padx=2)
+
+                self.visibility_buttons[train_id] = btn
 
         count = self.manager.get_train_count()
         if count == 0:
@@ -1094,8 +868,26 @@ class TrainManagerUI(tk.Tk):
         else:
             self.update_status(f"Managing {count} train(s)")
 
-    def update_status(self, message: str):
-        """Update status bar."""
+    def select_train(self, train_id):
+        self.selected_train_id = train_id
+
+    def toggle_train_visibility(self, train_id):
+        train = self.manager.get_train(train_id)
+        if not train:
+            return
+
+        btn = self.visibility_buttons.get(train_id)
+        if not btn:
+            return
+
+        if train.controller_ui and train.controller_ui.state() == "normal":
+            train.hide_windows()
+            btn.config(text="Show")
+        else:
+            train.show_windows()
+            btn.config(text="Hide")
+
+    def update_status(self, message):
         self.status_label.config(text=message)
 
 

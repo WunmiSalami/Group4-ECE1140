@@ -2,14 +2,14 @@
     "Dispatcher": {
         "Trains": {
             "Train 1": {
-                "Line": "Green",
-                "Suggested Speed": 62,
-                "Authority": 547,
-                "Station Destination": "Poplar",
-                "Arrival Time": "12:00",
-                "Position": 0,
-                "State": 0,
-                "Current Station": "---"
+                "Line": "",
+                "Suggested Speed": "",
+                "Authority": "",
+                "Station Destination": "",
+                "Arrival Time": "",
+                "Position": "",
+                "State": "",
+                "Current Station": ""
             },
             "Train 2": {
                 "Line": "",
