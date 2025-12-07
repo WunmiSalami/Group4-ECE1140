@@ -157,12 +157,10 @@ class LineNetwork:
             print(f"Error reading JSON: {e}")
 
     def write_to_train_model_json(self, commanded_speeds, commanded_authorities):
-        # Read file
         json_path = TRAIN_MODEL_JSON
         with open(json_path, "r") as f:
             train_model_data = json.load(f)
 
-        # Extract motion & position and store
         trains = []
         for i in range(len(commanded_speeds)):
             train_key = f"{self.line_name[0]}_train_{i + 1}"
@@ -172,7 +170,6 @@ class LineNetwork:
                 trains.append({"train_id": i + 1, "motion": motion})
                 self.train_positions[i + 1] = pos
 
-                # Write commanded speed/authority
                 train_model_data[train_key]["block"]["commanded speed"] = (
                     commanded_speeds[i]
                 )
@@ -181,23 +178,36 @@ class LineNetwork:
                 )
 
         if self.block_manager:
-            self.block_manager.trains = []
+            # Don't wipe - update existing trains or add new ones
+            existing_train_ids = {
+                train["train_id"]: idx
+                for idx, train in enumerate(self.block_manager.trains)
+            }
+
             for t in trains:
-                self.block_manager.trains.append(
-                    {
-                        "train_id": t["train_id"],
-                        "line": self.line_name,
-                        "start": True if t["motion"] == "Moving" else False,
-                    }
-                )
-        # Store based on line
+                train_id = t["train_id"]
+
+                if train_id in existing_train_ids:
+                    # Update existing train's motion state
+                    idx = existing_train_ids[train_id]
+                    self.block_manager.trains[idx]["start"] = (
+                        True if t["motion"] == "Moving" else False
+                    )
+                else:
+                    # Add new train
+                    self.block_manager.trains.append(
+                        {
+                            "train_id": train_id,
+                            "line": self.line_name,
+                            "start": True if t["motion"] == "Moving" else False,
+                        }
+                    )
+
         if self.line_name == "Green":
             self.green_line_trains = trains
         else:
             self.red_line_trains = trains
 
-        # Write back
-        json_path = TRAIN_MODEL_JSON
         with open(json_path, "w") as f:
             json.dump(train_model_data, f, indent=4)
 

@@ -906,6 +906,17 @@ class TrainManagerUI(tk.Tk):
         else:
             self.update_status(f"Managing {count} train(s)")
 
+    def _poll_wrapper(self):
+        """Periodically update the train manager UI."""
+        try:
+            if self.winfo_exists():
+                self.update_train_list()
+                self.after(2000, self._poll_wrapper)
+        except Exception as e:
+            print(f"Error in _poll_wrapper: {e}")
+            if self.winfo_exists():
+                self.after(2000, self._poll_wrapper)
+
     def select_train(self, train_id):
         self.selected_train_id = train_id
 

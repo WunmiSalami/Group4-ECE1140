@@ -25,7 +25,7 @@ class MainUI(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Train & Track System - Launcher")
-        self.geometry("400x200")
+        self.geometry("200x200")
         self.configure(bg="white")
 
         # Component windows

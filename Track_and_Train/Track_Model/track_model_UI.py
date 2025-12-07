@@ -700,14 +700,16 @@ class TrackModelUI(ttk.Frame):
             return "N/A"
 
     def check_and_start_trains(self):
+        # Always read from track_io.json and sync to train model
+        if self.line_network:
+            self.line_network.read_train_data_from_json()
+
+        # Then check if any trains need to start animating
         for train in self.block_manager.trains:
             train_id = train["train_id"]
             line = train["line"]
             if train["start"] and train_id not in self.visualizer.trains:
                 self.visualizer.animate_train(train_id, line)
-            else:
-                if self.line_network:
-                    self.line_network.read_train_data_from_json()
 
 
 if __name__ == "__main__":
