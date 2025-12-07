@@ -15,7 +15,7 @@ import os
 VISUALIZER_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Import network builder and parser
-from LineNetwork import LineNetworkBuilder
+from Track_and_Train.LineNetwork import LineNetworkBuilder
 from TrackDiagramParser import TrackDiagramParser
 
 
@@ -1140,7 +1140,7 @@ class RailwayDiagram:
 
         # Build LineNetwork
         df = self.track_data[line_name]
-        from LineNetwork import LineNetworkBuilder
+        from Track_and_Train.LineNetwork import LineNetworkBuilder
 
         builder = LineNetworkBuilder(df, line_name)
         self.line_network = builder.build()

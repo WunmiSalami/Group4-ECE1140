@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from Track_Visualizer import RailwayDiagram
 from DynamicBlockManager import DynamicBlockManager
-from LineNetwork import LineNetwork
+from Track_and_Train.LineNetwork import LineNetwork
 from PIL import Image, ImageTk
 import json
 import pandas as pd
