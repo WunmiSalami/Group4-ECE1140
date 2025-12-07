@@ -160,6 +160,28 @@ class train_controller:
             safe_write_json(self.state_file, all_states)
 
     def update_from_train_model(self):
+        track_model_file = os.path.join(
+            parent_dir, "Train_Model", "track_model_Train_Model.json"
+        )
+        track_data = safe_read_json(track_model_file)
+        train_key = f"G_train_{self.train_id}"
+
+        if train_key in track_data:
+            block = track_data[train_key].get("block", {})
+            beacon = track_data[train_key].get("beacon", {})
+
+            self.update_state(
+                {
+                    "commanded_speed": float(block.get("commanded speed", 0.0) or 0.0),
+                    "commanded_authority": float(
+                        block.get("commanded authority", 0.0) or 0.0
+                    ),
+                    "speed_limit": float(beacon.get("speed limit", 0.0) or 0.0),
+                    "next_stop": beacon.get("next station", "") or "",
+                    "station_side": beacon.get("side_door", "") or "",
+                }
+            )
+
         state = self.get_state()
         self.beacon_info.update_from_state(state)
         self.cmd_speed_auth.update_from_state(state)

@@ -793,23 +793,31 @@ class TrackControl:
 
     def _update_train_positions(self, occupancy, line):
         """Update train positions from occupancy array for specific line"""
-        for train_id, train_info in self.active_trains.items():
-            if train_info.get("line") != line:
-                continue
+        # Find all occupied blocks
+        occupied_blocks = [idx for idx, occ in enumerate(occupancy) if occ == 1]
 
-            # Find occupied blocks
-            for block_idx, occ in enumerate(occupancy):
-                if occ == 1:
-                    train_info["current_block"] = block_idx
+        # Get trains on this line sorted by train_id
+        line_trains = sorted(
+            [
+                (tid, info)
+                for tid, info in self.active_trains.items()
+                if info.get("line") == line
+            ],
+            key=lambda x: x[0],
+        )
 
-                    # Check if at station
-                    config = self.infrastructure[line]
-                    stations = config["stations"]
-                    block_to_station = {v: k for k, v in stations.items()}
+        # Assign occupied blocks to trains in order
+        for i, (train_id, train_info) in enumerate(line_trains):
+            if i < len(occupied_blocks):
+                train_info["current_block"] = occupied_blocks[i]
 
-                    if block_idx in block_to_station:
-                        train_info["current_station"] = block_to_station[block_idx]
-                    break
+                # Check if at station
+                config = self.infrastructure[line]
+                stations = config["stations"]
+                block_to_station = {v: k for k, v in stations.items()}
+
+                if occupied_blocks[i] in block_to_station:
+                    train_info["current_station"] = block_to_station[occupied_blocks[i]]
 
     def _route_all_trains(self, track_data):
         """Route all trains on all lines"""

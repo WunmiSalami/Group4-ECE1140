@@ -155,64 +155,58 @@ def merge_inputs(td_inputs: dict, track_in: dict, ctrl: dict, onboard_fallback: 
     merged.setdefault("train_model_brake_failure", False)
     return merged
 
+    # === Track motion write-back ONLY (no passengers_disembarking) ===
+    def update_track_motion(
+        train_index: int,
+        acceleration_ftps2: float,
+        velocity_mph: float,
+        position_yds: float,
+    ):
+        motion_state = (
+            "stopped"
+            if velocity_mph <= 0.01
+            else ("braking" if acceleration_ftps2 < 0 else "moving")
+        )
 
-# === Track motion write-back ONLY (no passengers_disembarking) ===
-def update_track_motion(
-    train_index: int, acceleration_ftps2: float, velocity_mph: float
-):
-    """
-    Update the current motion state inside track_model_Train_Model.json.
+        data = safe_read_json(TRACK_INPUT_FILE)
+        if not isinstance(data, dict) or not data:
+            if isinstance(data, dict):
+                legacy = data
+            else:
+                legacy = {}
+            legacy_motion = legacy.get("motion", {})
+            if not isinstance(legacy_motion, dict):
+                legacy_motion = {}
+            legacy_motion["current motion"] = motion_state
+            legacy_motion["position_yds"] = position_yds
+            legacy["motion"] = legacy_motion
+            safe_write_json(TRACK_INPUT_FILE, legacy)
+            return
 
-    Motion states:
-        velocity <= 0.01 mph -> "stopped"
-        acceleration < 0     -> "braking"
-        else                  -> "moving"
-    """
-    motion_state = (
-        "stopped"
-        if velocity_mph <= 0.01
-        else ("braking" if acceleration_ftps2 < 0 else "moving")
-    )
+        keys = sorted([k for k in data.keys() if "_train_" in k])
+        if not keys:
+            legacy_motion = data.get("motion", {})
+            if not isinstance(legacy_motion, dict):
+                legacy_motion = {}
+            legacy_motion["current motion"] = motion_state
+            legacy_motion["position_yds"] = position_yds
+            data["motion"] = legacy_motion
+            safe_write_json(TRACK_INPUT_FILE, data)
+            return
 
-    data = safe_read_json(TRACK_INPUT_FILE)
-    if not isinstance(data, dict) or not data:
-        # Legacy single structure (create if empty)
-        if isinstance(data, dict):
-            legacy = data
-        else:
-            legacy = {}
-        legacy_motion = legacy.get("motion", {})
-        if not isinstance(legacy_motion, dict):
-            legacy_motion = {}
-        legacy_motion["current motion"] = motion_state
-        legacy["motion"] = legacy_motion
-        safe_write_json(TRACK_INPUT_FILE, legacy)
-        return
-
-    # Multi-train: find sorted keys *_train_*
-    keys = sorted([k for k in data.keys() if "_train_" in k])
-    if not keys:
-        # Fallback to legacy style
-        legacy_motion = data.get("motion", {})
-        if not isinstance(legacy_motion, dict):
-            legacy_motion = {}
-        legacy_motion["current motion"] = motion_state
-        data["motion"] = legacy_motion
+        idx = train_index if 0 <= train_index < len(keys) else 0
+        entry_key = keys[idx]
+        entry = data.get(entry_key, {})
+        if not isinstance(entry, dict):
+            entry = {}
+        motion = entry.get("motion", {})
+        if not isinstance(motion, dict):
+            motion = {}
+        motion["current motion"] = motion_state
+        motion["position_yds"] = position_yds
+        entry["motion"] = motion
+        data[entry_key] = entry
         safe_write_json(TRACK_INPUT_FILE, data)
-        return
-
-    idx = train_index if 0 <= train_index < len(keys) else 0
-    entry_key = keys[idx]
-    entry = data.get(entry_key, {})
-    if not isinstance(entry, dict):
-        entry = {}
-    motion = entry.get("motion", {})
-    if not isinstance(motion, dict):
-        motion = {}
-    motion["current motion"] = motion_state
-    entry["motion"] = motion
-    data[entry_key] = entry
-    safe_write_json(TRACK_INPUT_FILE, data)
 
 
 # === Core Train Model ===
