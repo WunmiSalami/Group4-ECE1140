@@ -12,13 +12,13 @@
         "crew_count": 2
     },
     "inputs": {
-        "commanded speed": 40,
+        "commanded speed": 0,
         "commanded authority": 0,
         "speed limit": 30,
-        "current station": "Central Station",
-        "next station": "Park Street",
-        "side_door": "Right",
-        "passengers_boarding": 15,
+        "current station": "N/A",
+        "next station": "N/A",
+        "side_door": "N/A",
+        "passengers_boarding": 0,
         "engine_failure": false,
         "signal_failure": false,
         "brake_failure": false,
@@ -35,9 +35,9 @@
     },
     "train_1": {
         "inputs": {
-            "commanded speed": 35.0,
-            "commanded authority": 10.0,
-            "speed limit": 70.0,
+            "commanded speed": 0,
+            "commanded authority": 0,
+            "speed limit": 0,
             "current station": "Glenbury",
             "next station": "Glenbury",
             "side_door": "Right",
@@ -52,7 +52,7 @@
             "velocity_mph": 0.0,
             "acceleration_ftps2": 0.0,
             "position_yds": 0.0,
-            "authority_yds": 10.0
+            "authority_yds": 132.0
         },
         "specs": {
             "length_ft": 66.0,

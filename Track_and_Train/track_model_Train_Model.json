@@ -1,8 +1,8 @@
 {
     "G_train_1": {
         "block": {
-            "commanded speed": 35,
-            "commanded authority": 10
+            "commanded speed": 21,
+            "commanded authority": 113
         },
         "beacon": {
             "speed limit": 70.0,
@@ -18,8 +18,8 @@
     },
     "G_train_2": {
         "block": {
-            "commanded speed": 30,
-            "commanded authority": 10
+            "commanded speed": 0,
+            "commanded authority": 0
         },
         "beacon": {
             "speed limit": 0,
@@ -30,14 +30,13 @@
         },
         "motion": {
             "current motion": "stopped",
-            "Position_yds": 1500,
             "position_yds": 0.0
         }
     },
     "G_train_3": {
         "block": {
-            "commanded speed": 25,
-            "commanded authority": 15
+            "commanded speed": 0,
+            "commanded authority": 0
         },
         "beacon": {
             "speed limit": 0,

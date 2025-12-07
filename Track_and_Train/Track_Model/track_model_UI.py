@@ -1,19 +1,26 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+import sys
+import os
+
+# Set up path for imports
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+_PARENT_DIR = os.path.dirname(_CURRENT_DIR)
+sys.path.insert(0, _PARENT_DIR)
+
 from Track_Visualizer import RailwayDiagram
 from DynamicBlockManager import DynamicBlockManager
-from Track_and_Train.LineNetwork import LineNetwork
+from LineNetwork import LineNetwork
 from PIL import Image, ImageTk
 import json
 import pandas as pd
 import re
-import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TRACK_MODEL_DIR = os.path.join(BASE_DIR, "Track_Model")
 
 STATIC_JSON_PATH = os.path.join(TRACK_MODEL_DIR, "track_model_static.json")
-CONTROLLER_JSON_PATH = os.path.join(TRACK_MODEL_DIR, "track_io.json")
+CONTROLLER_JSON_PATH = os.path.join(BASE_DIR, "track_io.json")
 
 
 class TrackModelUI(ttk.Frame):

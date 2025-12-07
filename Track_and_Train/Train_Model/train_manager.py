@@ -420,7 +420,10 @@ class train_controller_ui(tk.Toplevel):
                     except tk.TclError:
                         pass  # Entry widget may be destroyed
 
-            self.update_button_states(state)
+            try:
+                self.update_button_states(state)
+            except tk.TclError:
+                pass  # Button may be destroyed
         except Exception as e:
             print(f"Update error: {e}")
         finally:
@@ -756,6 +759,8 @@ class TrainManagerUI(tk.Tk):
         self.create_status_bar()
         self.update_train_list()
 
+        self.after(2000, self._poll_wrapper)
+
     def create_header(self):
         header = tk.Frame(self, bg="#2c3e50", height=80)
         header.grid(row=0, column=0, sticky="EW")
@@ -922,6 +927,111 @@ class TrainManagerUI(tk.Tk):
 
     def update_status(self, message):
         self.status_label.config(text=message)
+
+    def _poll_track_model_for_new_trains(self):
+        """Poll track_model_Train_Model.json for new trains dispatched by TrackControl."""
+        try:
+            track_model_data = safe_read_json(self.track_model_file)
+
+            if not isinstance(track_model_data, dict):
+                self.after(1000, self._poll_track_model_for_new_trains)
+                return
+
+            # Find all train keys (G_train_* or R_train_*)
+            train_keys = [k for k in track_model_data.keys() if "_train_" in k]
+
+            for train_key in train_keys:
+                train_data = track_model_data[train_key]
+                if not isinstance(train_data, dict):
+                    continue
+
+                # Extract train_id from key (e.g., "G_train_3" -> 3)
+                try:
+                    train_id = int(train_key.split("_train_")[-1])
+                except (ValueError, IndexError):
+                    continue
+
+                # Check if train has non-zero commanded speed or authority
+                block = train_data.get("block", {})
+                if not isinstance(block, dict):
+                    continue
+
+                commanded_speed = float(block.get("commanded speed", 0) or 0)
+                commanded_authority = float(block.get("commanded authority", 0) or 0)
+
+                # If train is dispatched (has commands) but doesn't exist locally, create it
+                if (
+                    commanded_speed > 0 or commanded_authority > 0
+                ) and train_id not in self.trains:
+                    print(f"Auto-creating Train {train_id} from TrackControl dispatch")
+
+                    # Sync next_train_id to avoid conflicts
+                    if train_id >= self.next_train_id:
+                        self.next_train_id = train_id + 1
+
+                    # Add the train with the specific train_id
+                    self._add_train_with_id(train_id)
+
+        except Exception as e:
+            print(f"Error polling track model: {e}")
+        finally:
+            self.after(1000, self._poll_track_model_for_new_trains)
+
+    def _add_train_with_id(self, train_id):
+        """Add a train with a specific ID (used by polling mechanism)."""
+        try:
+            from train_model_core import TrainModel
+            from train_model_ui import TrainModelUI
+        except ImportError:
+            import importlib.util
+
+            spec = importlib.util.spec_from_file_location(
+                "train_model_core", os.path.join(train_model_dir, "train_model_core.py")
+            )
+            core = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(core)
+            spec2 = importlib.util.spec_from_file_location(
+                "train_model_ui", os.path.join(train_model_dir, "train_model_ui.py")
+            )
+            ui_mod = importlib.util.module_from_spec(spec2)
+            spec2.loader.exec_module(ui_mod)
+            TrainModel = core.TrainModel
+            TrainModelUI = ui_mod.TrainModelUI
+
+        train_specs = {
+            "length_ft": 66.0,
+            "width_ft": 10.0,
+            "height_ft": 11.5,
+            "mass_lbs": 90100,
+            "max_power_hp": 161,
+            "max_accel_ftps2": 1.64,
+            "service_brake_ftps2": -3.94,
+            "emergency_brake_ftps2": -8.86,
+            "capacity": 222,
+            "crew_count": 2,
+        }
+
+        model = TrainModel(train_specs)
+
+        model_ui_window = tk.Toplevel()
+        model_ui_window.title(f"Train {train_id} - Train Model")
+        model_ui = TrainModelUI(model_ui_window, train_id=train_id)
+
+        x_offset = 50 + (train_id - 1) * 60
+        y_offset = 50 + (train_id - 1) * 60
+        model_ui_window.geometry(f"350x700+{x_offset}+{y_offset}")
+
+        controller_ui = train_controller_ui(train_id, self.state_file)
+        controller_ui.geometry(f"550x450+{x_offset + 360}+{y_offset}")
+        controller = controller_ui.controller
+
+        train_pair = TrainPair(train_id, model, controller, model_ui, controller_ui)
+        self.trains[train_id] = train_pair
+
+        self._initialize_train_state(train_id)
+        self._initialize_train_data_entry(train_id, train_id - 1)
+
+        print(f"Train {train_id} auto-created from dispatch")
 
 
 if __name__ == "__main__":

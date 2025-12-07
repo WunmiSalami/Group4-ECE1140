@@ -8,7 +8,7 @@
     "beacon_read_blocked": false,
     "train_1": {
         "train_velocity": 0.0,
-        "commanded_authority": 10.0,
+        "commanded_authority": 113.0,
         "current_station": "Glenbury",
         "next_stop": "Glenbury",
         "station_side": "Right",

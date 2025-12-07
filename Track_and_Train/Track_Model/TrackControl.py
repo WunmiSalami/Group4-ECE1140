@@ -12,9 +12,13 @@ class TrackControl:
     def __init__(self, parent):
         self.parent = parent
 
+        # Set up paths
+        CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+        PARENT_DIR = os.path.dirname(CURRENT_DIR)
+
         # File paths
-        self.track_io_file = "track_io.json"
-        self.ctc_data_file = "ctc_data.json"
+        self.track_io_file = os.path.join(PARENT_DIR, "track_io.json")
+        self.ctc_data_file = os.path.join(PARENT_DIR, "ctc_data.json")
 
         # Current selected line
         self.selected_line = "Green"

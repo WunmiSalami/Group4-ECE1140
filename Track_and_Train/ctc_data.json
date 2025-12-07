@@ -2,13 +2,13 @@
     "Dispatcher": {
         "Trains": {
             "Train 1": {
-                "Line": "",
+                "Line": "Green",
                 "Suggested Speed": "",
                 "Authority": "",
-                "Station Destination": "",
-                "Arrival Time": "",
+                "Station Destination": "Glenbury",
+                "Arrival Time": "00:50",
                 "Position": "",
-                "State": "",
+                "State": "Dispatched",
                 "Current Station": ""
             },
             "Train 2": {

@@ -11,11 +11,16 @@ from typing import List, Tuple, Dict
 from PIL import Image, ImageTk
 import time
 import os
+import sys
 
 VISUALIZER_DIR = os.path.dirname(os.path.abspath(__file__))
+PARENT_DIR = os.path.dirname(VISUALIZER_DIR)
+
+# Add parent directory to path for imports
+sys.path.insert(0, PARENT_DIR)
 
 # Import network builder and parser
-from Track_and_Train.LineNetwork import LineNetworkBuilder
+from LineNetwork import LineNetworkBuilder
 from TrackDiagramParser import TrackDiagramParser
 
 
@@ -1140,7 +1145,7 @@ class RailwayDiagram:
 
         # Build LineNetwork
         df = self.track_data[line_name]
-        from Track_and_Train.LineNetwork import LineNetworkBuilder
+        from LineNetwork import LineNetworkBuilder
 
         builder = LineNetworkBuilder(df, line_name)
         self.line_network = builder.build()

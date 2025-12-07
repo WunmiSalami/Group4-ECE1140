@@ -10,17 +10,22 @@ from dataclasses import dataclass
 import json
 import random
 import os
-from DynamicBlockManager import DynamicBlockManager
+import sys
 
 # Correct fixed paths for Track and Train JSONs
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))  # Track_and_Train
 TRACK_MODEL_DIR = os.path.join(PROJECT_ROOT, "Track_Model")
 TRAIN_MODEL_DIR = os.path.join(PROJECT_ROOT, "Train_Model")
+
+# Add Track_Model to path for imports
+sys.path.insert(0, TRACK_MODEL_DIR)
+
+from DynamicBlockManager import DynamicBlockManager
 
 # JSON paths
 TRACK_STATIC_JSON = os.path.join(TRACK_MODEL_DIR, "track_model_static.json")
 TRACK_CONTROLLER_JSON = os.path.join(PROJECT_ROOT, "track_io.json")
-TRAIN_MODEL_JSON = os.path.join(TRAIN_MODEL_DIR, "track_model_Train_Model.json")
+TRAIN_MODEL_JSON = os.path.join(PROJECT_ROOT, "track_model_Train_Model.json")
 
 
 def parse_branching_connections(value: str) -> List[Tuple[int, int]]:

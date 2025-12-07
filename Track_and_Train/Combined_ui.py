@@ -11,6 +11,7 @@ TRACK_MODEL_DIR = os.path.join(MAIN_DIR, "Track_Model")
 TRAIN_MODEL_DIR = os.path.join(MAIN_DIR, "Train_Model")
 
 # Add directories to path for imports BEFORE importing
+sys.path.insert(0, MAIN_DIR)
 sys.path.insert(0, TRACK_MODEL_DIR)
 sys.path.insert(0, TRAIN_MODEL_DIR)
 

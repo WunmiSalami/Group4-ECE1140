@@ -1,6 +1,6 @@
 {
     "G-switches": [
-        1,
+        0,
         0,
         1,
         0,
@@ -643,14 +643,10 @@
     ],
     "G-Train": {
         "commanded speed": [
-            0,
-            0,
-            0
+            21
         ],
         "commanded authority": [
-            0,
-            0,
-            0
+            113
         ]
     },
     "R-switches": [
@@ -1002,15 +998,7 @@
         0
     ],
     "R-Train": {
-        "commanded speed": [
-            0,
-            0,
-            0
-        ],
-        "commanded authority": [
-            0,
-            0,
-            0
-        ]
+        "commanded speed": [],
+        "commanded authority": []
     }
 }
