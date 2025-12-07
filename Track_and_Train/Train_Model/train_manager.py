@@ -243,45 +243,31 @@ class train_controller:
         return True
 
     def calculate_power_command(self, state: dict):
-        # Check if authority braking is needed
         train_velocity = state.get("train_velocity", 0.0)
-        position_yds = state.get("position_yds", 0.0)
+        driver_velocity = state.get("driver_velocity", 0.0)
+        emergency_brake = state.get("emergency_brake", False)
+        service_brake = state.get("service_brake", False)
+        power_command = state.get("power_command", 0.0)
         commanded_authority = state.get("commanded_authority", 0.0)
+        speed_limit = state.get("speed_limit", 0.0)
+        position_yds = state.get("position_yds", 0.0)
 
-        # Calculate distance to authority limit
-        distance_to_authority = commanded_authority - position_yds
+        # If within 3 yards of authority, apply service brake
+        if commanded_authority - position_yds <= 3:
+            service_brake = True
+            state["service_brake"] = True
 
-        # Service brake deceleration (ft/s²) - convert to mph/s for calculation
-        service_brake_decel = 3.94  # ft/s² = 2.686 mph/s
-
-        # Calculate braking distance: d = v² / (2a)
-        # v in mph, a in mph/s, result in miles, convert to yards
-        if train_velocity > 0.1:
-            braking_distance_miles = (train_velocity**2) / (2 * service_brake_decel)
-            braking_distance_yards = (
-                braking_distance_miles * 1760
-            )  # 1 mile = 1760 yards
-        else:
-            braking_distance_yards = 0
-
-        # If within braking distance + safety margin (10 yards), force service brake
-        if (
-            distance_to_authority < (braking_distance_yards + 10)
-            and distance_to_authority > 0
-        ):
-            return 0  # Zero power to start braking
-
-        # Normal PI control
+        # Normal PI control (accelerate/maintain speed)
         controls = vital_train_controls(
             kp=state.get("kp", 1500.0),
             ki=state.get("ki", 50.0),
             train_velocity=train_velocity,
-            driver_velocity=state.get("driver_velocity", 0.0),
-            emergency_brake=state.get("emergency_brake", False),
-            service_brake=state.get("service_brake", 0),
-            power_command=state.get("power_command", 0.0),
+            driver_velocity=driver_velocity,
+            emergency_brake=emergency_brake,
+            service_brake=service_brake,
+            power_command=power_command,
             commanded_authority=commanded_authority,
-            speed_limit=state.get("speed_limit", 0.0),
+            speed_limit=speed_limit,
         )
 
         power, new_error, new_time = controls.calculate_power_command(
@@ -869,76 +855,119 @@ class TrainManager:
     @staticmethod
     def cleanup_all_files():
         """Reset all JSON files to default/initial states on application exit"""
+        print("[Cleanup] Starting cleanup of all JSON files...")
+        try:
+            # 1. Reset train_states.json
+            train_controller_dir = os.path.join(parent_dir, "train_controller", "data")
+            os.makedirs(train_controller_dir, exist_ok=True)
+            train_states_file = os.path.join(train_controller_dir, "train_states.json")
 
-        # 1. Reset train_states.json
-        train_controller_dir = os.path.join(parent_dir, "train_controller", "data")
-        os.makedirs(train_controller_dir, exist_ok=True)
-        train_states_file = os.path.join(train_controller_dir, "train_states.json")
+            default_state = {
+                "train_id": 0,
+                "commanded_speed": 0.0,
+                "commanded_authority": 0.0,
+                "speed_limit": 0.0,
+                "train_velocity": 0.0,
+                "next_stop": "N/A",
+                "station_side": "N/A",
+                "manual_mode": False,
+                "driver_velocity": 0.0,
+                "service_brake": False,
+                "emergency_brake": False,
+                "kp": 1500.0,
+                "ki": 50.0,
+                "power_command": 0.0,
+                "current_station": "N/A",
+                "position_yds": 0.0,
+                "beacon_read_blocked": False,
+            }
 
-        default_state = {
-            "train_id": 0,
-            "commanded_speed": 0.0,
-            "commanded_authority": 0.0,
-            "speed_limit": 0.0,
-            "train_velocity": 0.0,
-            "next_stop": "N/A",
-            "station_side": "N/A",
-            "manual_mode": False,
-            "driver_velocity": 0.0,
-            "service_brake": False,
-            "emergency_brake": False,
-            "kp": 1500.0,
-            "ki": 50.0,
-            "power_command": 0.0,
-            "current_station": "N/A",
-            "position_yds": 0.0,
-            "beacon_read_blocked": False,
-        }
+            all_states = {}
+            for train_id in range(1, 6):  # 5 trains
+                state = default_state.copy()
+                state["train_id"] = train_id
+                all_states[f"train_{train_id}"] = state
 
-        all_states = {}
-        for train_id in range(1, 6):  # 5 trains
-            state = default_state.copy()
-            state["train_id"] = train_id
-            all_states[f"train_{train_id}"] = state
+            safe_write_json(train_states_file, all_states)
+            print("[Cleanup] Reset train_states.json")
 
-        safe_write_json(train_states_file, all_states)
-        print("[Cleanup] Reset train_states.json")
+            # 2. Reset track_io.json to default switch/gate/light states
+            track_io_file = os.path.join(parent_dir, "track_io.json")
+            if os.path.exists(track_io_file):
+                track_io_data = safe_read_json(track_io_file)
+                # Reset all switches, gates, and lights to 0
+                if "G-switches" in track_io_data:
+                    track_io_data["G-switches"] = [0] * len(track_io_data["G-switches"])
+                if "G-gates" in track_io_data:
+                    track_io_data["G-gates"] = [0] * len(track_io_data["G-gates"])
+                if "G-lights" in track_io_data:
+                    track_io_data["G-lights"] = [0] * len(track_io_data["G-lights"])
+                if "R-switches" in track_io_data:
+                    track_io_data["R-switches"] = [0] * len(track_io_data["R-switches"])
+                if "R-gates" in track_io_data:
+                    track_io_data["R-gates"] = [0] * len(track_io_data["R-gates"])
+                if "R-lights" in track_io_data:
+                    track_io_data["R-lights"] = [0] * len(track_io_data["R-lights"])
+                safe_write_json(track_io_file, track_io_data)
+                print("[Cleanup] Reset track_io.json switches/gates/lights")
 
-        # 2. Reset track_io.json to default switch/gate/light states
-        track_io_file = os.path.join(parent_dir, "track_io.json")
-        if os.path.exists(track_io_file):
-            track_io_data = safe_read_json(track_io_file)
-            # Reset all switches, gates, and lights to 0
-            if "G-switches" in track_io_data:
-                track_io_data["G-switches"] = [0] * len(track_io_data["G-switches"])
-            if "G-gates" in track_io_data:
-                track_io_data["G-gates"] = [0] * len(track_io_data["G-gates"])
-            if "G-lights" in track_io_data:
-                track_io_data["G-lights"] = [0] * len(track_io_data["G-lights"])
-            if "R-switches" in track_io_data:
-                track_io_data["R-switches"] = [0] * len(track_io_data["R-switches"])
-            if "R-gates" in track_io_data:
-                track_io_data["R-gates"] = [0] * len(track_io_data["R-gates"])
-            if "R-lights" in track_io_data:
-                track_io_data["R-lights"] = [0] * len(track_io_data["R-lights"])
-            safe_write_json(track_io_file, track_io_data)
-            print("[Cleanup] Reset track_io.json switches/gates/lights")
+            # 3. Reset ctc_data.json trains to initial state
+            ctc_file = os.path.join(parent_dir, "ctc_data.json")
+            if os.path.exists(ctc_file):
+                ctc_data = safe_read_json(ctc_file)
+                if "Dispatcher" in ctc_data and "Trains" in ctc_data["Dispatcher"]:
+                    trains = ctc_data["Dispatcher"]["Trains"]
+                    # Reset all trains to empty/default state
+                    for train_key in trains:
+                        trains[train_key]["Suggested Speed"] = ""
+                        trains[train_key]["Authority"] = ""
+                        trains[train_key]["Position"] = ""
+                        trains[train_key]["State"] = "Idle"
+                        trains[train_key]["Current Station"] = ""
+                    safe_write_json(ctc_file, ctc_data)
+                    print("[Cleanup] Reset ctc_data.json train states")
 
-        # 3. Reset ctc_data.json trains to initial state
-        ctc_file = os.path.join(parent_dir, "ctc_data.json")
-        if os.path.exists(ctc_file):
-            ctc_data = safe_read_json(ctc_file)
-            if "Dispatcher" in ctc_data and "Trains" in ctc_data["Dispatcher"]:
-                trains = ctc_data["Dispatcher"]["Trains"]
-                # Reset all trains to empty/default state
-                for train_key in trains:
-                    trains[train_key]["Suggested Speed"] = ""
-                    trains[train_key]["Authority"] = ""
-                    trains[train_key]["Position"] = ""
-                    trains[train_key]["State"] = "Idle"
-                    trains[train_key]["Current Station"] = ""
-                safe_write_json(ctc_file, ctc_data)
-                print("[Cleanup] Reset ctc_data.json train states")
+            # 4. Reset track_model_Train_Model.json (dynamic train/track data)
+            track_model_file = os.path.join(parent_dir, "track_model_Train_Model.json")
+            if os.path.exists(track_model_file):
+                track_model_data = safe_read_json(track_model_file)
+                # Reset all train entries to default state
+                for train_key in track_model_data:
+                    if isinstance(track_model_data[train_key], dict):
+                        # Reset block data
+                        if "block" in track_model_data[train_key]:
+                            track_model_data[train_key]["block"] = {
+                                "commanded speed": 0,
+                                "commanded authority": 0,
+                                "position": 0.0,
+                            }
+                        # Reset beacon data
+                        if "beacon" in track_model_data[train_key]:
+                            track_model_data[train_key]["beacon"] = {
+                                "speed limit": 0.0,
+                                "side_door": "N/A",
+                                "current station": "N/A",
+                                "next station": "N/A",
+                                "passengers_boarding": 0,
+                            }
+                        # Reset motion data
+                        if "motion" in track_model_data[train_key]:
+                            track_model_data[train_key]["motion"] = {
+                                "current motion": "stopped",
+                                "position_yds": 0.0,
+                            }
+                safe_write_json(track_model_file, track_model_data)
+                print("[Cleanup] Reset track_model_Train_Model.json")
+
+            # 5. Reset track_model_static.json to empty state
+            static_file = os.path.join(parent_dir, "track_model_static.json")
+            if os.path.exists(static_file):
+                safe_write_json(static_file, {})
+                print("[Cleanup] Cleared track_model_static.json")
+
+            print("[Cleanup] Completed cleanup of all JSON files")
+        except Exception as e:
+            print(f"[Cleanup Error] Unexpected error during cleanup: {e}")
 
 
 class TrainManagerUI(tk.Tk):

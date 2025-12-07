@@ -577,4 +577,19 @@ class TrainModelUI(ttk.Frame):
 
     def on_close(self):
         self._stop_event.set()
+
+        # Reset train_data.json inputs/outputs while keeping specs
+        try:
+            if os.path.exists(self.train_data_path):
+                train_data = safe_read_json(self.train_data_path)
+                # Keep specs, reset inputs and outputs
+                if "inputs" in train_data:
+                    train_data["inputs"] = {}
+                if "outputs" in train_data:
+                    train_data["outputs"] = {}
+                safe_write_json(self.train_data_path, train_data)
+                print("[Train Model] Reset train_data.json inputs/outputs")
+        except Exception as e:
+            print(f"[Train Model] Error resetting train_data.json: {e}")
+
         self.destroy()

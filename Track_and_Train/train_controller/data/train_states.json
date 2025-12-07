@@ -1,6 +1,6 @@
 {
-    "train_4": {
-        "train_id": 4,
+    "train_1": {
+        "train_id": 1,
         "commanded_speed": 0.0,
         "commanded_authority": 0.0,
         "speed_limit": 0.0,
@@ -56,8 +56,8 @@
         "position_yds": 0.0,
         "beacon_read_blocked": false
     },
-    "train_1": {
-        "train_id": 1,
+    "train_4": {
+        "train_id": 4,
         "commanded_speed": 0.0,
         "commanded_authority": 0.0,
         "speed_limit": 0.0,

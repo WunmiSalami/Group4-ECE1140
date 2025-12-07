@@ -39,6 +39,10 @@ class TrackModelUI(ttk.Frame):
         self.grid_columnconfigure(0, weight=9)  # Left panel gets more space
         self.grid_columnconfigure(1, weight=1)  # Right panel
 
+        # Hook cleanup to parent window close
+        if isinstance(parent, tk.Tk) or isinstance(parent, tk.Toplevel):
+            parent.protocol("WM_DELETE_WINDOW", self.on_window_close)
+
         # === LEFT PANEL === #
         self.left_frame = ttk.LabelFrame(self, text="Track Layout Interactive Diagram")
         self.left_frame.grid(row=0, column=0, sticky="NSEW", padx=10, pady=10)
@@ -698,6 +702,22 @@ class TrackModelUI(ttk.Frame):
         except Exception as e:
             print(f"Error getting station name: {e}")
             return "N/A"
+
+    def on_window_close(self):
+        """Handle cleanup when track model UI window is closing"""
+        print("[Cleanup] Clearing track_model_static.json from track_model_UI")
+        try:
+            if os.path.exists(STATIC_JSON_PATH):
+                with open(STATIC_JSON_PATH, "w") as f:
+                    json.dump({}, f, indent=4)
+                print("[Cleanup] Cleared track_model_static.json")
+        except Exception as e:
+            print(f"[Cleanup Error] Failed to clear track_model_static.json: {e}")
+
+        # Get parent window and destroy it
+        root = self.winfo_toplevel()
+        if root:
+            root.destroy()
 
     def check_and_start_trains(self):
         # Always read from track_io.json and sync to train model

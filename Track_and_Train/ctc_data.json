@@ -5,10 +5,10 @@
                 "Line": "Green",
                 "Suggested Speed": "",
                 "Authority": "",
-                "Station Destination": "Inglewood",
-                "Arrival Time": "03:14",
+                "Station Destination": "Poplar",
+                "Arrival Time": "4:09",
                 "Position": "",
-                "State": "Dispatched",
+                "State": "Idle",
                 "Current Station": ""
             },
             "Train 2": {
@@ -18,7 +18,7 @@
                 "Station Destination": "Glenbury",
                 "Arrival Time": "01:32",
                 "Position": "",
-                "State": "Dispatched",
+                "State": "Idle",
                 "Current Station": ""
             },
             "Train 3": {
@@ -28,7 +28,7 @@
                 "Station Destination": "",
                 "Arrival Time": "",
                 "Position": "",
-                "State": "",
+                "State": "Idle",
                 "Current Station": ""
             },
             "Train 4": {
@@ -38,7 +38,7 @@
                 "Station Destination": "Mt. Lebanon",
                 "Arrival Time": "03:32",
                 "Position": "",
-                "State": "Dispatched",
+                "State": "Idle",
                 "Current Station": ""
             },
             "Train 5": {
@@ -48,7 +48,7 @@
                 "Station Destination": "",
                 "Arrival Time": "",
                 "Position": "",
-                "State": "",
+                "State": "Idle",
                 "Current Station": ""
             }
         }
