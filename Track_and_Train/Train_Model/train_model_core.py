@@ -229,15 +229,7 @@ class TrainModel:
         self.acceleration_ftps2 = 0.0
         self.position_yds = 0.0
         self.authority_yds = 0.0
-        self.temperature_F = 68.0
         self.dt = 0.5
-
-    def regulate_temperature(self, set_temperature):
-        diff = set_temperature - self.temperature_F
-        rate = 0.25
-        if abs(diff) > 0.2:
-            self.temperature_F += rate if diff > 0 else -rate
-        return self.temperature_F
 
     def update(
         self,
@@ -252,7 +244,6 @@ class TrainModel:
         service_brake=False,
         engine_failure=False,
         brake_failure=False,
-        set_temperature=70.0,
         left_door=False,
         right_door=False,
         driver_velocity=0.0,
@@ -279,7 +270,6 @@ class TrainModel:
         )
         self.position_yds += (self.velocity_mph / 0.681818) * self.dt / 3.0
         self.authority_yds = float(commanded_authority or 0.0)
-        self.regulate_temperature(set_temperature)
         return {
             "velocity_mph": self.velocity_mph,
             "acceleration_ftps2": self.acceleration_ftps2,
@@ -290,7 +280,6 @@ class TrainModel:
             "left_door_open": bool(left_door),
             "right_door_open": bool(right_door),
             "speed_limit": float(speed_limit or 0.0),
-            "temperature_F": self.temperature_F,
         }
 
 

@@ -31,7 +31,6 @@
         "velocity_mph": 0.0,
         "acceleration_ftps2": 0.0,
         "position_yds": 0.0,
-        "authority_yds": 10.0,
-        "temperature_F": 33.25
+        "authority_yds": 10.0
     }
 }

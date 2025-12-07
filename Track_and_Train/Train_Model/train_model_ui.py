@@ -32,7 +32,7 @@ from train_model_core import (
     ensure_train_data,
     read_track_input,
     merge_inputs,
-    update_track_motion,  # renamed: motion only
+    update_track_motion,
     DEFAULT_SPECS,
     compute_passengers_disembarking,
 )
@@ -50,12 +50,13 @@ except Exception:
     requests = None
 
 
-# NEW
 class TrainModelUI(ttk.Frame):
     def __init__(self, parent, train_id=None, server_url=None):
         super().__init__(parent)
-        self.grid(row=0, column=0, sticky="nsew")
-        self.config(width=450)
+        self.pack(fill="both", expand=True)
+
+        # Configure narrower window
+        self.config(width=350)
         self.pack_propagate(False)
 
         self.train_id = train_id
@@ -87,134 +88,108 @@ class TrainModelUI(ttk.Frame):
         self._last_mtimes = {"track": 0.0, "ctrl": 0.0, "train_data": 0.0}
         threading.Thread(target=self._watch_files, daemon=True).start()
 
-        # TrainModelUI layout: 2 rows
-        # row 0 = left column (info/env/specs/failure/control)
-        # row 1 = announcements panel (full-width)
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=0)
-        self.columnconfigure(0, weight=1)
+        # Single column layout
+        main_container = ttk.Frame(self)
+        main_container.pack(fill="both", expand=True, padx=6, pady=6)
 
-        # LEFT COLUMN
-        left = ttk.Frame(self)
-        left.grid(row=0, column=0, sticky="nsew", padx=6, pady=6)
-
-        left.columnconfigure(0, weight=0)
-        left.columnconfigure(1, weight=0)
-        left.rowconfigure(0, weight=1)
-        left.rowconfigure(1, weight=1)
-        left.rowconfigure(2, weight=1)
-
-        # Build left-side panels
-        self.create_info_panel(left)
-        self.create_env_panel(left)
-        self.create_specs_panel(left)
-        self.create_failure_panel(left)
-        self.create_control_panel(left)
-
-        # --- MOVE ANNOUNCEMENTS OUT OF LEFT ---
-        bottom = ttk.Frame(self)
-        bottom.grid(row=1, column=0, sticky="ew", padx=6, pady=6)
-        bottom.columnconfigure(0, weight=1)
-        bottom.config(height=120)
-        bottom.grid_propagate(False)
-
-        self.create_announcements_panel(bottom)
+        # Build panels vertically
+        self.create_info_panel(main_container)
+        self.create_doors_panel(main_container)
+        self.create_specs_panel(main_container)
+        self.create_failure_panel(main_container)
+        self.create_announcements_panel(main_container)
 
         self.update_loop()
 
     def create_info_panel(self, parent):
         frame = ttk.LabelFrame(parent, text="Dynamics", style="Header.TLabelframe")
-        frame.grid(row=0, column=0, sticky="NSEW", padx=4, pady=4)
+        frame.pack(fill="x", padx=4, pady=4)
+
         self.info_labels = {}
         fields = [
             "Velocity (mph)",
             "Acceleration (ft/s²)",
             "Position (yds)",
             "Authority Remaining (yds)",
-            "Train Temperature (°F)",
-            "Set Temperature (°F)",
             "Current Station",
             "Next Station",
             "Speed Limit (mph)",
         ]
         for i, key in enumerate(fields):
-            ttk.Label(frame, text=key + ":", style="Data.TLabel").grid(
-                row=i, column=0, sticky="w", padx=8, pady=2
-            )
-            lbl = ttk.Label(frame, text="--", style="Data.TLabel")
-            lbl.grid(row=i, column=1, sticky="w", padx=4, pady=2)
-            self.info_labels[key] = lbl
-        frame.columnconfigure(1, weight=1)
+            row_frame = ttk.Frame(frame)
+            row_frame.pack(fill="x", padx=8, pady=2)
 
-    def create_env_panel(self, parent):
-        frame = ttk.LabelFrame(
-            parent, text="Env / Doors / Lights", style="Header.TLabelframe"
-        )
-        frame.grid(row=0, column=1, sticky="NSEW", padx=4, pady=4)
-        self.env_labels = {}
-        # FIX: use enumerate instead of unpacking into (i, key) from a list of strings
-        for i, key in enumerate(
-            ["Left Door", "Right Door", "Interior Lights", "Exterior Lights"]
-        ):
-            ttk.Label(frame, text=key + ":", style="Data.TLabel").grid(
-                row=i, column=0, sticky="w", padx=8, pady=2
+            ttk.Label(row_frame, text=key + ":", style="Data.TLabel", width=25).pack(
+                side="left"
             )
-            lbl = ttk.Label(frame, text="--", style="Data.TLabel")
-            lbl.grid(row=i, column=1, sticky="w", padx=4, pady=2)
+            lbl = ttk.Label(row_frame, text="--", style="Data.TLabel")
+            lbl.pack(side="left", padx=4)
+            self.info_labels[key] = lbl
+
+    def create_doors_panel(self, parent):
+        frame = ttk.LabelFrame(parent, text="Doors", style="Header.TLabelframe")
+        frame.pack(fill="x", padx=4, pady=4)
+
+        self.env_labels = {}
+        for key in ["Left Door", "Right Door"]:
+            row_frame = ttk.Frame(frame)
+            row_frame.pack(fill="x", padx=8, pady=2)
+
+            ttk.Label(row_frame, text=key + ":", style="Data.TLabel", width=25).pack(
+                side="left"
+            )
+            lbl = ttk.Label(row_frame, text="--", style="Data.TLabel")
+            lbl.pack(side="left", padx=4)
             self.env_labels[key] = lbl
-        frame.columnconfigure(1, weight=1)
 
     def create_specs_panel(self, parent):
         frame = ttk.LabelFrame(parent, text="Specs", style="Header.TLabelframe")
-        frame.grid(row=1, column=0, sticky="NSEW", padx=4, pady=4)
-        for k, v in self.specs.items():
-            ttk.Label(frame, text=f"{k}: {v}", style="Data.TLabel").pack(
-                anchor="w", padx=8, pady=0
-            )
+        frame.pack(fill="x", padx=4, pady=4)
+
+        # Only show capacity and crew_count
+        ttk.Label(
+            frame,
+            text=f"Capacity: {self.specs.get('capacity', 222)}",
+            style="Data.TLabel",
+        ).pack(anchor="w", padx=8, pady=2)
+
+        ttk.Label(
+            frame,
+            text=f"Crew Count: {self.specs.get('crew_count', 2)}",
+            style="Data.TLabel",
+        ).pack(anchor="w", padx=8, pady=2)
 
     def create_failure_panel(self, parent):
         frame = ttk.LabelFrame(parent, text="Failures", style="Header.TLabelframe")
-        frame.grid(row=1, column=1, sticky="NSEW", padx=4, pady=4)
-        self.fail_labels = {}
-        for row, key in enumerate(
-            ["Engine Failure", "Brake Failure", "Signal Failure", "Emergency Brake"]
-        ):
-            ttk.Label(frame, text=key + ":", style="Data.TLabel").grid(
-                row=row, column=0, sticky="w", padx=6, pady=2
-            )
-            lbl = ttk.Label(frame, text="Off", style="Status.Off.TLabel")
-            lbl.grid(row=row, column=1, sticky="w", padx=4, pady=2)
-            self.fail_labels[key] = lbl
-        ttk.Button(
-            frame, text="Toggle Engine", command=self.toggle_engine_failure
-        ).grid(row=0, column=2, padx=4, pady=2)
-        ttk.Button(frame, text="Toggle Brake", command=self.toggle_brake_failure).grid(
-            row=1, column=2, padx=4, pady=2
-        )
-        ttk.Button(
-            frame, text="Toggle Signal", command=self.toggle_signal_failure
-        ).grid(row=2, column=2, padx=4, pady=2)
-        ttk.Button(
-            frame, text="Toggle E‑Brake", command=self.toggle_emergency_brake
-        ).grid(row=3, column=2, padx=4, pady=2)
-        frame.columnconfigure(1, weight=1)
+        frame.pack(fill="x", padx=4, pady=4)
 
-    def create_control_panel(self, parent):
-        frame = ttk.LabelFrame(parent, text="Controls", style="Header.TLabelframe")
-        frame.grid(row=2, column=0, sticky="NSEW", padx=4, pady=4)
-        ttk.Label(
-            frame,
-            text="Controlled by Train Controller (train_states.json)",
-            style="Data.TLabel",
-        ).pack(anchor="w", padx=8, pady=2)
-        self.btn_emergency = ttk.Button(
-            frame, text="Toggle Emergency Brake", command=self.toggle_emergency_brake
-        )
-        self.btn_emergency.pack(fill="x", padx=8, pady=6)
+        self.fail_labels = {}
+        failures = [
+            ("Engine Failure", self.toggle_engine_failure),
+            ("Brake Failure", self.toggle_brake_failure),
+            ("Signal Failure", self.toggle_signal_failure),
+            ("Emergency Brake", self.toggle_emergency_brake),
+        ]
+
+        for key, command in failures:
+            row_frame = ttk.Frame(frame)
+            row_frame.pack(fill="x", padx=6, pady=2)
+
+            ttk.Label(row_frame, text=key + ":", style="Data.TLabel", width=18).pack(
+                side="left"
+            )
+            lbl = ttk.Label(row_frame, text="Off", style="Status.Off.TLabel", width=5)
+            lbl.pack(side="left", padx=4)
+            self.fail_labels[key] = lbl
+
+            ttk.Button(row_frame, text="Toggle", command=command, width=8).pack(
+                side="right", padx=4
+            )
 
     def create_announcements_panel(self, parent):
         frame = ttk.LabelFrame(parent, text="Announcements", style="Header.TLabelframe")
-        frame.grid(row=2, column=1, sticky="NSEW", padx=4, pady=4)
+        frame.pack(fill="both", expand=True, padx=4, pady=4)
+
         self.announcement_box = tk.Text(
             frame, height=4, wrap="word", state="disabled", bg="white"
         )
@@ -248,7 +223,7 @@ class TrainModelUI(ttk.Frame):
             else:
                 key = f"train_{self.train_id}"
                 sect = all_states.get(key, {})
-                current = bool(sect.get(flag_name, False))  # FIX: read actual value
+                current = bool(sect.get(flag_name, False))
                 sect[flag_name] = not current
                 all_states[key] = sect
                 new_val = sect[flag_name]
@@ -341,7 +316,6 @@ class TrainModelUI(ttk.Frame):
             "acceleration_ftps2": self.model.acceleration_ftps2,
             "position_yds": self.model.position_yds,
             "authority_yds": self.model.authority_yds,
-            "temperature_F": self.model.temperature_F,
         }
         if self.train_id is None:
             current_inputs = data.get("inputs", {})
@@ -464,7 +438,6 @@ class TrainModelUI(ttk.Frame):
             service_brake=ctrl.get("service_brake", False),
             engine_failure=merged_inputs.get("train_model_engine_failure", False),
             brake_failure=merged_inputs.get("train_model_brake_failure", False),
-            set_temperature=ctrl.get("set_temperature", 0.0),
             left_door=ctrl.get("left_door", False),
             right_door=ctrl.get("right_door", False),
             driver_velocity=ctrl.get("driver_velocity", 0.0),
@@ -478,21 +451,20 @@ class TrainModelUI(ttk.Frame):
             passengers_onboard,
             self.model.crew_count,
         )
-        # Update motion state in track_model_Train_Model.json (no passengers_disembarking feedback)
+
         update_track_motion(
-            idx,  # train index derived earlier
+            idx,
             outputs["acceleration_ftps2"],
             outputs["velocity_mph"],
         )
 
         self.write_train_data(specs_for_write, merged_inputs, td_inputs)
 
-        remaining_authority = outputs["authority_yds"]  # FIX: define before use
+        remaining_authority = outputs["authority_yds"]
 
         if signal_failure_active and self._last_beacon_inputs:
             controller_updates = {
                 "train_velocity": outputs["velocity_mph"],
-                "train_temperature": outputs["temperature_F"],
                 "commanded_authority": remaining_authority,
                 "current_station": self._last_beacon_inputs.get("current station", ""),
                 "next_stop": self._last_beacon_inputs.get("next station", ""),
@@ -502,7 +474,6 @@ class TrainModelUI(ttk.Frame):
         else:
             controller_updates = {
                 "train_velocity": outputs["velocity_mph"],
-                "train_temperature": outputs["temperature_F"],
                 "commanded_authority": remaining_authority,
                 "current_station": merged_inputs.get("current station", ""),
                 "next_stop": merged_inputs.get("next station", ""),
@@ -524,17 +495,10 @@ class TrainModelUI(ttk.Frame):
         self.info_labels["Authority Remaining (yds)"].config(
             text=f"{outputs['authority_yds']:.1f}"
         )
-        self.info_labels["Train Temperature (°F)"].config(
-            text=f"{outputs['temperature_F']:.1f}"
-        )
-        self.info_labels["Set Temperature (°F)"].config(
-            text=f"{ctrl.get('set_temperature', 0.0):.1f}"
-        )
         self.info_labels["Current Station"].config(
             text=f"{outputs['station_name'] or ''}"
         )
         self.info_labels["Next Station"].config(text=f"{outputs['next_station'] or ''}")
-        # FIX: speed limit is part of merged inputs, not outputs
         self.info_labels["Speed Limit (mph)"].config(
             text=f"{merged_inputs.get('speed limit', 0.0):.0f}"
         )
@@ -549,14 +513,6 @@ class TrainModelUI(ttk.Frame):
         self.env_labels["Right Door"].config(
             text="Open" if outputs["right_door_open"] else "Closed",
             style=door_style(outputs["right_door_open"]),
-        )
-        self.env_labels["Interior Lights"].config(
-            text="On" if ctrl.get("interior_lights") else "Off",
-            style=door_style(ctrl.get("interior_lights")),
-        )
-        self.env_labels["Exterior Lights"].config(
-            text="On" if ctrl.get("exterior_lights") else "Off",
-            style=door_style(ctrl.get("exterior_lights")),
         )
 
         def set_flag(lbl_key, on):
@@ -615,25 +571,3 @@ class TrainModelUI(ttk.Frame):
     def on_close(self):
         self._stop_event.set()
         self.destroy()
-
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Train Model UI")
-    parser.add_argument(
-        "--train-id",
-        type=int,
-        default=None,
-        help="Train ID for multi-train mode (default: legacy single-train)",
-    )
-    parser.add_argument(
-        "--server",
-        type=str,
-        default=None,
-        help="Server URL for remote mode (e.g., http://192.168.1.100:5000)",
-    )
-    args = parser.parse_args()
-
-    app = TrainModelUI(train_id=args.train_id, server_url=args.server)
-    app.mainloop()
