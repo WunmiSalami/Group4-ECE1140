@@ -1144,13 +1144,14 @@ class RailwayDiagram:
         self.current_line = line_name
         self.highlighted_block = highlighted_block
 
-        # Build LineNetwork
-        df = self.track_data[line_name]
-        from LineNetwork import LineNetworkBuilder
+        # Use existing LineNetwork if available, otherwise build new one
+        if not self.line_network:
+            df = self.track_data[line_name]
+            from LineNetwork import LineNetworkBuilder
 
-        builder = LineNetworkBuilder(df, line_name)
-        self.line_network = builder.build()
-        self.line_network.block_manager = self.block_manager
+            builder = LineNetworkBuilder(df, line_name)
+            self.line_network = builder.build()
+            self.line_network.block_manager = self.block_manager
 
         # Draw based on line type
         if line_name == "Red Line":
@@ -1367,9 +1368,10 @@ class RailwayDiagram:
         if block_name:
             self.highlight_block(block_name)
 
-        # Update train position in memory
-        train["previous_block"] = current_block
-        train["current_block"] = next_block
+        # Update train position in memory only if train actually moved
+        if next_block != current_block:
+            train["previous_block"] = current_block
+            train["current_block"] = next_block
 
         # Schedule next animation step (repeat every 1 second)
         self.root.after(1000, lambda: self.animate_train_step(train_id))

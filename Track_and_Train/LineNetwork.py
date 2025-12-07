@@ -169,6 +169,9 @@ class LineNetwork:
                 pos = train_model_data[train_key]["motion"].get("position_yds", 0)
                 trains.append({"train_id": i + 1, "motion": motion})
                 self.train_positions[i + 1] = pos
+                print(
+                    f"[write_to_train_model_json] Train {i+1}: Read position_yds={pos:.2f} from {train_key}"
+                )
 
                 train_model_data[train_key]["block"]["commanded speed"] = (
                     commanded_speeds[i]
@@ -365,11 +368,19 @@ class LineNetwork:
             return "Stopped"
 
     def get_next_block(self, train_id, current, previous=None):
+        print(
+            f"[get_next_block] Train {train_id}: current={current}, previous={previous}"
+        )
+
         if not self.should_advance_block(train_id, current):
+            print(
+                f"[get_next_block] Train {train_id}: Not enough yards to advance, staying at {current}"
+            )
             return current
 
         # Read motion and handle stopped/undispatched (stays here)
         motion = self._read_train_motion(train_id)
+        print(f"[get_next_block] Train {train_id}: motion={motion}")
         if motion == "Stopped":
             return current
         elif motion == "Undispatched":
@@ -380,6 +391,8 @@ class LineNetwork:
             next_block = self._get_green_line_next_block(current, previous)
         elif self.line_name == "Red":
             next_block = self._get_red_line_next_block(current, previous)
+
+        print(f"[get_next_block] Train {train_id}: Determined next_block={next_block}")
 
         self._handle_station_arrival(next_block)
         self._finalize_block_transition(next_block, current, train_id)
@@ -753,12 +766,19 @@ class LineNetwork:
 
         # Read current position from train_positions (already populated by write_to_train_model_json)
         current_position_yds = self.train_positions.get(train_id, 0)
+        print(
+            f"[should_advance_block] Train {train_id}: train_positions dict = {self.train_positions}"
+        )
 
         # Calculate delta
         delta = current_position_yds - self.previous_position_yds[train_id]
 
         # Add delta to yards traveled in current block
         self.yards_into_current_block[train_id] += delta
+
+        print(
+            f"[should_advance_block] Train {train_id}: current_position={current_position_yds:.2f} yds, delta={delta:.2f}, yards_in_block={self.yards_into_current_block[train_id]:.2f}"
+        )
 
         # Get block length from static JSON
         try:
@@ -777,19 +797,32 @@ class LineNetwork:
                     break
 
             if block_length_yards is None:
+                print(
+                    f"[should_advance_block] Block {current_block} length unknown, allowing advance"
+                )
                 # Default to allowing advance if block length unknown
                 self.previous_position_yds[train_id] = current_position_yds
                 return True
+
+            print(
+                f"[should_advance_block] Block {current_block} length={block_length_yards:.2f} yds"
+            )
 
             # Check if enough yards traveled to advance
             if self.yards_into_current_block[train_id] >= block_length_yards:
                 # Subtract block length and carry overflow
                 self.yards_into_current_block[train_id] -= block_length_yards
                 self.previous_position_yds[train_id] = current_position_yds
+                print(
+                    f"[should_advance_block] ADVANCE! Yards sufficient. Remaining overflow: {self.yards_into_current_block[train_id]:.2f}"
+                )
                 return True
             else:
                 # Not enough yards traveled, stay in current block
                 self.previous_position_yds[train_id] = current_position_yds
+                print(
+                    f"[should_advance_block] STAY! Need {block_length_yards - self.yards_into_current_block[train_id]:.2f} more yards"
+                )
                 return False
 
         except Exception as e:
@@ -862,26 +895,62 @@ class LineNetwork:
         Returns:
             Next block number
         """
-        # Green line switch check list and routes
-        green_line_switch_check_list = [13, 150, 57, 0, 77, 100]
+        # Green line switch routes - blocks can appear multiple times for different switch scenarios
         switch_routes = {
-            13: {0: "13->12", 1: "1->13"},
-            28: {0: "28->29", 1: "150->28"},
-            57: {0: "57->58", 1: "57->Yard"},
-            63: {0: "63->64", 1: "Yard->63"},
-            77: {0: "76->77", 1: "77->101"},
-            85: {0: "85->86", 1: "100->85"},
+            13: {0: "13->12", 1: "13->14"},
+            1: {
+                0: "1->2",
+                1: "1->13",
+            },  # Block 1 check: if coming from 13, switch exists
+            150: {1: "150->28"},  # Only one route
+            57: {0: "57->58", 1: "57->0"},
+            0: {1: "0->63"},  # Only one route
+            77: {0: "77->78", 1: "77->101"},
+            100: {1: "100->85"},  # Only one route
+        }
+        source_to_switch = {
+            1: 13,  # Block 1 routes through switch 13
+            150: 28,  # Block 150 routes through switch 28
+            0: 63,  # Block 0 routes through switch 63
+            100: 85,  # Block 100 routes through switch 85
         }
 
-        # Check if current block is a switch block
-        if current in green_line_switch_check_list and current in switch_routes:
-            # Get switch position from block manager
-            switch_target = self.block_manager.get_switch_position(
-                self.line_name, current
-            )
+        if previous == 0 and current == 63:
+            # Special case: from Yard (0) to Block 63 always goes to 64
+            print(f"[Green] Special case: previous=0, current=63 -> next=64")
+            next_block = 64
+
+        # Check if current block is a switch block or routes through a switch
+        elif current in switch_routes:
+            print(f"[Green] Block {current} is in switch_routes")
+            # Check if this block routes through another switch
+            if current in source_to_switch:
+                switch_block = source_to_switch[current]
+                print(f"[Green] Block {current} routes through switch {switch_block}")
+                switch_target = self.block_manager.get_switch_position(
+                    self.line_name, switch_block
+                )
+                print(
+                    f"[Green] Switch {switch_block} position returns: {switch_target}"
+                )
+                if switch_target == switch_block + 1:
+                    print(
+                        f"[Green] Adjusting: {switch_target} == {switch_block}+1, setting to {switch_block}"
+                    )
+                    switch_target = switch_block
+            else:
+                # This block is the actual switch
+                print(f"[Green] Block {current} is the actual switch")
+                switch_target = self.block_manager.get_switch_position(
+                    self.line_name, current
+                )
+                print(f"[Green] Switch {current} position returns: {switch_target}")
+
             if switch_target != "N/A" and isinstance(switch_target, int):
                 next_block = switch_target
+                print(f"[Green] Using switch target: {next_block}")
             else:
+                print(f"[Green] Switch returned N/A, using fallback logic")
                 # Fallback to backward/forward motion
                 if previous is not None and previous == current + 1:
                     next_block = current - 1
@@ -893,11 +962,20 @@ class LineNetwork:
                     )
                     next_block = current
         else:
+            print(
+                f"[Green] Block {current} NOT in switch_routes, using backward/forward logic"
+            )
             # Use backward/forward motion logic
             if previous is not None and previous == current + 1:
                 next_block = current - 1
+                print(
+                    f"[Green] Backward: previous ({previous}) == current+1 ({current+1}), next={next_block}"
+                )
             elif previous is not None and previous == current - 1:
                 next_block = current + 1
+                print(
+                    f"[Green] Forward: previous ({previous}) == current-1 ({current-1}), next={next_block}"
+                )
             else:
                 # Should never happen with proper hard-coding
                 print(
@@ -920,24 +998,37 @@ class LineNetwork:
         Returns:
             Next block number
         """
-        # Red line switch check list and routes
-        red_line_switch_check_list = [0, 9, 1, 27, 33, 38, 44, 52]
+        # Red line switch routes - blocks can appear multiple times for different switch scenarios
         switch_routes = {
-            9: {0: "0->9", 1: "9->0 (Yard)"},
-            16: {0: "15->16", 1: "1->16"},
+            0: {0: "0->9"},  # Block 0 check: only route to 9
+            9: {0: "9->10", 1: "9->0"},  # Block 9 check: only route back to 0 (Yard)
+            1: {0: "1->2", 1: "1->16"},  # Block 1 check: two routes
             27: {0: "27->28", 1: "27->76"},
-            33: {0: "32->33", 1: "33->72"},
+            33: {0: "33->34", 1: "33->72"},
             38: {0: "38->39", 1: "38->71"},
-            44: {0: "43->44", 1: "44->67"},
+            44: {0: "44->45", 1: "44->67"},
             52: {0: "52->53", 1: "52->66"},
         }
 
-        # Check if current block is a switch block
-        if current in red_line_switch_check_list and current in switch_routes:
-            # Get switch position from block manager
-            switch_target = self.block_manager.get_switch_position(
-                self.line_name, current
-            )
+        source_to_switch = {
+            0: 9,  # Block 0 routes through switch 9
+            1: 16,  # Block 1 routes through switch 16
+        }
+
+        # Check if current block is a switch block or routes through a switch
+        if current in switch_routes:
+            # Check if this block routes through another switch
+            if current in source_to_switch:
+                switch_block = source_to_switch[current]
+                switch_target = self.block_manager.get_switch_position(
+                    self.line_name, switch_block
+                )
+            else:
+                # This block is the actual switch
+                switch_target = self.block_manager.get_switch_position(
+                    self.line_name, current
+                )
+
             if switch_target != "N/A" and isinstance(switch_target, int):
                 next_block = switch_target
             else:

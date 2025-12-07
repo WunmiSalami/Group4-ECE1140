@@ -450,7 +450,9 @@ class TrackModelUI(ttk.Frame):
         if hasattr(self, "track_label"):
             self.track_label.destroy()
         self.visualizer = RailwayDiagram(
-            self.left_frame, block_manager=self.block_manager
+            self.left_frame,
+            block_manager=self.block_manager,
+            line_network=self.line_network,
         )
         self.excel_file_path = None
 

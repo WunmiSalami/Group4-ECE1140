@@ -1,8 +1,8 @@
 {
     "G_train_1": {
         "block": {
-            "commanded speed": 12,
-            "commanded authority": 1452
+            "commanded speed": 0,
+            "commanded authority": 0
         },
         "beacon": {
             "speed limit": 0.0,
@@ -12,8 +12,8 @@
             "passengers_boarding": 0
         },
         "motion": {
-            "current motion": "moving",
-            "position_yds": 1243.9536104734466
+            "current motion": "stopped",
+            "position_yds": 0.0
         }
     },
     "G_train_2": {

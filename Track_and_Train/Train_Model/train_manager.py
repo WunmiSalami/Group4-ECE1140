@@ -715,7 +715,6 @@ class TrainManager:
 
         all_states[f"train_{train_id}"] = train_state
         safe_write_json(self.state_file, all_states)
-        print(f"[TrainManager] Initialized train_{train_id} with state: {train_state}")
 
     def _initialize_train_data_entry(self, train_id, index):
         track = safe_read_json(self.track_model_file)

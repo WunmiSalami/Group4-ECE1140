@@ -15,8 +15,8 @@
     "outputs": {},
     "train_1": {
         "inputs": {
-            "commanded speed": 0.0,
-            "commanded authority": 0.0,
+            "commanded speed": 9.0,
+            "commanded authority": 2004.0,
             "speed limit": 0.0,
             "current station": "N/A",
             "next station": "N/A",
@@ -29,10 +29,10 @@
             "passengers_onboard": 0
         },
         "outputs": {
-            "velocity_mph": 12.042942627339029,
+            "velocity_mph": 9.023174806695407,
             "acceleration_ftps2": 0.0,
-            "position_yds": 1243.9536104734466,
-            "authority_yds": 1452.0
+            "position_yds": 1219.8152263623815,
+            "authority_yds": 2004.0
         },
         "specs": {
             "length_ft": 66.0,
