@@ -19,9 +19,7 @@ TRAIN_MODEL_DIR = os.path.join(PROJECT_ROOT, "Train_Model")
 
 # JSON paths
 TRACK_STATIC_JSON = os.path.join(TRACK_MODEL_DIR, "track_model_static.json")
-TRACK_CONTROLLER_JSON = os.path.join(
-    TRACK_MODEL_DIR, "track_model_Track_controller.json"
-)
+TRACK_CONTROLLER_JSON = os.path.join(PROJECT_ROOT, "track_io.json")
 TRAIN_MODEL_JSON = os.path.join(TRAIN_MODEL_DIR, "track_model_Train_Model.json")
 
 
@@ -93,6 +91,13 @@ class LineNetwork:
         self.total_ticket_sales = 0  # Cumulative ticket sales
         self.previous_train_motions = {}  # Track motion changes: {train_id: motion}
         self.train_current_stations = {}
+        self.train_positions = {}
+        self.previous_position_yds = (
+            {}
+        )  # Track previous position: {train_id: position_yds}
+        self.yards_into_current_block = (
+            {}
+        )  # Track yards traveled in current block: {train_id: yards}
 
         self.read_train_data_from_json()
 
@@ -152,13 +157,15 @@ class LineNetwork:
         with open(json_path, "r") as f:
             train_model_data = json.load(f)
 
-        # Extract motion and store
+        # Extract motion & position and store
         trains = []
         for i in range(len(commanded_speeds)):
             train_key = f"{self.line_name[0]}_train_{i + 1}"
             if train_key in train_model_data:
                 motion = train_model_data[train_key]["motion"]["current motion"]
+                pos = train_model_data[train_key]["motion"].get("position_yds", 0)
                 trains.append({"train_id": i + 1, "motion": motion})
+                self.train_positions[i + 1] = pos
 
                 # Write commanded speed/authority
                 train_model_data[train_key]["block"]["commanded speed"] = (
@@ -325,240 +332,32 @@ class LineNetwork:
         # Default to Super Green if parsing fails
         return "Super Green"
 
-    def get_next_block(
-        self, train_id: int, current: int, previous: Optional[int] = None
-    ) -> int:
-        # Read JSON to update everything
-        self.read_train_data_from_json()
+    def get_next_block(self, train_id, current, previous=None):
+        if not self.should_advance_block(train_id, current):
+            return current
 
-        # Find this train's motion
-        trains = (
-            self.green_line_trains
-            if self.line_name == "Green"
-            else self.red_line_trains
-        )
-        motion = None
-        for train in trains:
-            if train["train_id"] == train_id:
-                motion = train["motion"]
-                break
-
-        # Check if motion changed from "Undispatched" to "Moving"
-        previous_motion = self.previous_train_motions.get(train_id)
-
-        # Update previous motion
-        self.previous_train_motions[train_id] = motion
-
-        # STEP 1: Check if stopped - return current immediately
+        # Read motion and handle stopped/undispatched (stays here)
+        motion = self._read_train_motion(train_id)
         if motion == "Stopped":
-            next_block = current
-
-        # STEP 2: Check if undispatched - return yard
+            return current
         elif motion == "Undispatched":
-            next_block = 0
+            return 0
 
-        # STEP 3: GREEN LINE LOGIC
-        elif self.line_name == "Green":
-            # Special cases first
-            if current == 0 and previous is None:
-                next_block = 63
-            elif current == 57 and previous == 56:
-                next_block = 0
-            elif current == 0 and previous == 57:
-                next_block = 0
-            elif current == 100 and previous == 85:
-                next_block = 99
-            elif current == 100 and previous == 99:
-                next_block = 85
-            elif current == 85 and previous == 100:
-                next_block = 84
-            elif current == 85 and previous == 86:
-                next_block = 84
-            elif current == 150 and previous == 149:
-                next_block = 28
-            elif current == 150 and previous == 28:
-                next_block = 149
-            else:
-                # Check switch position first
-                switch_target = self.block_manager.get_switch_position(
-                    self.line_name, current
-                )
-                if switch_target != "N/A" and isinstance(switch_target, int):
-                    # Switch overrides hard-coded path
-                    if switch_target != previous:
-                        next_block = switch_target
-                    elif switch_target == previous:
-                        if switch_target == current - 1:
-                            next_block = current + 1
-                        elif switch_target == current + 1:
-                            next_block = current - 1
-                else:
-                    if previous is not None and previous == current + 1:
-                        next_block = current - 1
-                    elif previous is not None and previous == current - 1:
-                        next_block = current + 1
-                    else:
-                        # Should never happen with proper hard-coding
-                        print(
-                            f"ERROR: Green Line - No path defined for block {current}, previous {previous}"
-                        )
-                        next_block = current
-            print(
-                f"Train {train_id} at block {current} with next block {next_block} on Green Line."
-            )
-
-        # STEP 4: RED LINE LOGIC
+        # Route based on line
+        if self.line_name == "Green":
+            next_block = self._get_green_line_next_block(current, previous)
         elif self.line_name == "Red":
-            # Special cases first
-            if current == 0 and previous is None:
-                next_block = 10
-            elif current == 10 and previous == 9:
-                next_block = 0
-            elif current == 0 and previous == 10:
-                next_block = 0
-            else:
-                # Check switch position first
-                switch_target = self.block_manager.get_switch_position(
-                    self.line_name, current
-                )
+            next_block = self._get_red_line_next_block(current, previous)
 
-                if switch_target != "N/A" and isinstance(switch_target, int):
-                    # Switch overrides hard-coded path
-                    next_block = switch_target
-                else:
-                    # Hard-coded path for Red Line: 0→10→66→45→16→1→10→0
-
-                    # Segment 1: 10→66 (going up)
-                    if 10 <= current < 66:
-                        if previous is not None and previous == current + 1:
-                            # Coming from above, go down
-                            next_block = current - 1
-                        else:
-                            # Normal: going up
-                            next_block = current + 1
-
-                    # Transition: 66→45
-                    elif current == 66:
-                        if previous is not None and previous == 65:
-                            # Coming from 65, go to 45
-                            next_block = 45
-                        elif previous is not None and previous == 45:
-                            # Coming from 45 (going backwards), go to 65
-                            next_block = 65
-                        else:
-                            # Default: go to 45
-                            next_block = 45
-
-                    # Segment 2: 45→16 (going down)
-                    elif 16 < current < 45:
-                        if previous is not None and previous == current - 1:
-                            # Coming from below, go up
-                            next_block = current + 1
-                        else:
-                            # Normal: going down
-                            next_block = current - 1
-
-                    # At 45 specifically
-                    elif current == 45:
-                        if previous is not None and previous == 66:
-                            # Coming from 66, go down to 44
-                            next_block = 44
-                        elif previous is not None and previous == 44:
-                            # Coming from 44 (going backwards), go to 66
-                            next_block = 66
-                        else:
-                            # Default: go down
-                            next_block = 44
-
-                    # Transition: 16→1
-                    elif current == 16:
-                        if previous is not None and previous == 17:
-                            # Coming from 17, go to 1
-                            next_block = 1
-                        elif previous is not None and previous == 1:
-                            # Coming from 1 (going backwards), go to 17
-                            next_block = 17
-                        else:
-                            # Default: go to 1
-                            next_block = 1
-
-                    # Segment 3: 1→10 (going up)
-                    elif 1 <= current < 10:
-                        if previous is not None and previous == current + 1:
-                            # Coming from above, go down
-                            next_block = current - 1
-                        else:
-                            # Normal: going up
-                            next_block = current + 1
-
-                    # Transition: 10→0 (yard)
-                    elif current == 10:
-                        if previous is not None and previous == 9:
-                            # Coming from 9, go to yard
-                            next_block = 0
-                        elif previous is not None and previous == 0:
-                            # Coming from yard (shouldn't happen normally)
-                            next_block = 9
-                        elif previous is not None and previous == 11:
-                            # Coming from 11 (going down), continue to 9
-                            next_block = 9
-                        else:
-                            # Default: go to yard
-                            next_block = 0
-
-                    else:
-                        # Should never happen with proper hard-coding
-                        print(
-                            f"ERROR: Red Line - No path defined for block {current}, previous {previous}"
-                        )
-                        next_block = current
-
-        else:
-            # Unknown line
-            print(f"ERROR: Unknown line {self.line_name}")
-            next_block = current
-
-        # Check if next_block is a station and generate passengers boarding
-        station_name = self.get_station_name(next_block)
-        if station_name != "N/A":
-            self.block_manager.passengers_boarding = random.randint(0, 200)
-            self.block_manager.total_ticket_sales += (
-                self.block_manager.passengers_boarding
-            )
-
-        # Update occupancy in block manager
-        self.update_block_occupancy(next_block, current)
-        self.write_beacon_data_to_train_model(next_block, train_id)
-
-        # Write occupancy and failures back to Track Controller JSON
-        self.write_occupancy_to_json()
-        self.write_failures_to_json()
-
-        # Determine direction of travel
-        if next_block > current:
-            direction = "Forward"
-        elif next_block < current:
-            direction = "Backward"
-        else:
-            direction = "Stopped"
-
-        # Store direction in block_manager
-        if self.block_manager:
-            # Find the block_id for current block
-            for block_id in self.block_manager.line_states.get(self.line_name, {}):
-                block_num_str = "".join(filter(str.isdigit, block_id))
-                if block_num_str and int(block_num_str) == current:
-                    self.block_manager.line_states[self.line_name][block_id][
-                        "direction"
-                    ] = direction
-                    break
+        self._handle_station_arrival(next_block)
+        self._finalize_block_transition(next_block, current, train_id)
 
         return next_block
 
     def get_station_name(self, block_num: int) -> str:
         """Get station name for a given block number from static JSON."""
         try:
-            json_path = TRACK_CONTROLLER_JSON
+            json_path = TRACK_STATIC_JSON
             with open(json_path, "r") as f:
                 static_data = json.load(f)
 
@@ -573,9 +372,10 @@ class LineNetwork:
 
     def find_next_station(self, starting_block_num):
         """Search forward from starting block to find next station."""
+        # wrong assumes unidirectional
         try:
             # Load static data inside the helper
-            json_path = TRACK_CONTROLLER_JSON
+            json_path = TRACK_STATIC_JSON
             with open(json_path, "r") as f:
                 static_data = json.load(f)
 
@@ -653,7 +453,7 @@ class LineNetwork:
             print(f"Error writing Circuit Failure beacon data to train model: {e}")
         try:
             # Read static track data
-            json_path = TRACK_CONTROLLER_JSON
+            json_path = TRACK_STATIC_JSON
             with open(json_path, "r") as f:
                 static_data = json.load(f)
 
@@ -810,7 +610,7 @@ class LineNetwork:
     def load_crossing_blocks_from_static(self):
         """Load crossing blocks from static JSON file."""
         try:
-            json_path = TRACK_CONTROLLER_JSON
+            json_path = TRACK_STATIC_JSON
             with open(json_path, "r") as f:
                 static_data = json.load(f)
 
@@ -833,7 +633,7 @@ class LineNetwork:
     def load_branch_points_from_static(self):
         """Load branch points from static JSON file."""
         try:
-            json_path = TRACK_CONTROLLER_JSON
+            json_path = TRACK_STATIC_JSON
             with open(json_path, "r") as f:
                 static_data = json.load(f)
 
@@ -877,7 +677,7 @@ class LineNetwork:
     def load_all_blocks_from_static(self):
         """Load all blocks from static JSON file."""
         try:
-            json_path = TRACK_CONTROLLER_JSON
+            json_path = TRACK_STATIC_JSON
             with open(json_path, "r") as f:
                 static_data = json.load(f)
 
@@ -895,6 +695,203 @@ class LineNetwork:
             self.all_blocks = sorted(set(all_blocks))
         except Exception:
             pass
+
+    def should_advance_block(self, train_id: int, current_block: int) -> bool:
+        """
+        Determine if train has traveled enough yards to advance to next block.
+
+        Args:
+            train_id: Train identifier
+            current_block: Current block number
+
+        Returns:
+            True if train should advance to next block, False otherwise
+        """
+        # Initialize train state if not exists
+        if not hasattr(self, "previous_position_yds"):
+            self.previous_position_yds = {}
+        if not hasattr(self, "yards_into_current_block"):
+            self.yards_into_current_block = {}
+
+        # Initialize this train's state
+        if train_id not in self.previous_position_yds:
+            self.previous_position_yds[train_id] = 0
+        if train_id not in self.yards_into_current_block:
+            self.yards_into_current_block[train_id] = 0
+
+        # Read current position from train_positions (already populated by write_to_train_model_json)
+        current_position_yds = self.train_positions.get(train_id, 0)
+
+        # Calculate delta
+        delta = current_position_yds - self.previous_position_yds[train_id]
+
+        # Add delta to yards traveled in current block
+        self.yards_into_current_block[train_id] += delta
+
+        # Get block length from static JSON
+        try:
+            with open(TRACK_STATIC_JSON, "r") as f:
+                static_data = json.load(f)
+
+            blocks = static_data.get("static_data", {}).get(self.line_name, [])
+            block_length_yards = None
+
+            for block in blocks:
+                if block.get("Block Number") == current_block:
+                    length_m = block.get("Block Length (m)", 0)
+                    if length_m not in ["N/A", "nan", None]:
+                        # Convert meters to yards (1m = 1.09361 yards)
+                        block_length_yards = float(length_m) * 1.09361
+                    break
+
+            if block_length_yards is None:
+                # Default to allowing advance if block length unknown
+                self.previous_position_yds[train_id] = current_position_yds
+                return True
+
+            # Check if enough yards traveled to advance
+            if self.yards_into_current_block[train_id] >= block_length_yards:
+                # Subtract block length and carry overflow
+                self.yards_into_current_block[train_id] -= block_length_yards
+                self.previous_position_yds[train_id] = current_position_yds
+                return True
+            else:
+                # Not enough yards traveled, stay in current block
+                self.previous_position_yds[train_id] = current_position_yds
+                return False
+
+        except Exception as e:
+            print(f"Error in should_advance_block: {e}")
+            self.previous_position_yds[train_id] = current_position_yds
+            return True  # Default to allowing advance on error
+
+    def _handle_station_arrival(self, next_block: int) -> None:
+        """
+        Check if next_block is a station and generate passengers boarding.
+
+        Args:
+            next_block: The block number train is moving to
+        """
+        # Check if next_block is a station and generate passengers boarding
+        station_name = self.get_station_name(next_block)
+        if station_name != "N/A":
+            self.block_manager.passengers_boarding = random.randint(0, 200)
+            self.block_manager.total_ticket_sales += (
+                self.block_manager.passengers_boarding
+            )
+
+    def _finalize_block_transition(
+        self, next_block: int, current: int, train_id: int
+    ) -> None:
+        """
+        Finalize the block transition by updating occupancy, beacon data, and direction.
+
+        Args:
+            next_block: The block number train is moving to
+            current: The current block number
+            train_id: Train identifier
+        """
+        # Update occupancy in block manager
+        self.update_block_occupancy(next_block, current)
+        self.write_beacon_data_to_train_model(next_block, train_id)
+
+        # Write occupancy and failures back to Track Controller JSON
+        self.write_occupancy_to_json()
+        self.write_failures_to_json()
+
+        # Determine direction of travel
+        # wrong direction is a static property of the block, not of the train unidirectional or bidirectional
+        if next_block > current:
+            direction = "Forward"
+        elif next_block < current:
+            direction = "Backward"
+        else:
+            direction = "Stopped"
+
+        # Store direction in block_manager
+        if self.block_manager:
+            # Find the block_id for current block
+            for block_id in self.block_manager.line_states.get(self.line_name, {}):
+                block_num_str = "".join(filter(str.isdigit, block_id))
+                if block_num_str and int(block_num_str) == current:
+                    self.block_manager.line_states[self.line_name][block_id][
+                        "direction"
+                    ] = direction
+                    break
+
+    def _get_green_line_next_block(self, current: int, previous: Optional[int]) -> int:
+        """
+        Determine next block for Green Line based on current position and routing rules.
+
+        Args:
+            current: Current block number
+            previous: Previous block number (or None)
+
+        Returns:
+            Next block number
+        """
+        # Check switch position first
+        switch_target = self.block_manager.get_switch_position(self.line_name, current)
+        if switch_target != "N/A" and isinstance(switch_target, int):
+            # Switch overrides hard-coded path
+            if switch_target != previous:
+                next_block = switch_target
+            elif switch_target == previous:
+                if switch_target == current - 1:
+                    next_block = current + 1
+                elif switch_target == current + 1:
+                    next_block = current - 1
+        else:
+            if previous is not None and previous == current + 1:
+                next_block = current - 1
+            elif previous is not None and previous == current - 1:
+                next_block = current + 1
+            else:
+                # Should never happen with proper hard-coding
+                print(
+                    f"ERROR: Green Line - No path defined for block {current}, previous {previous}"
+                )
+                next_block = current
+
+        print(f"Train at block {current} with next block {next_block} on Green Line.")
+
+        return next_block
+
+    def _get_red_line_next_block(self, current: int, previous: Optional[int]) -> int:
+        """
+        Determine next block for Red Line based on current position and routing rules.
+
+        Args:
+            current: Current block number
+            previous: Previous block number (or None)
+
+        Returns:
+            Next block number
+        """
+        # Check switch position first
+        switch_target = self.block_manager.get_switch_position(self.line_name, current)
+        if switch_target != "N/A" and isinstance(switch_target, int):
+            # Switch overrides hard-coded path
+            if switch_target != previous:
+                next_block = switch_target
+            elif switch_target == previous:
+                if switch_target == current - 1:
+                    next_block = current + 1
+                elif switch_target == current + 1:
+                    next_block = current - 1
+        else:
+            if previous is not None and previous == current + 1:
+                next_block = current - 1
+            elif previous is not None and previous == current - 1:
+                next_block = current + 1
+            else:
+                # Should never happen with proper hard-coding
+                print(
+                    f"ERROR: Red Line - No path defined for block {current}, previous {previous}"
+                )
+                next_block = current
+
+        return next_block
 
 
 class LineNetworkBuilder:

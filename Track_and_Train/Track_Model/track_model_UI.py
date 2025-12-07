@@ -13,9 +13,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TRACK_MODEL_DIR = os.path.join(BASE_DIR, "Track_Model")
 
 STATIC_JSON_PATH = os.path.join(TRACK_MODEL_DIR, "track_model_static.json")
-CONTROLLER_JSON_PATH = os.path.join(
-    TRACK_MODEL_DIR, "track_model_Track_controller.json"
-)
+CONTROLLER_JSON_PATH = os.path.join(TRACK_MODEL_DIR, "track_io.json")
 
 
 class TrackModelUI(ttk.Frame):
