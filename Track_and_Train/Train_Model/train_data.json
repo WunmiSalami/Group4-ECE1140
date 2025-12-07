@@ -49,10 +49,10 @@
             "passengers_onboard": 0
         },
         "outputs": {
-            "velocity_mph": 0.0,
-            "acceleration_ftps2": -3.94,
-            "position_yds": 6611.749109842966,
-            "authority_yds": 452.0
+            "velocity_mph": 4.0251479271199395,
+            "acceleration_ftps2": 0.0,
+            "position_yds": 464.50603730562466,
+            "authority_yds": 2013.0
         },
         "specs": {
             "length_ft": 66.0,

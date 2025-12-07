@@ -2,21 +2,21 @@
     "Dispatcher": {
         "Trains": {
             "Train 1": {
-                "Line": "Green",
+                "Line": "",
                 "Suggested Speed": "",
                 "Authority": "",
-                "Station Destination": "Poplar",
-                "Arrival Time": "4:09",
+                "Station Destination": "",
+                "Arrival Time": "",
                 "Position": "",
                 "State": "Idle",
                 "Current Station": ""
             },
             "Train 2": {
-                "Line": "Green",
+                "Line": "",
                 "Suggested Speed": "",
                 "Authority": "",
-                "Station Destination": "Glenbury",
-                "Arrival Time": "01:32",
+                "Station Destination": "",
+                "Arrival Time": "",
                 "Position": "",
                 "State": "Idle",
                 "Current Station": ""
@@ -32,11 +32,11 @@
                 "Current Station": ""
             },
             "Train 4": {
-                "Line": "Green",
+                "Line": "",
                 "Suggested Speed": "",
                 "Authority": "",
-                "Station Destination": "Mt. Lebanon",
-                "Arrival Time": "03:32",
+                "Station Destination": "",
+                "Arrival Time": "",
                 "Position": "",
                 "State": "Idle",
                 "Current Station": ""

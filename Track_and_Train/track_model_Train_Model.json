@@ -2,8 +2,7 @@
     "G_train_1": {
         "block": {
             "commanded speed": 0,
-            "commanded authority": 0,
-            "position": 0.0
+            "commanded authority": 0
         },
         "beacon": {
             "speed limit": 0.0,
@@ -20,8 +19,7 @@
     "G_train_2": {
         "block": {
             "commanded speed": 0,
-            "commanded authority": 0,
-            "position": 0.0
+            "commanded authority": 0
         },
         "beacon": {
             "speed limit": 0.0,
@@ -38,8 +36,7 @@
     "G_train_3": {
         "block": {
             "commanded speed": 0,
-            "commanded authority": 0,
-            "position": 0.0
+            "commanded authority": 0
         },
         "beacon": {
             "speed limit": 0.0,
@@ -56,8 +53,7 @@
     "R_train_4": {
         "block": {
             "commanded speed": 0,
-            "commanded authority": 0,
-            "position": 0.0
+            "commanded authority": 0
         },
         "beacon": {
             "speed limit": 0.0,
@@ -74,8 +70,7 @@
     "R_train_5": {
         "block": {
             "commanded speed": 0,
-            "commanded authority": 0,
-            "position": 0.0
+            "commanded authority": 0
         },
         "beacon": {
             "speed limit": 0.0,

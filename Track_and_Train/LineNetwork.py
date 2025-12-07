@@ -191,7 +191,7 @@ class LineNetwork:
                     # Update existing train's motion state
                     idx = existing_train_ids[train_id]
                     self.block_manager.trains[idx]["start"] = (
-                        True if t["motion"] == "Moving" else False
+                        True if t["motion"].lower() == "moving" else False
                     )
                 else:
                     # Add new train
@@ -199,7 +199,7 @@ class LineNetwork:
                         {
                             "train_id": train_id,
                             "line": self.line_name,
-                            "start": True if t["motion"] == "Moving" else False,
+                            "start": True if t["motion"].lower() == "moving" else False,
                         }
                     )
 

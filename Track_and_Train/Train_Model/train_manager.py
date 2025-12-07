@@ -919,8 +919,11 @@ class TrainManager:
                     trains = ctc_data["Dispatcher"]["Trains"]
                     # Reset all trains to empty/default state
                     for train_key in trains:
+                        trains[train_key]["Line"] = ""
                         trains[train_key]["Suggested Speed"] = ""
                         trains[train_key]["Authority"] = ""
+                        trains[train_key]["Station Destination"] = ""
+                        trains[train_key]["Arrival Time"] = ""
                         trains[train_key]["Position"] = ""
                         trains[train_key]["State"] = "Idle"
                         trains[train_key]["Current Station"] = ""
@@ -939,7 +942,6 @@ class TrainManager:
                             track_model_data[train_key]["block"] = {
                                 "commanded speed": 0,
                                 "commanded authority": 0,
-                                "position": 0.0,
                             }
                         # Reset beacon data
                         if "beacon" in track_model_data[train_key]:

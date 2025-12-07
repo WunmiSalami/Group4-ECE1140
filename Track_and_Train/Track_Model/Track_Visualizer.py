@@ -1251,9 +1251,9 @@ class RailwayDiagram:
             from PIL import Image, ImageTk
 
             # Load and resize train image - NO COLORING
-            train_image = train_image.resize((30, 30), Image.Resampling.LANCZOS)
+            resized_image = train_image.resize((30, 30), Image.Resampling.LANCZOS)
 
-            photo = ImageTk.PhotoImage(train_image)
+            photo = ImageTk.PhotoImage(resized_image)
 
             if not hasattr(self, "train_photos"):
                 self.train_photos = {}
