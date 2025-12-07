@@ -347,6 +347,23 @@ class LineNetwork:
         # Default to Super Green if parsing fails
         return "Super Green"
 
+    def _read_train_motion(self, train_id):
+        """Read the current motion status of a train from track_model_Train_Model.json"""
+        try:
+            with open(TRAIN_MODEL_JSON, "r") as f:
+                train_model_data = json.load(f)
+
+            train_key = f"{self.line_name[0]}_train_{train_id}"
+            if train_key in train_model_data:
+                motion = train_model_data[train_key]["motion"].get(
+                    "current motion", "stopped"
+                )
+                return motion.capitalize()  # Convert to "Stopped", "Moving", etc.
+            return "Stopped"
+        except Exception as e:
+            print(f"Error reading train motion: {e}")
+            return "Stopped"
+
     def get_next_block(self, train_id, current, previous=None):
         if not self.should_advance_block(train_id, current):
             return current
@@ -845,18 +862,38 @@ class LineNetwork:
         Returns:
             Next block number
         """
-        # Check switch position first
-        switch_target = self.block_manager.get_switch_position(self.line_name, current)
-        if switch_target != "N/A" and isinstance(switch_target, int):
-            # Switch overrides hard-coded path
-            if switch_target != previous:
+        # Green line switch check list and routes
+        green_line_switch_check_list = [13, 150, 57, 0, 77, 100]
+        switch_routes = {
+            13: {0: "13->12", 1: "1->13"},
+            28: {0: "28->29", 1: "150->28"},
+            57: {0: "57->58", 1: "57->Yard"},
+            63: {0: "63->64", 1: "Yard->63"},
+            77: {0: "76->77", 1: "77->101"},
+            85: {0: "85->86", 1: "100->85"},
+        }
+
+        # Check if current block is a switch block
+        if current in green_line_switch_check_list and current in switch_routes:
+            # Get switch position from block manager
+            switch_target = self.block_manager.get_switch_position(
+                self.line_name, current
+            )
+            if switch_target != "N/A" and isinstance(switch_target, int):
                 next_block = switch_target
-            elif switch_target == previous:
-                if switch_target == current - 1:
-                    next_block = current + 1
-                elif switch_target == current + 1:
+            else:
+                # Fallback to backward/forward motion
+                if previous is not None and previous == current + 1:
                     next_block = current - 1
+                elif previous is not None and previous == current - 1:
+                    next_block = current + 1
+                else:
+                    print(
+                        f"ERROR: Green Line - No path defined for block {current}, previous {previous}"
+                    )
+                    next_block = current
         else:
+            # Use backward/forward motion logic
             if previous is not None and previous == current + 1:
                 next_block = current - 1
             elif previous is not None and previous == current - 1:
@@ -883,18 +920,39 @@ class LineNetwork:
         Returns:
             Next block number
         """
-        # Check switch position first
-        switch_target = self.block_manager.get_switch_position(self.line_name, current)
-        if switch_target != "N/A" and isinstance(switch_target, int):
-            # Switch overrides hard-coded path
-            if switch_target != previous:
+        # Red line switch check list and routes
+        red_line_switch_check_list = [0, 9, 1, 27, 33, 38, 44, 52]
+        switch_routes = {
+            9: {0: "0->9", 1: "9->0 (Yard)"},
+            16: {0: "15->16", 1: "1->16"},
+            27: {0: "27->28", 1: "27->76"},
+            33: {0: "32->33", 1: "33->72"},
+            38: {0: "38->39", 1: "38->71"},
+            44: {0: "43->44", 1: "44->67"},
+            52: {0: "52->53", 1: "52->66"},
+        }
+
+        # Check if current block is a switch block
+        if current in red_line_switch_check_list and current in switch_routes:
+            # Get switch position from block manager
+            switch_target = self.block_manager.get_switch_position(
+                self.line_name, current
+            )
+            if switch_target != "N/A" and isinstance(switch_target, int):
                 next_block = switch_target
-            elif switch_target == previous:
-                if switch_target == current - 1:
-                    next_block = current + 1
-                elif switch_target == current + 1:
+            else:
+                # Fallback to backward/forward motion
+                if previous is not None and previous == current + 1:
                     next_block = current - 1
+                elif previous is not None and previous == current - 1:
+                    next_block = current + 1
+                else:
+                    print(
+                        f"ERROR: Red Line - No path defined for block {current}, previous {previous}"
+                    )
+                    next_block = current
         else:
+            # Use backward/forward motion logic
             if previous is not None and previous == current + 1:
                 next_block = current - 1
             elif previous is not None and previous == current - 1:

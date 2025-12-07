@@ -2,13 +2,13 @@
     "Dispatcher": {
         "Trains": {
             "Train 1": {
-                "Line": "",
+                "Line": "Green",
                 "Suggested Speed": "",
                 "Authority": "",
-                "Station Destination": "",
-                "Arrival Time": "",
+                "Station Destination": "Dormont",
+                "Arrival Time": "04:41",
                 "Position": "",
-                "State": "Idle",
+                "State": "Dispatched",
                 "Current Station": ""
             },
             "Train 2": {

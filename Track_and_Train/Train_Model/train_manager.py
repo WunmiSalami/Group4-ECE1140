@@ -962,7 +962,8 @@ class TrainManager:
                 print("[Cleanup] Reset track_model_Train_Model.json")
 
             # 5. Reset track_model_static.json to empty state
-            static_file = os.path.join(parent_dir, "track_model_static.json")
+            track_model_dir = os.path.join(parent_dir, "Track_Model")
+            static_file = os.path.join(track_model_dir, "track_model_static.json")
             if os.path.exists(static_file):
                 safe_write_json(static_file, {})
                 print("[Cleanup] Cleared track_model_static.json")
