@@ -1,8 +1,8 @@
 {
     "G_train_1": {
         "block": {
-            "commanded speed": 12,
-            "commanded authority": 67
+            "commanded speed": 56,
+            "commanded authority": 176
         },
         "beacon": {
             "speed limit": 70.0,
@@ -12,8 +12,8 @@
             "passengers_boarding": 0
         },
         "motion": {
-            "current motion": "stopped",
-            "position_yds": 4511.026604367717
+            "current motion": "moving",
+            "position_yds": 520.7000000000029
         }
     },
     "G_train_2": {
@@ -29,8 +29,8 @@
             "passengers_boarding": 0
         },
         "motion": {
-            "current motion": "stopped",
-            "position_yds": 0.0
+            "current motion": "moving",
+            "position_yds": 284.1299999999999
         }
     },
     "G_train_3": {
@@ -46,7 +46,8 @@
             "passengers_boarding": 0
         },
         "motion": {
-            "current motion": "Undispatched"
+            "current motion": "stopped",
+            "position_yds": 0.0
         }
     },
     "R_train_4": {
@@ -62,7 +63,8 @@
             "passengers_boarding": 0
         },
         "motion": {
-            "current motion": "Undispatched"
+            "current motion": "stopped",
+            "position_yds": 0.0
         }
     },
     "R_train_5": {
@@ -78,7 +80,8 @@
             "passengers_boarding": 0
         },
         "motion": {
-            "current motion": "Undispatched"
+            "current motion": "stopped",
+            "position_yds": 0.0
         }
     }
 }

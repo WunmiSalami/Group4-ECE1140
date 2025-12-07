@@ -148,7 +148,34 @@ class train_controller:
     def get_state(self):
         with _file_lock:
             all_states = safe_read_json(self.state_file)
-            return all_states.get(f"train_{self.train_id}", {})
+            state = all_states.get(f"train_{self.train_id}", {})
+
+            # Migrate state with missing fields
+            required_fields = {
+                "train_id": self.train_id,
+                "commanded_speed": 0.0,
+                "commanded_authority": 0.0,
+                "speed_limit": 0.0,
+                "train_velocity": 0.0,
+                "next_stop": "",
+                "station_side": "",
+                "manual_mode": False,
+                "driver_velocity": 0.0,
+                "service_brake": False,
+                "emergency_brake": False,
+                "kp": 1500.0,
+                "ki": 50.0,
+                "power_command": 0.0,
+                "current_station": "",
+                "position_yds": 0.0,
+            }
+
+            # Fill in any missing fields
+            for field, default_value in required_fields.items():
+                if field not in state:
+                    state[field] = default_value
+
+            return state
 
     def update_state(self, updates: dict):
         with _file_lock:
@@ -178,6 +205,7 @@ class train_controller:
                     "speed_limit": float(beacon.get("speed limit", 0.0) or 0.0),
                     "next_stop": beacon.get("next station", "") or "",
                     "station_side": beacon.get("side_door", "") or "",
+                    "position_yds": float(block.get("position", 0.0) or 0.0),
                 }
             )
 
@@ -215,16 +243,45 @@ class train_controller:
         return True
 
     def calculate_power_command(self, state: dict):
+        # Check if authority braking is needed
+        train_velocity = state.get("train_velocity", 0.0)
+        position_yds = state.get("position_yds", 0.0)
+        commanded_authority = state.get("commanded_authority", 0.0)
+
+        # Calculate distance to authority limit
+        distance_to_authority = commanded_authority - position_yds
+
+        # Service brake deceleration (ft/s²) - convert to mph/s for calculation
+        service_brake_decel = 3.94  # ft/s² = 2.686 mph/s
+
+        # Calculate braking distance: d = v² / (2a)
+        # v in mph, a in mph/s, result in miles, convert to yards
+        if train_velocity > 0.1:
+            braking_distance_miles = (train_velocity**2) / (2 * service_brake_decel)
+            braking_distance_yards = (
+                braking_distance_miles * 1760
+            )  # 1 mile = 1760 yards
+        else:
+            braking_distance_yards = 0
+
+        # If within braking distance + safety margin (10 yards), force service brake
+        if (
+            distance_to_authority < (braking_distance_yards + 10)
+            and distance_to_authority > 0
+        ):
+            return 0  # Zero power to start braking
+
+        # Normal PI control
         controls = vital_train_controls(
-            kp=state["kp"],
-            ki=state["ki"],
-            train_velocity=state["train_velocity"],
-            driver_velocity=state["driver_velocity"],
-            emergency_brake=state["emergency_brake"],
-            service_brake=state["service_brake"],
-            power_command=state["power_command"],
-            commanded_authority=state["commanded_authority"],
-            speed_limit=state["speed_limit"],
+            kp=state.get("kp", 1500.0),
+            ki=state.get("ki", 50.0),
+            train_velocity=train_velocity,
+            driver_velocity=state.get("driver_velocity", 0.0),
+            emergency_brake=state.get("emergency_brake", False),
+            service_brake=state.get("service_brake", 0),
+            power_command=state.get("power_command", 0.0),
+            commanded_authority=commanded_authority,
+            speed_limit=state.get("speed_limit", 0.0),
         )
 
         power, new_error, new_time = controls.calculate_power_command(
@@ -297,7 +354,14 @@ class train_controller_ui(tk.Toplevel):
         current_mode = state.get("manual_mode", False)
         new_mode = not current_mode
 
-        self.controller.vital_control_check_and_update({"manual_mode": new_mode})
+        updates = {"manual_mode": new_mode}
+
+        # When switching to automatic mode, set driver_velocity to commanded_speed
+        # This allows the PI controller to gradually adjust the speed
+        if not new_mode:  # new_mode is False = automatic mode
+            updates["driver_velocity"] = state.get("commanded_speed", 0.0)
+
+        self.controller.vital_control_check_and_update(updates)
 
         # Update button text
         mode_text = "Manual" if new_mode else "Automatic"
@@ -660,6 +724,7 @@ class TrainManager:
             "ki": 50.0,
             "power_command": 0.0,
             "current_station": beacon.get("next station", "") or "",
+            "position_yds": float(block.get("position", 0.0) or 0.0),
         }
 
         all_states[f"train_{train_id}"] = train_state
@@ -770,6 +835,111 @@ class TrainManager:
     def get_train_count(self):
         return len(self.trains)
 
+    def reset_all_train_states(self, num_trains=5):
+        """Reset all train states to default values"""
+        default_state = {
+            "train_id": 0,
+            "commanded_speed": 0.0,
+            "commanded_authority": 0.0,
+            "speed_limit": 0.0,
+            "train_velocity": 0.0,
+            "next_stop": "N/A",
+            "station_side": "N/A",
+            "manual_mode": False,
+            "driver_velocity": 0.0,
+            "service_brake": False,
+            "emergency_brake": False,
+            "kp": 1500.0,
+            "ki": 50.0,
+            "power_command": 0.0,
+            "current_station": "N/A",
+            "position_yds": 0.0,
+            "beacon_read_blocked": False,
+        }
+
+        all_states = {}
+        for train_id in range(1, num_trains + 1):
+            state = default_state.copy()
+            state["train_id"] = train_id
+            all_states[f"train_{train_id}"] = state
+
+        safe_write_json(self.state_file, all_states)
+        print(f"[TrainManager] Reset all {num_trains} train states to defaults")
+
+    @staticmethod
+    def cleanup_all_files():
+        """Reset all JSON files to default/initial states on application exit"""
+
+        # 1. Reset train_states.json
+        train_controller_dir = os.path.join(parent_dir, "train_controller", "data")
+        os.makedirs(train_controller_dir, exist_ok=True)
+        train_states_file = os.path.join(train_controller_dir, "train_states.json")
+
+        default_state = {
+            "train_id": 0,
+            "commanded_speed": 0.0,
+            "commanded_authority": 0.0,
+            "speed_limit": 0.0,
+            "train_velocity": 0.0,
+            "next_stop": "N/A",
+            "station_side": "N/A",
+            "manual_mode": False,
+            "driver_velocity": 0.0,
+            "service_brake": False,
+            "emergency_brake": False,
+            "kp": 1500.0,
+            "ki": 50.0,
+            "power_command": 0.0,
+            "current_station": "N/A",
+            "position_yds": 0.0,
+            "beacon_read_blocked": False,
+        }
+
+        all_states = {}
+        for train_id in range(1, 6):  # 5 trains
+            state = default_state.copy()
+            state["train_id"] = train_id
+            all_states[f"train_{train_id}"] = state
+
+        safe_write_json(train_states_file, all_states)
+        print("[Cleanup] Reset train_states.json")
+
+        # 2. Reset track_io.json to default switch/gate/light states
+        track_io_file = os.path.join(parent_dir, "track_io.json")
+        if os.path.exists(track_io_file):
+            track_io_data = safe_read_json(track_io_file)
+            # Reset all switches, gates, and lights to 0
+            if "G-switches" in track_io_data:
+                track_io_data["G-switches"] = [0] * len(track_io_data["G-switches"])
+            if "G-gates" in track_io_data:
+                track_io_data["G-gates"] = [0] * len(track_io_data["G-gates"])
+            if "G-lights" in track_io_data:
+                track_io_data["G-lights"] = [0] * len(track_io_data["G-lights"])
+            if "R-switches" in track_io_data:
+                track_io_data["R-switches"] = [0] * len(track_io_data["R-switches"])
+            if "R-gates" in track_io_data:
+                track_io_data["R-gates"] = [0] * len(track_io_data["R-gates"])
+            if "R-lights" in track_io_data:
+                track_io_data["R-lights"] = [0] * len(track_io_data["R-lights"])
+            safe_write_json(track_io_file, track_io_data)
+            print("[Cleanup] Reset track_io.json switches/gates/lights")
+
+        # 3. Reset ctc_data.json trains to initial state
+        ctc_file = os.path.join(parent_dir, "ctc_data.json")
+        if os.path.exists(ctc_file):
+            ctc_data = safe_read_json(ctc_file)
+            if "Dispatcher" in ctc_data and "Trains" in ctc_data["Dispatcher"]:
+                trains = ctc_data["Dispatcher"]["Trains"]
+                # Reset all trains to empty/default state
+                for train_key in trains:
+                    trains[train_key]["Suggested Speed"] = ""
+                    trains[train_key]["Authority"] = ""
+                    trains[train_key]["Position"] = ""
+                    trains[train_key]["State"] = "Idle"
+                    trains[train_key]["Current Station"] = ""
+                safe_write_json(ctc_file, ctc_data)
+                print("[Cleanup] Reset ctc_data.json train states")
+
 
 class TrainManagerUI(tk.Tk):
     def __init__(self):
@@ -791,6 +961,9 @@ class TrainManagerUI(tk.Tk):
         self.update_train_list()
 
         self.after(2000, self._poll_wrapper)
+
+        # Set cleanup handler on close
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def create_header(self):
         header = tk.Frame(self, bg="#2c3e50", height=80)
@@ -1074,6 +1247,11 @@ class TrainManagerUI(tk.Tk):
         self.manager._initialize_train_data_entry(train_id, train_id - 1)
 
         print(f"Train {train_id} auto-created from dispatch")
+
+    def on_closing(self):
+        """Handle cleanup when window is closing"""
+        TrainManager.cleanup_all_files()
+        self.destroy()
 
 
 if __name__ == "__main__":

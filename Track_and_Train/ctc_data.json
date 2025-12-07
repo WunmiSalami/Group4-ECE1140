@@ -5,8 +5,8 @@
                 "Line": "Green",
                 "Suggested Speed": "",
                 "Authority": "",
-                "Station Destination": "Mt. Lebanon",
-                "Arrival Time": "03:03",
+                "Station Destination": "Inglewood",
+                "Arrival Time": "03:14",
                 "Position": "",
                 "State": "Dispatched",
                 "Current Station": ""
@@ -32,13 +32,13 @@
                 "Current Station": ""
             },
             "Train 4": {
-                "Line": "",
+                "Line": "Green",
                 "Suggested Speed": "",
                 "Authority": "",
-                "Station Destination": "",
-                "Arrival Time": "",
+                "Station Destination": "Mt. Lebanon",
+                "Arrival Time": "03:32",
                 "Position": "",
-                "State": "",
+                "State": "Dispatched",
                 "Current Station": ""
             },
             "Train 5": {

@@ -15,6 +15,7 @@ import sys
 
 VISUALIZER_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(VISUALIZER_DIR)
+train_image = Image.open(os.path.join(VISUALIZER_DIR, "train.png")).convert("RGBA")
 
 # Add parent directory to path for imports
 sys.path.insert(0, PARENT_DIR)
@@ -1250,7 +1251,6 @@ class RailwayDiagram:
             from PIL import Image, ImageTk
 
             # Load and resize train image - NO COLORING
-            train_image = Image.open("train.png").convert("RGBA")
             train_image = train_image.resize((30, 30), Image.Resampling.LANCZOS)
 
             photo = ImageTk.PhotoImage(train_image)

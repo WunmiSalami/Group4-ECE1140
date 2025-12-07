@@ -36,6 +36,9 @@ class MainUI(tk.Tk):
         # Create button bar
         self.create_button_bar()
 
+        # Set cleanup handler on close
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
     def create_button_bar(self):
         button_frame = ttk.Frame(self)
         button_frame.pack(fill="both", expand=True, padx=20, pady=20)
@@ -132,6 +135,26 @@ class MainUI(tk.Tk):
         if self.track_control_window:
             self.track_control_window.withdraw()
             self.btn_track_control.config(text="Show Track Control")
+
+    def on_closing(self):
+        """Handle cleanup when main window is closing"""
+        # Reset all JSON files before exiting
+        try:
+            from train_manager import TrainManager
+
+            TrainManager.cleanup_all_files()
+        except Exception as e:
+            print(f"Error cleaning up files: {e}")
+
+        # Close any open child windows
+        if self.track_window:
+            self.track_window.destroy()
+        if self.train_manager_window:
+            self.train_manager_window.destroy()
+        if self.track_control_window:
+            self.track_control_window.destroy()
+
+        self.destroy()
 
 
 if __name__ == "__main__":
