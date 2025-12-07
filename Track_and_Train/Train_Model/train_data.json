@@ -35,8 +35,8 @@
     },
     "train_1": {
         "inputs": {
-            "commanded speed": 21.0,
-            "commanded authority": 101.0,
+            "commanded speed": 12.0,
+            "commanded authority": 67.0,
             "speed limit": 70.0,
             "current station": "Glenbury",
             "next station": "Glenbury",
@@ -50,9 +50,9 @@
         },
         "outputs": {
             "velocity_mph": 0.0,
-            "acceleration_ftps2": 0.0,
-            "position_yds": 0.0,
-            "authority_yds": 101.0
+            "acceleration_ftps2": -3.94,
+            "position_yds": 4511.026604367717,
+            "authority_yds": 67.0
         },
         "specs": {
             "length_ft": 66.0,

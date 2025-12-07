@@ -1,10 +1,20 @@
 {
     "train_1": {
+        "train_id": 1,
+        "commanded_speed": 12.0,
+        "commanded_authority": 67.0,
+        "speed_limit": 70.0,
         "train_velocity": 0.0,
-        "commanded_authority": 101.0,
-        "current_station": "Glenbury",
         "next_stop": "Glenbury",
         "station_side": "Right",
+        "manual_mode": false,
+        "driver_velocity": 0,
+        "service_brake": true,
+        "emergency_brake": false,
+        "kp": 1500.0,
+        "ki": 50.0,
+        "power_command": 0,
+        "current_station": "Glenbury",
         "beacon_read_blocked": false
     },
     "train_2": {

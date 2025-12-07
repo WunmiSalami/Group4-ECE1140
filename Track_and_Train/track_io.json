@@ -643,12 +643,10 @@
     ],
     "G-Train": {
         "commanded speed": [
-            21,
-            22
+            12
         ],
         "commanded authority": [
-            101,
-            101
+            67
         ]
     },
     "R-switches": [

@@ -4,6 +4,10 @@ import threading
 import sys
 import importlib, importlib.util
 
+import threading
+
+_file_lock = threading.Lock()
+
 import os
 
 BASE_DIR = os.path.dirname(
@@ -51,7 +55,7 @@ except Exception:
 
 
 class TrainModelUI(ttk.Frame):
-    def __init__(self, parent, train_id=None, server_url=None):
+    def __init__(self, parent, train_id=None):
         super().__init__(parent)
         self.pack(fill="both", expand=True)
 
@@ -60,7 +64,6 @@ class TrainModelUI(ttk.Frame):
         self.pack_propagate(False)
 
         self.train_id = train_id
-        self.server_url = server_url
         self.train_data_path = TRAIN_DATA_FILE
 
         style = ttk.Style(self)
@@ -277,37 +280,22 @@ class TrainModelUI(ttk.Frame):
         return all_states.get(f"train_{self.train_id}", {})
 
     def update_train_state(self, updates: dict):
-        # Remote mode: only if requests is available
-        if self.server_url and self.train_id is not None and requests is not None:
-            try:
-                response = requests.post(
-                    f"{self.server_url}/api/train/{self.train_id}/state",
-                    json=updates,
-                    timeout=2.0,
-                )
-                if response.status_code != 200:
-                    print(
-                        f"[Train Model] Server update returned {response.status_code}"
-                    )
-            except Exception as e:
-                print(f"[Train Model] Error updating state on server: {e}")
-            return
+        with _file_lock:
+            all_states = safe_read_json(TRAIN_STATES_FILE)
 
-        # Local mode: READ FIRST, then merge updates
-        all_states = safe_read_json(TRAIN_STATES_FILE)
-        if self.train_id is None:
-            # Merge with existing root-level state
-            existing = all_states if isinstance(all_states, dict) else {}
-            existing.update(updates)
-            all_states = existing
-        else:
-            key = f"train_{self.train_id}"
-            # Get existing train state (preserves controller fields)
-            cur = all_states.get(key, {})
-            # Merge updates into existing state
-            cur.update(updates)
-            all_states[key] = cur
-        safe_write_json(TRAIN_STATES_FILE, all_states)
+            if self.train_id is None:
+                if not isinstance(all_states, dict):
+                    all_states = {}
+                all_states.update(updates)
+            else:
+                key = f"train_{self.train_id}"
+                existing_train_state = all_states.get(key, {})
+                if not isinstance(existing_train_state, dict):
+                    existing_train_state = {}
+                existing_train_state.update(updates)
+                all_states[key] = existing_train_state
+
+            safe_write_json(TRAIN_STATES_FILE, all_states)
 
     def write_train_data(self, specs, inputs, td_inputs):
         data = safe_read_json(self.train_data_path)
@@ -471,6 +459,7 @@ class TrainModelUI(ttk.Frame):
         if signal_failure_active and self._last_beacon_inputs:
             controller_updates = {
                 "train_velocity": outputs["velocity_mph"],
+                "power_command": ctrl.get("power_command", 0.0),
                 "commanded_authority": remaining_authority,
                 "current_station": self._last_beacon_inputs.get("current station", ""),
                 "next_stop": self._last_beacon_inputs.get("next station", ""),
@@ -480,6 +469,7 @@ class TrainModelUI(ttk.Frame):
         else:
             controller_updates = {
                 "train_velocity": outputs["velocity_mph"],
+                "power_command": ctrl.get("power_command", 0.0),
                 "commanded_authority": remaining_authority,
                 "current_station": merged_inputs.get("current station", ""),
                 "next_stop": merged_inputs.get("next station", ""),

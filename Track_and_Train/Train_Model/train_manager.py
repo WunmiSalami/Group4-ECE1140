@@ -168,6 +168,7 @@ class train_controller:
             block = track_data[train_key].get("block", {})
             beacon = track_data[train_key].get("beacon", {})
 
+            # Only update track-related fields, preserve controller state
             self.update_state(
                 {
                     "commanded_speed": float(block.get("commanded speed", 0.0) or 0.0),
@@ -390,10 +391,7 @@ class train_controller_ui(tk.Toplevel):
 
             if not state["emergency_brake"] and state["service_brake"] == 0:
                 power = self.controller.calculate_power_command(state)
-                if power != state["power_command"]:
-                    self.controller.vital_control_check_and_update(
-                        {"power_command": power}
-                    )
+                self.controller.vital_control_check_and_update({"power_command": power})
             else:
                 self.controller._accumulated_error = 0
                 self.controller.vital_control_check_and_update(
@@ -546,9 +544,10 @@ class TrainManager:
         self.next_train_id = 1
 
         if state_file is None:
-            data_dir = os.path.join(current_dir, "data")
-            os.makedirs(data_dir, exist_ok=True)
-            self.state_file = os.path.join(data_dir, "train_states.json")
+            # Use the same path as train_model_core.py
+            train_controller_dir = os.path.join(parent_dir, "train_controller", "data")
+            os.makedirs(train_controller_dir, exist_ok=True)
+            self.state_file = os.path.join(train_controller_dir, "train_states.json")
         else:
             self.state_file = state_file
 
@@ -600,6 +599,10 @@ class TrainManager:
         controller_ui = None
         controller = None
 
+        # Initialize train state BEFORE creating controller UI
+        self._initialize_train_state(train_id)
+        self._initialize_train_data_entry(train_id, train_id - 1)
+
         if create_uis:
             model_ui_window = tk.Toplevel()
             model_ui_window.title(f"Train {train_id} - Train Model")
@@ -615,9 +618,6 @@ class TrainManager:
 
         train_pair = TrainPair(train_id, model, controller, model_ui, controller_ui)
         self.trains[train_id] = train_pair
-
-        self._initialize_train_state(train_id)
-        self._initialize_train_data_entry(train_id, train_id - 1)
 
         print(f"Train {train_id} created")
         return train_id
@@ -643,7 +643,8 @@ class TrainManager:
                         else {}
                     )
 
-        all_states[f"train_{train_id}"] = {
+        # Build complete initial state
+        train_state = {
             "train_id": train_id,
             "commanded_speed": float(block.get("commanded speed", 0.0) or 0.0),
             "commanded_authority": float(block.get("commanded authority", 0.0) or 0.0),
@@ -660,7 +661,10 @@ class TrainManager:
             "power_command": 0.0,
             "current_station": beacon.get("next station", "") or "",
         }
+
+        all_states[f"train_{train_id}"] = train_state
         safe_write_json(self.state_file, all_states)
+        print(f"[TrainManager] Initialized train_{train_id} with state: {train_state}")
 
     def _initialize_train_data_entry(self, train_id, index):
         track = safe_read_json(self.track_model_file)
@@ -1059,15 +1063,15 @@ class TrainManagerUI(tk.Tk):
         y_offset = 50 + (train_id - 1) * 60
         model_ui_window.geometry(f"350x700+{x_offset}+{y_offset}")
 
-        controller_ui = train_controller_ui(train_id, self.state_file)
+        controller_ui = train_controller_ui(train_id, self.manager.state_file)
         controller_ui.geometry(f"550x450+{x_offset + 360}+{y_offset}")
         controller = controller_ui.controller
 
         train_pair = TrainPair(train_id, model, controller, model_ui, controller_ui)
-        self.trains[train_id] = train_pair
+        self.manager.trains[train_id] = train_pair
 
-        self._initialize_train_state(train_id)
-        self._initialize_train_data_entry(train_id, train_id - 1)
+        self.manager._initialize_train_state(train_id)
+        self.manager._initialize_train_data_entry(train_id, train_id - 1)
 
         print(f"Train {train_id} auto-created from dispatch")
 
