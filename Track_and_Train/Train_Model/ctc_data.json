@@ -1,0 +1,56 @@
+{
+    "Dispatcher": {
+        "Trains": {
+            "Train 1": {
+                "Line": "Green",
+                "Suggested Speed": "",
+                "Authority": "",
+                "Station Destination": "Glenbury",
+                "Arrival Time": "23:56",
+                "Position": "",
+                "State": "Dispatched",
+                "Current Station": ""
+            },
+            "Train 2": {
+                "Line": "",
+                "Suggested Speed": "",
+                "Authority": "",
+                "Station Destination": "",
+                "Arrival Time": "",
+                "Position": "",
+                "State": "",
+                "Current Station": ""
+            },
+            "Train 3": {
+                "Line": "",
+                "Suggested Speed": "",
+                "Authority": "",
+                "Station Destination": "",
+                "Arrival Time": "",
+                "Position": "",
+                "State": "",
+                "Current Station": ""
+            },
+            "Train 4": {
+                "Line": "",
+                "Suggested Speed": "",
+                "Authority": "",
+                "Station Destination": "",
+                "Arrival Time": "",
+                "Position": "",
+                "State": "",
+                "Current Station": ""
+            },
+            "Train 5": {
+                "Line": "",
+                "Suggested Speed": "",
+                "Authority": "",
+                "Station Destination": "",
+                "Arrival Time": "",
+                "Position": "",
+                "State": "",
+                "Current Station": ""
+            }
+        }
+    }
+}

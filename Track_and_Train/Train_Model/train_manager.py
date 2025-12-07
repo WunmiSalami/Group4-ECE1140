@@ -160,9 +160,7 @@ class train_controller:
             safe_write_json(self.state_file, all_states)
 
     def update_from_train_model(self):
-        track_model_file = os.path.join(
-            parent_dir, "Train_Model", "track_model_Train_Model.json"
-        )
+        track_model_file = os.path.join(parent_dir, "track_model_Train_Model.json")
         track_data = safe_read_json(track_model_file)
         train_key = f"G_train_{self.train_id}"
 
@@ -347,6 +345,10 @@ class train_controller_ui(tk.Toplevel):
 
     def periodic_update(self):
         try:
+            # Check if window still exists before updating
+            if not self.winfo_exists():
+                return
+
             self.controller.update_from_train_model()
             state = self.controller.get_state()
 
@@ -376,26 +378,34 @@ class train_controller_ui(tk.Toplevel):
                 )
 
             self.speed_display.config(text=f"{state['train_velocity']:.1f} MPH")
-            self.info_table.set(
-                "commanded_speed",
-                column="Value",
-                value=f"{state['commanded_speed']:.1f} mph",
-            )
-            self.info_table.set(
-                "speed_limit", column="Value", value=f"{state['speed_limit']:.1f} mph"
-            )
-            self.info_table.set(
-                "authority",
-                column="Value",
-                value=f"{state['commanded_authority']:.1f} yds",
-            )
-            self.info_table.set("next_stop", column="Value", value=state["next_stop"])
-            self.info_table.set(
-                "power", column="Value", value=f"{state['power_command']:.1f} W"
-            )
-            self.info_table.set(
-                "station_side", column="Value", value=state["station_side"]
-            )
+            try:
+                self.info_table.set(
+                    "commanded_speed",
+                    column="Value",
+                    value=f"{state['commanded_speed']:.1f} mph",
+                )
+                self.info_table.set(
+                    "speed_limit",
+                    column="Value",
+                    value=f"{state['speed_limit']:.1f} mph",
+                )
+                self.info_table.set(
+                    "authority",
+                    column="Value",
+                    value=f"{state['commanded_authority']:.1f} yds",
+                )
+                self.info_table.set(
+                    "next_stop", column="Value", value=state["next_stop"]
+                )
+                self.info_table.set(
+                    "power", column="Value", value=f"{state['power_command']:.1f} W"
+                )
+                self.info_table.set(
+                    "station_side", column="Value", value=state["station_side"]
+                )
+            except Exception:
+                pass  # Table may be destroyed
+
             self.set_speed_label.config(text=f"Set: {state['driver_velocity']:.1f} MPH")
 
             if self.speed_entry.focus_get() != self.speed_entry:
@@ -403,9 +413,12 @@ class train_controller_ui(tk.Toplevel):
                     if float(self.speed_entry.get()) != state["driver_velocity"]:
                         self.speed_entry.delete(0, tk.END)
                         self.speed_entry.insert(0, f"{state['driver_velocity']:.1f}")
-                except ValueError:
-                    self.speed_entry.delete(0, tk.END)
-                    self.speed_entry.insert(0, f"{state['driver_velocity']:.1f}")
+                except (ValueError, tk.TclError):
+                    try:
+                        self.speed_entry.delete(0, tk.END)
+                        self.speed_entry.insert(0, f"{state['driver_velocity']:.1f}")
+                    except tk.TclError:
+                        pass  # Entry widget may be destroyed
 
             self.update_button_states(state)
         except Exception as e:
@@ -510,9 +523,7 @@ class TrainManager:
             self.state_file = state_file
 
         self.train_data_file = os.path.join(train_model_dir, "train_data.json")
-        self.track_model_file = os.path.join(
-            train_model_dir, "track_model_Train_Model.json"
-        )
+        self.track_model_file = os.path.join(parent_dir, "track_model_Train_Model.json")
 
         if not os.path.exists(self.state_file):
             safe_write_json(self.state_file, {})

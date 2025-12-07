@@ -456,6 +456,7 @@ class TrainModelUI(ttk.Frame):
             idx,
             outputs["acceleration_ftps2"],
             outputs["velocity_mph"],
+            outputs["position_yds"],
         )
 
         self.write_train_data(specs_for_write, merged_inputs, td_inputs)
@@ -487,65 +488,76 @@ class TrainModelUI(ttk.Frame):
             self.after(int(self.model.dt * 1000), self.update_loop)
 
     def _update_ui(self, outputs, ctrl, merged_inputs, disembarking):
-        self.info_labels["Velocity (mph)"].config(text=f"{outputs['velocity_mph']:.2f}")
-        self.info_labels["Acceleration (ft/s²)"].config(
-            text=f"{outputs['acceleration_ftps2']:.2f}"
-        )
-        self.info_labels["Position (yds)"].config(text=f"{outputs['position_yds']:.1f}")
-        self.info_labels["Authority Remaining (yds)"].config(
-            text=f"{outputs['authority_yds']:.1f}"
-        )
-        self.info_labels["Current Station"].config(
-            text=f"{outputs['station_name'] or ''}"
-        )
-        self.info_labels["Next Station"].config(text=f"{outputs['next_station'] or ''}")
-        self.info_labels["Speed Limit (mph)"].config(
-            text=f"{merged_inputs.get('speed limit', 0.0):.0f}"
-        )
-
-        def door_style(open_):
-            return "Status.On.TLabel" if open_ else "Status.Off.TLabel"
-
-        self.env_labels["Left Door"].config(
-            text="Open" if outputs["left_door_open"] else "Closed",
-            style=door_style(outputs["left_door_open"]),
-        )
-        self.env_labels["Right Door"].config(
-            text="Open" if outputs["right_door_open"] else "Closed",
-            style=door_style(outputs["right_door_open"]),
-        )
-
-        def set_flag(lbl_key, on):
-            self.fail_labels[lbl_key].config(
-                text="On" if on else "Off",
-                style="Status.On.TLabel" if on else "Status.Off.TLabel",
+        try:
+            self.info_labels["Velocity (mph)"].config(
+                text=f"{outputs['velocity_mph']:.2f}"
+            )
+            self.info_labels["Acceleration (ft/s²)"].config(
+                text=f"{outputs['acceleration_ftps2']:.2f}"
+            )
+            self.info_labels["Position (yds)"].config(
+                text=f"{outputs['position_yds']:.1f}"
+            )
+            self.info_labels["Authority Remaining (yds)"].config(
+                text=f"{outputs['authority_yds']:.1f}"
+            )
+            self.info_labels["Current Station"].config(
+                text=f"{outputs['station_name'] or ''}"
+            )
+            self.info_labels["Next Station"].config(
+                text=f"{outputs['next_station'] or ''}"
+            )
+            self.info_labels["Speed Limit (mph)"].config(
+                text=f"{merged_inputs.get('speed limit', 0.0):.0f}"
             )
 
-        set_flag(
-            "Engine Failure",
-            bool(merged_inputs.get("train_model_engine_failure", False)),
-        )
-        set_flag(
-            "Brake Failure", bool(merged_inputs.get("train_model_brake_failure", False))
-        )
-        set_flag(
-            "Signal Failure",
-            bool(merged_inputs.get("train_model_signal_failure", False)),
-        )
-        set_flag("Emergency Brake", bool(ctrl.get("emergency_brake", False)))
+            def door_style(open_):
+                return "Status.On.TLabel" if open_ else "Status.Off.TLabel"
 
-        try:
-            self.announcement_box.config(state="normal")
-            self.announcement_box.delete("1.0", "end")
-            announcement = ctrl.get("announcement", "")
-            if announcement:
-                self.announcement_box.insert("1.0", announcement)
-            else:
-                self.announcement_box.insert(
-                    "1.0", f"Running\nDisembark: {disembarking}"
+            self.env_labels["Left Door"].config(
+                text="Open" if outputs["left_door_open"] else "Closed",
+                style=door_style(outputs["left_door_open"]),
+            )
+            self.env_labels["Right Door"].config(
+                text="Open" if outputs["right_door_open"] else "Closed",
+                style=door_style(outputs["right_door_open"]),
+            )
+
+            def set_flag(lbl_key, on):
+                self.fail_labels[lbl_key].config(
+                    text="On" if on else "Off",
+                    style="Status.On.TLabel" if on else "Status.Off.TLabel",
                 )
-            self.announcement_box.config(state="disabled")
-        except Exception:
+
+            set_flag(
+                "Engine Failure",
+                bool(merged_inputs.get("train_model_engine_failure", False)),
+            )
+            set_flag(
+                "Brake Failure",
+                bool(merged_inputs.get("train_model_brake_failure", False)),
+            )
+            set_flag(
+                "Signal Failure",
+                bool(merged_inputs.get("train_model_signal_failure", False)),
+            )
+            set_flag("Emergency Brake", bool(ctrl.get("emergency_brake", False)))
+
+            try:
+                self.announcement_box.config(state="normal")
+                self.announcement_box.delete("1.0", "end")
+                announcement = ctrl.get("announcement", "")
+                if announcement:
+                    self.announcement_box.insert("1.0", announcement)
+                else:
+                    self.announcement_box.insert(
+                        "1.0", f"Running\nDisembark: {disembarking}"
+                    )
+                self.announcement_box.config(state="disabled")
+            except Exception:
+                pass
+        except Exception as e:
+            # Widget may be destroyed, ignore UI update errors
             pass
 
     def _watch_files(self):
