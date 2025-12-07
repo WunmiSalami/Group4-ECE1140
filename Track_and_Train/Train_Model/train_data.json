@@ -35,9 +35,9 @@
     },
     "train_1": {
         "inputs": {
-            "commanded speed": 0,
-            "commanded authority": 0,
-            "speed limit": 0,
+            "commanded speed": 21.0,
+            "commanded authority": 101.0,
+            "speed limit": 70.0,
             "current station": "Glenbury",
             "next station": "Glenbury",
             "side_door": "Right",
@@ -52,7 +52,7 @@
             "velocity_mph": 0.0,
             "acceleration_ftps2": 0.0,
             "position_yds": 0.0,
-            "authority_yds": 113.0
+            "authority_yds": 101.0
         },
         "specs": {
             "length_ft": 66.0,
@@ -69,8 +69,8 @@
     },
     "train_2": {
         "inputs": {
-            "commanded speed": 30.0,
-            "commanded authority": 10.0,
+            "commanded speed": 22.0,
+            "commanded authority": 101.0,
             "speed limit": 0.0,
             "current station": "N/A",
             "next station": "N/A",
@@ -86,7 +86,7 @@
             "velocity_mph": 0.0,
             "acceleration_ftps2": 0.0,
             "position_yds": 0.0,
-            "authority_yds": 10.0
+            "authority_yds": 101.0
         },
         "specs": {
             "length_ft": 66.0,

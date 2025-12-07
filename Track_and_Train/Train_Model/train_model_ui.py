@@ -293,13 +293,18 @@ class TrainModelUI(ttk.Frame):
                 print(f"[Train Model] Error updating state on server: {e}")
             return
 
-        # Local mode: write to file
+        # Local mode: READ FIRST, then merge updates
         all_states = safe_read_json(TRAIN_STATES_FILE)
         if self.train_id is None:
-            all_states.update(updates)
+            # Merge with existing root-level state
+            existing = all_states if isinstance(all_states, dict) else {}
+            existing.update(updates)
+            all_states = existing
         else:
             key = f"train_{self.train_id}"
+            # Get existing train state (preserves controller fields)
             cur = all_states.get(key, {})
+            # Merge updates into existing state
             cur.update(updates)
             all_states[key] = cur
         safe_write_json(TRAIN_STATES_FILE, all_states)

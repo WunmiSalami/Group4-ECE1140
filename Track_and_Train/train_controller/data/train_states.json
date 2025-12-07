@@ -1,14 +1,7 @@
 {
-    "train_velocity": 0.0,
-    "train_temperature": 33.25,
-    "commanded_authority": 10.0,
-    "current_station": "Glenbury",
-    "next_stop": "Glenbury",
-    "station_side": "Right",
-    "beacon_read_blocked": false,
     "train_1": {
         "train_velocity": 0.0,
-        "commanded_authority": 113.0,
+        "commanded_authority": 101.0,
         "current_station": "Glenbury",
         "next_stop": "Glenbury",
         "station_side": "Right",
@@ -16,7 +9,7 @@
     },
     "train_2": {
         "train_velocity": 0.0,
-        "commanded_authority": 10.0,
+        "commanded_authority": 101.0,
         "current_station": "N/A",
         "next_stop": "N/A",
         "station_side": "N/A",

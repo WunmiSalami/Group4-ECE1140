@@ -1,1 +1,36 @@
-{}
+{
+    "train_1": {
+        "train_id": 1,
+        "commanded_speed": 21.0,
+        "commanded_authority": 101.0,
+        "speed_limit": 70.0,
+        "train_velocity": 0.0,
+        "next_stop": "Glenbury",
+        "station_side": "Right",
+        "manual_mode": false,
+        "driver_velocity": 21,
+        "service_brake": false,
+        "emergency_brake": false,
+        "kp": 1500.0,
+        "ki": 50.0,
+        "power_command": 120000,
+        "current_station": "Glenbury"
+    },
+    "train_2": {
+        "train_id": 2,
+        "commanded_speed": 22.0,
+        "commanded_authority": 101.0,
+        "speed_limit": 0.0,
+        "train_velocity": 0.0,
+        "next_stop": "N/A",
+        "station_side": "N/A",
+        "manual_mode": false,
+        "driver_velocity": 22.0,
+        "service_brake": false,
+        "emergency_brake": false,
+        "kp": 1500.0,
+        "ki": 50.0,
+        "power_command": 120000,
+        "current_station": "N/A"
+    }
+}

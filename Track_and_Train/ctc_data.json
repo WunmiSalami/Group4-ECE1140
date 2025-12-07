@@ -6,19 +6,19 @@
                 "Suggested Speed": "",
                 "Authority": "",
                 "Station Destination": "Glenbury",
-                "Arrival Time": "01:03",
+                "Arrival Time": "01:32",
                 "Position": "",
                 "State": "Dispatched",
                 "Current Station": ""
             },
             "Train 2": {
-                "Line": "",
+                "Line": "Green",
                 "Suggested Speed": "",
                 "Authority": "",
-                "Station Destination": "",
-                "Arrival Time": "",
+                "Station Destination": "Glenbury",
+                "Arrival Time": "01:32",
                 "Position": "",
-                "State": "",
+                "State": "Dispatched",
                 "Current Station": ""
             },
             "Train 3": {

@@ -291,6 +291,17 @@ class train_controller_ui(tk.Toplevel):
         )
         self.set_speed_label.pack(pady=2)
 
+    def toggle_mode(self):
+        state = self.controller.get_state()
+        current_mode = state.get("manual_mode", False)
+        new_mode = not current_mode
+
+        self.controller.vital_control_check_and_update({"manual_mode": new_mode})
+
+        # Update button text
+        mode_text = "Manual" if new_mode else "Automatic"
+        self.mode_btn.config(text=f"Mode: {mode_text}")
+
     def create_info_table(self, parent):
         table_frame = ttk.LabelFrame(parent, text="Train Information")
         table_frame.pack(fill="both", expand=True, padx=5, pady=5)
@@ -323,6 +334,7 @@ class train_controller_ui(tk.Toplevel):
         button_frame = ttk.Frame(controls_frame)
         button_frame.pack(padx=10, pady=10)
 
+        # Row 0: Brake buttons
         self.service_brake_btn = tk.Button(
             button_frame,
             text="Service Brake",
@@ -342,6 +354,17 @@ class train_controller_ui(tk.Toplevel):
             height=1,
         )
         self.emergency_brake_btn.grid(row=0, column=1, padx=3, pady=3)
+
+        # Row 1: Manual/Automatic mode button
+        self.mode_btn = tk.Button(
+            button_frame,
+            text="Mode: Automatic",
+            command=self.toggle_mode,
+            bg=self.normal_color,
+            width=29,
+            height=1,
+        )
+        self.mode_btn.grid(row=1, column=0, columnspan=2, padx=3, pady=3)
 
     def periodic_update(self):
         try:
@@ -436,6 +459,10 @@ class train_controller_ui(tk.Toplevel):
         self.emergency_brake_btn.configure(
             bg=self.active_color if state["emergency_brake"] else self.normal_color
         )
+
+        # Update mode button text
+        mode_text = "Manual" if state.get("manual_mode", False) else "Automatic"
+        self.mode_btn.config(text=f"Mode: {mode_text}")
 
     def set_driver_speed(self):
         try:
