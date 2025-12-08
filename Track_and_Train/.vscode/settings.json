@@ -1,7 +1,0 @@
-{
-    "python.analysis.extraPaths": [
-        "./Track_Model",
-        "./Train Model",
-        "./Train_Model"
-    ]
-}
