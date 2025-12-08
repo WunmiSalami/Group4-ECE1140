@@ -252,7 +252,7 @@ class LineNetwork:
         parsed_lights = []
         for block_num in self.all_blocks:
             light_status = self.parse_traffic_lights(block_num, lights)
-            # Convert to int: Super Green=0, Green=1, Yellow=2, Red=3
+            # Convert to int: Super Green=0, Green=1, Yellow=2, Red=3, N/A=-1
             if light_status == "Super Green":
                 parsed_lights.append(0)
             elif light_status == "Green":
@@ -261,6 +261,8 @@ class LineNetwork:
                 parsed_lights.append(2)
             elif light_status == "Red":
                 parsed_lights.append(3)
+            else:  # N/A for blocks without traffic lights
+                parsed_lights.append(-1)
 
         # Write to block manager
         self.block_manager.write_inputs(
@@ -328,7 +330,9 @@ class LineNetwork:
         if self.line_name == "Green":
             traffic_light_blocks = [0, 3, 7, 29, 58, 62, 76, 86, 100, 101, 150, 151]
         elif self.line_name == "Red":
-            traffic_light_blocks = []  # TODO: Add Red line blocks when available
+            traffic_light_blocks = [0, 8, 14, 26, 31, 37, 42, 51]
+        else:
+            traffic_light_blocks = []
 
         # If current block doesn't have a traffic light, return N/A
         if current_block not in traffic_light_blocks:

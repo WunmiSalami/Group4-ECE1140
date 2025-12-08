@@ -404,6 +404,9 @@ class TrackModelUI(ttk.Frame):
             static_data = data.get("static_data", {})
             if static_data:
                 available_lines = list(static_data.keys())
+                # Add Show All Lines option if multiple lines available
+                if len(available_lines) > 1:
+                    available_lines.append("Show All Lines")
                 self.line_selector["values"] = available_lines
                 if available_lines:
                     self.line_selector.current(0)
@@ -511,6 +514,11 @@ class TrackModelUI(ttk.Frame):
 
                 all_lines_data[line] = df.to_dict(orient="records")
 
+            # Add Show All Lines option if multiple lines available
+            if len(available_lines) > 1:
+                available_lines.append("Show All Lines")
+                self.line_selector["values"] = available_lines
+
             data = {
                 "static_data": all_lines_data,
                 "block": {},
@@ -544,6 +552,19 @@ class TrackModelUI(ttk.Frame):
         selected_line = self.line_selector.get()
         if not selected_line or not os.path.exists(STATIC_JSON_PATH):
             self.block_selector["values"] = []
+            return
+
+        # Handle Show All Lines option
+        if selected_line == "Show All Lines":
+            if hasattr(self, "visualizer") and self.visualizer:
+                self.visualizer.show_all_lines()
+                self.block_selector["values"] = []
+                self.block_selector.set("")
+                # Clear block information display
+                for label_key in self.block_labels:
+                    self.block_labels[label_key].set("N/A")
+                # Set line_network to None so check_and_start_trains knows we're in overlay mode
+                self.line_network = None
             return
 
         self.load_static_after_upload(selected_line)
@@ -685,6 +706,13 @@ class TrackModelUI(ttk.Frame):
         selected_line = self.line_selector.get()
         selected_block = self.block_selector.get()
 
+        # For Show All Lines, skip UI updates since no blocks are visible/selectable
+        if selected_line == "Show All Lines":
+            # Still need to check and start trains and reschedule timer
+            self.check_and_start_trains()
+            self.after(500, self.load_data)
+            return
+
         # Update temperature and heater status regardless of block data
         temp = self.green_line_temp if selected_line == "Green" else self.red_line_temp
         self.temperature.set(str(temp))
@@ -708,26 +736,30 @@ class TrackModelUI(ttk.Frame):
 
                 # Determine direction from UNIDIRECTIONAL_BLOCKS
                 from LineNetwork import UNIDIRECTIONAL_BLOCKS
+                import re
 
                 line_key = self.line_selector.get().replace(" Line", "")
                 unidirectional_ranges = UNIDIRECTIONAL_BLOCKS.get(line_key, [])
                 direction = "Bidirectional"  # Default to Bidirectional (most blocks)
                 try:
-                    block_num = int(selected_block)
-                    # Check if block is in any unidirectional range
-                    for item in unidirectional_ranges:
-                        if isinstance(item, tuple):
-                            start, end = item
-                            if (start <= end and start <= block_num <= end) or (
-                                start > end and end <= block_num <= start
-                            ):
-                                direction = "Unidirectional"
-                                break
-                        elif isinstance(item, int):
-                            # Single block
-                            if block_num == item:
-                                direction = "Unidirectional"
-                                break
+                    # Extract numeric part from block ID (e.g., "A5" -> 5)
+                    match = re.search(r"\d+", selected_block)
+                    if match:
+                        block_num = int(match.group())
+                        # Check if block is in any unidirectional range
+                        for item in unidirectional_ranges:
+                            if isinstance(item, tuple):
+                                start, end = item
+                                if (start <= end and start <= block_num <= end) or (
+                                    start > end and end <= block_num <= start
+                                ):
+                                    direction = "Unidirectional"
+                                    break
+                            elif isinstance(item, int):
+                                # Single block
+                                if block_num == item:
+                                    direction = "Unidirectional"
+                                    break
                 except (ValueError, TypeError):
                     pass
 
@@ -797,6 +829,10 @@ class TrackModelUI(ttk.Frame):
                 self.warning_label.config(
                     text="✓ All Systems Normal", foreground="#3ba55d"
                 )
+
+        # Update traffic light colors on canvas
+        if hasattr(self, "visualizer") and self.visualizer:
+            self.visualizer.update_traffic_light_colors()
 
         self.check_and_start_trains()
         self.after(500, self.load_data)
@@ -911,7 +947,38 @@ class TrackModelUI(ttk.Frame):
 
     def check_and_start_trains(self):
         # Always read from track_io.json and sync to train model
-        if self.line_network:
+        selected_line = self.line_selector.get()
+
+        if selected_line == "Show All Lines":
+            # Read data for BOTH Red and Green lines
+            if (
+                hasattr(self, "visualizer")
+                and self.visualizer
+                and self.visualizer.track_data
+            ):
+                # Read Red Line data
+                if "Red Line" in self.visualizer.track_data:
+                    df_red = self.visualizer.track_data.get("Red Line")
+                    if df_red is not None:
+                        from LineNetwork import LineNetworkBuilder
+
+                        red_network = LineNetworkBuilder(df_red, "Red Line").build()
+                        red_network.block_manager = self.block_manager
+                        red_network.read_train_data_from_json()
+
+                # Read Green Line data
+                if "Green Line" in self.visualizer.track_data:
+                    df_green = self.visualizer.track_data.get("Green Line")
+                    if df_green is not None:
+                        from LineNetwork import LineNetworkBuilder
+
+                        green_network = LineNetworkBuilder(
+                            df_green, "Green Line"
+                        ).build()
+                        green_network.block_manager = self.block_manager
+                        green_network.read_train_data_from_json()
+        elif self.line_network:
+            # Read data for single line
             self.line_network.read_train_data_from_json()
 
         # Then check if any trains need to start animating

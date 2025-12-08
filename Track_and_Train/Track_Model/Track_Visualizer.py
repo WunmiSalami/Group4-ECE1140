@@ -217,6 +217,10 @@ class RailwayDiagram:
         """Draw railway line using skeleton paths from parser."""
         self.canvas.delete("all")
         self.elements = []
+        self._draw_red_line_without_clear(line_name)
+
+    def _draw_red_line_without_clear(self, line_name: str):
+        """Draw Red Line without clearing canvas (for overlay)."""
 
         # Define traffic light blocks for Red Line
         self.traffic_light_blocks_red = [0, 8, 14, 26, 31, 37, 42, 51]
@@ -680,6 +684,14 @@ class RailwayDiagram:
             # Store yard position as block 0
             self.all_positions_green[0] = yard_position
 
+        # Draw crossings on Red Line blocks 47 and 11
+        for block_num in [47, 11]:
+            if block_num in self.all_positions_red and self.crossing_image:
+                x, y = self.all_positions_red[block_num]
+                self.canvas.create_image(
+                    x, y, image=self.crossing_image, tags="crossing"
+                )
+
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         # Update info
         station_count = len(
@@ -696,6 +708,10 @@ class RailwayDiagram:
         """Draw railway line using skeleton paths from parser."""
         self.canvas.delete("all")
         self.elements = []
+        self._draw_green_line_without_clear(line_name)
+
+    def _draw_green_line_without_clear(self, line_name: str):
+        """Draw Green Line without clearing canvas (for overlay)."""
 
         # Define traffic light blocks for Green Line
         self.traffic_light_blocks_green = [
@@ -1166,6 +1182,14 @@ class RailwayDiagram:
             # Store yard position as block 0
             self.all_positions_green[0] = yard_position
 
+        # Draw crossings on Green Line blocks 108 and 19
+        for block_num in [108, 19]:
+            if block_num in self.all_positions_green and self.crossing_image:
+                x, y = self.all_positions_green[block_num]
+                self.canvas.create_image(
+                    x, y, image=self.crossing_image, tags="crossing"
+                )
+
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
         # Update info
@@ -1321,6 +1345,84 @@ class RailwayDiagram:
         # Highlight selected block if specified
         if highlighted_block:
             self.highlight_block(highlighted_block)
+
+    def show_all_lines(self):
+        """Display both Red and Green lines overlapped on same canvas without block numbers."""
+        self.canvas.delete("all")
+        self.elements = []
+        self.current_line = None
+
+        if not self.track_data:
+            print("No track data loaded")
+            return
+
+        # Store original line_network to restore after drawing both lines
+        original_network = self.line_network
+
+        # Draw Red Line first (without block numbers)
+        if "Red Line" in self.track_data:
+            df_red = self.track_data.get("Red Line")
+            if df_red is not None:
+                from LineNetwork import LineNetworkBuilder
+
+                temp_network = LineNetworkBuilder(df_red, "Red Line").build()
+                temp_network.block_manager = self.block_manager
+                self.line_network = temp_network
+                self._draw_red_line_without_clear("Red Line")
+
+        # Draw Green Line on top (without block numbers)
+        if "Green Line" in self.track_data:
+            df_green = self.track_data.get("Green Line")
+            if df_green is not None:
+                from LineNetwork import LineNetworkBuilder
+
+                temp_network = LineNetworkBuilder(df_green, "Green Line").build()
+                temp_network.block_manager = self.block_manager
+                self.line_network = temp_network
+                self._draw_green_line_without_clear("Green Line")
+
+        # Remove all block number labels from canvas
+        self.canvas.delete("block_label")
+
+        # Scale down EVERYTHING on the canvas by 15% to make it more compact
+        # This happens after both lines are drawn
+        self.canvas.scale("all", 0, 0, 0.85, 0.85)
+
+        # Restore original line_network
+        self.line_network = original_network
+
+    def update_traffic_light_colors(self):
+        """Update traffic light indicator colors based on current block manager state."""
+        if not self.block_manager or not self.current_line:
+            return
+
+        # Determine which line we're viewing
+        line_name = self.current_line.replace(" Line", "")
+
+        # Map states to colors
+        light_color_map = {
+            "Super Green": "#00ff00",
+            "Green": "#00ff00",
+            "Yellow": "#ffff00",
+            "Red": "#ff0000",
+            "N/A": "#808080",
+            "OFF": "#404040",
+        }
+
+        # Update all traffic light elements
+        for element in self.elements:
+            if element["type"] == "traffic_light":
+                block_name = element["data"]["block_name"]
+                block_data = self.block_manager.get_block_dynamic_data(
+                    line_name, block_name
+                )
+                if block_data:
+                    light_state = block_data["traffic_light"]
+                    light_color = light_color_map.get(light_state, "#808080")
+                    try:
+                        self.canvas.itemconfig(element["id"], fill=light_color)
+                    except Exception:
+                        pass
 
     def highlight_block(self, block_name: str):
         """Ensure only one block is highlighted at a time."""
