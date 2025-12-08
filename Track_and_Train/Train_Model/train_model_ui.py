@@ -631,8 +631,7 @@ class TrainModelUI(ttk.Frame):
                 if "outputs" in train_data:
                     train_data["outputs"] = {}
                 safe_write_json(self.train_data_path, train_data)
-                print("[Train Model] Reset train_data.json inputs/outputs")
         except Exception as e:
-            print(f"[Train Model] Error resetting train_data.json: {e}")
+            pass
 
         self.destroy()

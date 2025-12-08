@@ -203,7 +203,7 @@ class RailwayDiagram:
             self.parser = TrackDiagramParser(os.path.join(VISUALIZER_DIR, "track.png"))
             self.parser.parse()
         except Exception as e:
-            print(f"Error loading Excel: {e}")
+            pass
 
     def show_all_lines(self):
         """Show overview of all lines."""
@@ -239,7 +239,6 @@ class RailwayDiagram:
             additional_connections, skip_connections = (
                 self.line_network.get_red_line_visualizer_info()
             )
-            print(f"[Red Line] skip_connections = {skip_connections}")
 
         # Convert skip_connections from block numbers to section letters
         skip_sections = set()
@@ -743,7 +742,6 @@ class RailwayDiagram:
             additional_connections, skip_connections = (
                 self.line_network.get_green_line_visualizer_info()
             )
-            print(f"[Green Line] skip_connections = {skip_connections}")
 
         # Convert skip_connections from block numbers to section letters
         skip_sections = set()
@@ -1520,7 +1518,6 @@ class RailwayDiagram:
             self.train_photos[train_id] = photo
 
         except Exception as e:
-            print(f"Error loading train image: {e}")
             photo = None
 
         # Determine which position dictionary to use

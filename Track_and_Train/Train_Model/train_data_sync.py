@@ -49,8 +49,7 @@ def sync_train_data():
 
     # Detect multi-train format (only keep dict-valued train_* entries)
     multi_keys = [
-        k for k, v in states.items()
-        if k.startswith("train_") and isinstance(v, dict)
+        k for k, v in states.items() if k.startswith("train_") and isinstance(v, dict)
     ]
 
     if multi_keys:
@@ -72,9 +71,15 @@ def sync_train_data():
                     "current station": s.get("current_station", s.get("next_stop", "")),
                     "next station": s.get("next_stop", ""),
                     "passengers_boarding": passengers_boarding_existing,
-                    "train_model_engine_failure": s.get("train_model_engine_failure", False),
-                    "train_model_signal_failure": s.get("train_model_signal_failure", False),
-                    "train_model_brake_failure": s.get("train_model_brake_failure", False),
+                    "train_model_engine_failure": s.get(
+                        "train_model_engine_failure", False
+                    ),
+                    "train_model_signal_failure": s.get(
+                        "train_model_signal_failure", False
+                    ),
+                    "train_model_brake_failure": s.get(
+                        "train_model_brake_failure", False
+                    ),
                     "emergency_brake": s.get("emergency_brake", False),
                 }
             )
@@ -88,35 +93,39 @@ def sync_train_data():
                 "commanded authority": states.get("commanded_authority", 0.0),
                 "speed limit": states.get("speed_limit", 30.0),
                 "side_door": states.get("station_side", "Right"),
-                "current station": states.get("current_station", states.get("next_stop", "Unknown")),
+                "current station": states.get(
+                    "current_station", states.get("next_stop", "Unknown")
+                ),
                 "next station": states.get("next_stop", "Unknown"),
-                "train_model_engine_failure": states.get("train_model_engine_failure", False),
-                "train_model_signal_failure": states.get("train_model_signal_failure", False),
-                "train_model_brake_failure": states.get("train_model_brake_failure", False),
+                "train_model_engine_failure": states.get(
+                    "train_model_engine_failure", False
+                ),
+                "train_model_signal_failure": states.get(
+                    "train_model_signal_failure", False
+                ),
+                "train_model_brake_failure": states.get(
+                    "train_model_brake_failure", False
+                ),
                 "emergency_brake": states.get("emergency_brake", False),
             }
         )
         train_data["inputs"] = inputs
 
     _safe_write(TRAIN_DATA_FILE, train_data)
-    print("[SYNC SUCCESS] train_data.json synchronized.")
 
 
 if __name__ == "__main__":
     sync_train_data()
 
 {
-  "templates": [
-    { "id": 1, "speed": 0, "mass": 40000, "...": "..." },
-    { "id": 2, "speed": 0, "mass": 42000, "...": "..." },
-    { "id": 3, "...": "..." }
-  ],
-  "beacons": [
-    { "block": 12, "data": "..." },
-    { "block": 13, "data": "..." }
-  ],
-  "trainStates": {
-    "train1": { "templateId": 1, "speed": 0, "mass": 40000, "...": "..." },
-    "train2": { "templateId": 2, "speed": 0, "mass": 42000, "...": "..." }
-  }
+    "templates": [
+        {"id": 1, "speed": 0, "mass": 40000, "...": "..."},
+        {"id": 2, "speed": 0, "mass": 42000, "...": "..."},
+        {"id": 3, "...": "..."},
+    ],
+    "beacons": [{"block": 12, "data": "..."}, {"block": 13, "data": "..."}],
+    "trainStates": {
+        "train1": {"templateId": 1, "speed": 0, "mass": 40000, "...": "..."},
+        "train2": {"templateId": 2, "speed": 0, "mass": 42000, "...": "..."},
+    },
 }

@@ -920,13 +920,10 @@ class TrackModelUI(ttk.Frame):
             return "N/A"
 
         except FileNotFoundError:
-            print("Error: track_model_static.json not found")
             return "N/A"
         except json.JSONDecodeError as e:
-            print(f"Error: Invalid JSON in static file: {e}")
             return "N/A"
         except Exception as e:
-            print(f"Error getting station name: {e}")
             return "N/A"
 
     def on_window_close(self):

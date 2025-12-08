@@ -11,6 +11,7 @@ import json
 import random
 import os
 import sys
+from logger import get_logger
 
 # Correct fixed paths for Track and Train JSONs
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))  # Track_and_Train
@@ -165,7 +166,7 @@ class LineNetwork:
             self.write_to_train_model_json(commanded_speeds, commanded_authorities)
 
         except Exception as e:
-            print(f"Error reading JSON: {e}")
+            pass
 
     def write_to_train_model_json(self, commanded_speeds, commanded_authorities):
         json_path = TRAIN_MODEL_JSON
@@ -376,7 +377,6 @@ class LineNetwork:
                 return motion.capitalize()  # Convert to "Stopped", "Moving", etc.
             return "Stopped"
         except Exception as e:
-            print(f"Error reading train motion: {e}")
             return "Stopped"
 
     def get_next_block(self, train_id, current, previous=None):
@@ -413,7 +413,7 @@ class LineNetwork:
                 if block.get("Block Number") == block_num:
                     return block.get("Station", "N/A")
         except Exception as e:
-            print(f"Error reading station name: {e}")
+            pass
 
         return "N/A"
 
@@ -455,7 +455,6 @@ class LineNetwork:
             return "N/A", "N/A"
 
         except Exception as e:
-            print(f"Error in find_next_station: {e}")
             return "N/A", "N/A"
 
     def write_beacon_data_to_train_model(
@@ -500,13 +499,10 @@ class LineNetwork:
                         with open(json_path, "w") as f:
                             json.dump(train_model_data, f, indent=4)
 
-                        print(
-                            f"Train {train_id} on line {self.line_name} at block {next_block} has a circuit failure. Beacon data set to N/A."
-                        )
                         return  # Exit early - don't process normal beacon data
 
         except Exception as e:
-            print(f"Error writing Circuit Failure beacon data to train model: {e}")
+            pass
         try:
             # Read static track data
             json_path = TRACK_STATIC_JSON
@@ -576,8 +572,23 @@ class LineNetwork:
             with open(json_path, "w") as f:
                 json.dump(train_model_data, f, indent=4)
 
+            logger = get_logger()
+            logger.debug(
+                "BEACON",
+                f"Train {train_id} beacon updated at block {next_block}",
+                {
+                    "train_id": train_id,
+                    "line": self.line_name,
+                    "block": next_block,
+                    "current_station": current_station,
+                    "next_station": next_station,
+                    "speed_limit": speed_limit,
+                    "passengers_boarding": passengers_boarding,
+                },
+            )
+
         except Exception as e:
-            print(f"Error writing beacon data to train model: {e}")
+            pass
 
     def update_block_occupancy(
         self, current_block: int, previous_block: Optional[int] = None
@@ -631,7 +642,7 @@ class LineNetwork:
                 json.dump(data, f, indent=4)
 
         except Exception as e:
-            print(f"Error writing occupancy to JSON: {e}")
+            pass
 
     def write_failures_to_json(self, json_path=TRACK_CONTROLLER_JSON):
         """Write failure data back to Track Controller JSON."""
@@ -663,7 +674,7 @@ class LineNetwork:
                 json.dump(data, f, indent=4)
 
         except Exception as e:
-            print(f"Error writing failures to JSON: {e}")
+            pass
 
     def load_crossing_blocks_from_static(self):
         """Load crossing blocks from static JSON file."""
@@ -786,8 +797,20 @@ class LineNetwork:
         # Add delta to yards traveled in current block
         self.yards_into_current_block[train_id] += delta
 
-        print(
-            f"[DEBUG] Train {train_id} Block {current_block}: pos={current_position_yds:.2f}, prev_pos={self.previous_position_yds[train_id]:.2f}, delta={delta:.2f}, yards_in_block={self.yards_into_current_block[train_id]:.2f}"
+        # Log position tracking
+        logger = get_logger()
+        logger.debug(
+            "POSITION",
+            f"Train {train_id} Block {current_block}: pos={current_position_yds:.2f}yds, delta={delta:.2f}yds, block_traveled={self.yards_into_current_block[train_id]:.2f}yds",
+            {
+                "train_id": train_id,
+                "line": self.line_name,
+                "current_block": current_block,
+                "position_yds": round(current_position_yds, 2),
+                "previous_position_yds": round(self.previous_position_yds[train_id], 2),
+                "delta_yds": round(delta, 2),
+                "yards_in_block": round(self.yards_into_current_block[train_id], 2),
+            },
         )
 
         # Get block length from static JSON
@@ -823,7 +846,6 @@ class LineNetwork:
                 return False
 
         except Exception as e:
-            print(f"Error in should_advance_block: {e}")
             self.previous_position_yds[train_id] = current_position_yds
             return True  # Default to allowing advance on error
 
@@ -883,69 +905,40 @@ class LineNetwork:
 
         # Check if current block is a switch block or routes through a switch
         if current in switch_routes:
-            print(f"[Green] Block {current} is in switch_routes")
             # Check if this block routes through another switch
             if current in source_to_switch:
                 switch_block = source_to_switch[current]
-                print(f"[Green] Block {current} routes through switch {switch_block}")
                 switch_target = self.block_manager.get_switch_position(
                     self.line_name, switch_block
                 )
-                print(
-                    f"[Green] Switch {switch_block} position returns: {switch_target}"
-                )
                 if switch_target == switch_block + 1:
-                    print(
-                        f"[Green] Adjusting: {switch_target} == {switch_block}+1, setting to {switch_block}"
-                    )
                     switch_target = switch_block
             else:
                 # This block is the actual switch
-                print(f"[Green] Block {current} is the actual switch")
                 switch_target = self.block_manager.get_switch_position(
                     self.line_name, current
                 )
-                print(f"[Green] Switch {current} position returns: {switch_target}")
 
             if switch_target != "N/A" and isinstance(switch_target, int):
                 next_block = switch_target
-                print(f"[Green] Using switch target: {next_block}")
             else:
-                print(f"[Green] Switch returned N/A, using fallback logic")
                 # Fallback to backward/forward motion
                 if previous is not None and previous == current + 1:
                     next_block = current - 1
                 elif previous is not None and previous == current - 1:
                     next_block = current + 1
                 else:
-                    print(
-                        f"ERROR: Green Line - No path defined for block {current}, previous {previous}"
-                    )
                     next_block = current
         else:
-            print(
-                f"[Green] Block {current} NOT in switch_routes, using backward/forward logic"
-            )
             # Use backward/forward motion logic
             if previous is not None and previous == current + 1:
                 next_block = current - 1
-                print(
-                    f"[Green] Backward: previous ({previous}) == current+1 ({current+1}), next={next_block}"
-                )
             elif previous is not None and previous == current - 1:
                 next_block = current + 1
-                print(
-                    f"[Green] Forward: previous ({previous}) == current-1 ({current-1}), next={next_block}"
-                )
 
             else:
                 # Should never happen with proper hard-coding
-                print(
-                    f"Green Line - No path defined for block {current}, previous {previous}, moving to next sequential block"
-                )
                 next_block = current + 1
-
-        print(f"Train at block {current} with next block {next_block} on Green Line.")
 
         return next_block
 
@@ -1000,9 +993,6 @@ class LineNetwork:
                 elif previous is not None and previous == current - 1:
                     next_block = current + 1
                 else:
-                    print(
-                        f"Red Line - No path defined for block {current}, previous {previous} moving to next sequential block"
-                    )
                     next_block = current + 1
         else:
             # Use backward/forward motion logic
@@ -1012,9 +1002,6 @@ class LineNetwork:
                 next_block = current + 1
             else:
                 # Should never happen with proper hard-coding
-                print(
-                    f"ERROR: Red Line - No path defined for block {current}, previous {previous}"
-                )
                 next_block = current
 
         return next_block
@@ -1145,9 +1132,7 @@ def main():
 
     try:
         df = pd.read_excel(excel_file_path, sheet_name="Green Line")
-        print(f"✓ Data loaded successfully from {excel_file_path}")
     except FileNotFoundError:
-        print(f"❌ Error: Excel file not found at '{excel_file_path}'.")
         return
 
     builder = LineNetworkBuilder(df, "Green Line")
@@ -1161,10 +1146,8 @@ def main():
 
     for i in range(200):
         next_block = network.get_next_block(1, current, previous)
-        print(f"Step {i}: Block {current} → {next_block}")
 
         if next_block == current:
-            print("Train stopped")
             break
 
         previous = current

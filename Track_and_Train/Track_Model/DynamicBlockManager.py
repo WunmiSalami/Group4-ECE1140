@@ -1,3 +1,10 @@
+import sys
+import os
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from logger import get_logger
+
+
 class DynamicBlockManager:
     def __init__(self):
         self.line_states = {"Green": {}, "Red": {}}
@@ -42,27 +49,114 @@ class DynamicBlockManager:
         }
         light_blocks = traffic_light_blocks.get(line_name, [])
 
+        logger = get_logger()
+        light_map = {0: "Super Green", 1: "Green", 2: "Yellow", 3: "Red", -1: "N/A"}
+
         for idx, block_id in enumerate(blocks):
             # Extract numeric block number
             block_num = int("".join(filter(str.isdigit, block_id)))
 
             # Only update light value if this block has a traffic light
             if block_num in light_blocks and idx < len(lights):
-                self.line_states[line_name][block_id]["light"] = lights[idx]
+                old_light = self.line_states[line_name][block_id]["light"]
+                new_light = lights[idx]
+                self.line_states[line_name][block_id]["light"] = new_light
+
+                if old_light != new_light and old_light != -1:
+                    logger.debug(
+                        "LIGHT",
+                        f"{line_name} line block {block_num} traffic light: {light_map.get(old_light)} → {light_map.get(new_light)}",
+                        {
+                            "line": line_name,
+                            "block": block_num,
+                            "old_state": light_map.get(old_light),
+                            "new_state": light_map.get(new_light),
+                        },
+                    )
 
             if block_num in gates:
-                self.line_states[line_name][block_id]["gate"] = gates[block_num]
+                old_gate = self.line_states[line_name][block_id]["gate"]
+                new_gate = gates[block_num]
+                self.line_states[line_name][block_id]["gate"] = new_gate
+
+                if old_gate != new_gate and old_gate != "N/A":
+                    logger.info(
+                        "GATE",
+                        f"{line_name} line block {block_num} crossing gate: {old_gate} → {new_gate}",
+                        {
+                            "line": line_name,
+                            "block": block_num,
+                            "old_state": old_gate,
+                            "new_state": new_gate,
+                        },
+                    )
 
             if block_num in switches:
-                self.line_states[line_name][block_id]["switch_position"] = switches[
-                    block_num
-                ]
+                old_position = self.line_states[line_name][block_id]["switch_position"]
+                new_position = switches[block_num]
+                self.line_states[line_name][block_id]["switch_position"] = new_position
+
+                if old_position != new_position and old_position != "N/A":
+                    logger = get_logger()
+                    logger.info(
+                        "SWITCH",
+                        f"{line_name} line block {block_num} switch changed to position {new_position}",
+                        {
+                            "line": line_name,
+                            "block": block_num,
+                            "old_position": old_position,
+                            "new_position": new_position,
+                        },
+                    )
 
     def update_failures(self, line_name, block_id, power, circuit, broken):
         """Write failures."""
+        old_failures = self.line_states[line_name][block_id]["failures"].copy()
         self.line_states[line_name][block_id]["failures"]["power"] = power
         self.line_states[line_name][block_id]["failures"]["circuit"] = circuit
         self.line_states[line_name][block_id]["failures"]["broken"] = broken
+
+        logger = get_logger()
+
+        # Log new failures
+        if power and not old_failures["power"]:
+            logger.warn(
+                "FAILURE",
+                f"{line_name} line {block_id} POWER failure activated",
+                {"line": line_name, "block": block_id, "failure_type": "power"},
+            )
+        if circuit and not old_failures["circuit"]:
+            logger.warn(
+                "FAILURE",
+                f"{line_name} line {block_id} CIRCUIT failure activated",
+                {"line": line_name, "block": block_id, "failure_type": "circuit"},
+            )
+        if broken and not old_failures["broken"]:
+            logger.warn(
+                "FAILURE",
+                f"{line_name} line {block_id} BROKEN RAIL failure activated",
+                {"line": line_name, "block": block_id, "failure_type": "broken_rail"},
+            )
+
+        # Log cleared failures
+        if not power and old_failures["power"]:
+            logger.info(
+                "FAILURE",
+                f"{line_name} line {block_id} power failure cleared",
+                {"line": line_name, "block": block_id, "failure_type": "power"},
+            )
+        if not circuit and old_failures["circuit"]:
+            logger.info(
+                "FAILURE",
+                f"{line_name} line {block_id} circuit failure cleared",
+                {"line": line_name, "block": block_id, "failure_type": "circuit"},
+            )
+        if not broken and old_failures["broken"]:
+            logger.info(
+                "FAILURE",
+                f"{line_name} line {block_id} broken rail failure cleared",
+                {"line": line_name, "block": block_id, "failure_type": "broken_rail"},
+            )
 
     def get_block_dynamic_data(self, line_name, block_id):
         """Read data."""

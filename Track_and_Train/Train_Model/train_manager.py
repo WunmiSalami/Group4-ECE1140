@@ -18,6 +18,9 @@ parent_dir = os.path.dirname(current_dir)
 train_model_dir = os.path.join(parent_dir, "Train_Model")
 sys.path.extend([current_dir, parent_dir, train_model_dir])
 
+# Import logger
+from logger import get_logger
+
 _file_lock = threading.Lock()
 
 
@@ -615,7 +618,7 @@ class train_controller_ui(tk.Toplevel):
             except tk.TclError:
                 pass  # Button may be destroyed
         except Exception as e:
-            print(f"Update error: {e}")
+            pass
         finally:
             self.after(self.update_interval, self.periodic_update)
 
@@ -680,6 +683,17 @@ class train_controller_ui(tk.Toplevel):
             }
         )
 
+        logger = get_logger()
+        logger.info(
+            "BRAKE",
+            f"Train {self.train_id} service brake {'activated' if activate else 'released'}",
+            {
+                "train_id": self.train_id,
+                "service_brake": activate,
+                "velocity": state["train_velocity"],
+            },
+        )
+
     def emergency_brake(self):
         state = self.controller.get_state()
         activate = not state.get("emergency_brake", False)
@@ -689,6 +703,18 @@ class train_controller_ui(tk.Toplevel):
                 "driver_velocity": 0 if activate else state["driver_velocity"],
                 "power_command": 0 if activate else state["power_command"],
             }
+        )
+
+        logger = get_logger()
+        logger.warn(
+            "BRAKE",
+            f"Train {self.train_id} EMERGENCY brake {'ACTIVATED' if activate else 'released'}",
+            {
+                "train_id": self.train_id,
+                "emergency_brake": activate,
+                "velocity": state["train_velocity"],
+                "position_yds": state.get("position_yds", 0),
+            },
         )
 
 
@@ -796,7 +822,13 @@ class TrainManager:
         train_pair = TrainPair(train_id, model, controller, model_ui, controller_ui)
         self.trains[train_id] = train_pair
 
-        print(f"Train {train_id} created")
+        logger = get_logger()
+        logger.info(
+            "TRAIN",
+            f"Train {train_id} created successfully",
+            {"train_id": train_id, "has_ui": create_uis, "specs": train_specs},
+        )
+
         return train_id
 
     def _initialize_train_state(self, train_id):
@@ -914,6 +946,12 @@ class TrainManager:
 
     def remove_train(self, train_id):
         if train_id not in self.trains:
+            logger = get_logger()
+            logger.warn(
+                "TRAIN",
+                f"Attempted to remove non-existent train {train_id}",
+                {"train_id": train_id},
+            )
             return False
 
         train = self.trains[train_id]
@@ -935,7 +973,11 @@ class TrainManager:
             del all_states[f"train_{train_id}"]
         safe_write_json(self.state_file, all_states)
 
-        print(f"Train {train_id} removed")
+        logger = get_logger()
+        logger.info(
+            "TRAIN", f"Train {train_id} removed successfully", {"train_id": train_id}
+        )
+
         return True
 
     def get_train(self, train_id):
@@ -976,12 +1018,10 @@ class TrainManager:
             all_states[f"train_{train_id}"] = state
 
         safe_write_json(self.state_file, all_states)
-        print(f"[TrainManager] Reset all {num_trains} train states to defaults")
 
     @staticmethod
     def cleanup_all_files():
         """Reset all JSON files to default/initial states on application exit"""
-        print("[Cleanup] Starting cleanup of all JSON files...")
         try:
             # 1. Reset train_states.json
             train_controller_dir = os.path.join(parent_dir, "train_controller", "data")
@@ -1015,7 +1055,6 @@ class TrainManager:
                 all_states[f"train_{train_id}"] = state
 
             safe_write_json(train_states_file, all_states)
-            print("[Cleanup] Reset train_states.json")
 
             # 2. Reset track_io.json to default switch/gate/light/occupancy states
             track_io_file = os.path.join(parent_dir, "track_io.json")
@@ -1049,9 +1088,6 @@ class TrainManager:
                     track_io_data["R-Train"]["commanded speed"] = []
                     track_io_data["R-Train"]["commanded authority"] = []
                 safe_write_json(track_io_file, track_io_data)
-                print(
-                    "[Cleanup] Reset track_io.json switches/gates/lights/occupancy/commands"
-                )
 
             # 3. Reset ctc_data.json trains to initial state
             ctc_file = os.path.join(parent_dir, "ctc_data.json")
@@ -1070,7 +1106,6 @@ class TrainManager:
                         trains[train_key]["State"] = "Idle"
                         trains[train_key]["Current Station"] = ""
                     safe_write_json(ctc_file, ctc_data)
-                    print("[Cleanup] Reset ctc_data.json train states")
 
             # 4. Reset track_model_Train_Model.json (dynamic train/track data)
             track_model_file = os.path.join(parent_dir, "track_model_Train_Model.json")
@@ -1101,18 +1136,15 @@ class TrainManager:
                                 "position_yds": 0.0,
                             }
                 safe_write_json(track_model_file, track_model_data)
-                print("[Cleanup] Reset track_model_Train_Model.json")
 
             # 5. Reset track_model_static.json to empty state
             track_model_dir = os.path.join(parent_dir, "Track_Model")
             static_file = os.path.join(track_model_dir, "track_model_static.json")
             if os.path.exists(static_file):
                 safe_write_json(static_file, {})
-                print("[Cleanup] Cleared track_model_static.json")
 
-            print("[Cleanup] Completed cleanup of all JSON files")
         except Exception as e:
-            print(f"[Cleanup Error] Unexpected error during cleanup: {e}")
+            pass
 
 
 class TrainManagerUI(tk.Tk):
@@ -1341,7 +1373,6 @@ class TrainManagerUI(tk.Tk):
                 self.update_train_list()
                 self.after(2000, self._poll_wrapper)
         except Exception as e:
-            print(f"Error in _poll_wrapper: {e}")
             if self.winfo_exists():
                 self.after(2000, self._poll_wrapper)
 
@@ -1402,8 +1433,6 @@ class TrainManagerUI(tk.Tk):
                 if (
                     commanded_speed > 0 or commanded_authority > 0
                 ) and train_id not in self.trains:
-                    print(f"Auto-creating Train {train_id} from TrackControl dispatch")
-
                     # Sync next_train_id to avoid conflicts
                     if train_id >= self.next_train_id:
                         self.next_train_id = train_id + 1
@@ -1412,7 +1441,7 @@ class TrainManagerUI(tk.Tk):
                     self._add_train_with_id(train_id)
 
         except Exception as e:
-            print(f"Error polling track model: {e}")
+            pass
         finally:
             self.after(1000, self._poll_track_model_for_new_trains)
 
@@ -1469,8 +1498,6 @@ class TrainManagerUI(tk.Tk):
 
         self.manager._initialize_train_state(train_id)
         self.manager._initialize_train_data_entry(train_id, train_id - 1)
-
-        print(f"Train {train_id} auto-created from dispatch")
 
     def on_closing(self):
         """Handle cleanup when window is closing"""
