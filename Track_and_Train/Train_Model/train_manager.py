@@ -252,8 +252,8 @@ class train_controller:
         speed_limit = state.get("speed_limit", 0.0)
         position_yds = state.get("position_yds", 0.0)
 
-        # If within 3 yards of authority, apply service brake
-        if commanded_authority - position_yds <= 3:
+        # If within 3 yards of authority, apply service brake (only if authority is set)
+        if commanded_authority > 0 and commanded_authority - position_yds <= 3:
             service_brake = True
             state["service_brake"] = True
             self.update_state({"service_brake": True, "power_command": 0.0})
@@ -438,7 +438,7 @@ class train_controller_ui(tk.Toplevel):
             # Emergency brake stays on until manually released - do not auto-release
             # Removed auto-release logic that was here
 
-            if not state["emergency_brake"] and state["service_brake"] == 0:
+            if not state["emergency_brake"] and not state["service_brake"]:
                 power = self.controller.calculate_power_command(state)
                 self.controller.vital_control_check_and_update({"power_command": power})
             else:
@@ -476,19 +476,24 @@ class train_controller_ui(tk.Toplevel):
             except Exception:
                 pass  # Table may be destroyed
 
-            self.set_speed_label.config(text=f"Set: {state['driver_velocity']:.1f} MPH")
+            try:
+                self.set_speed_label.config(
+                    text=f"Set: {state['driver_velocity']:.1f} MPH"
+                )
+            except tk.TclError:
+                pass  # Label may be destroyed
 
-            if self.speed_entry.focus_get() != self.speed_entry:
-                try:
-                    if float(self.speed_entry.get()) != state["driver_velocity"]:
+            try:
+                if (
+                    self.speed_entry.winfo_exists()
+                    and self.speed_entry.focus_get() != self.speed_entry
+                ):
+                    current_entry = float(self.speed_entry.get())
+                    if current_entry != state["driver_velocity"]:
                         self.speed_entry.delete(0, tk.END)
                         self.speed_entry.insert(0, f"{state['driver_velocity']:.1f}")
-                except (ValueError, tk.TclError):
-                    try:
-                        self.speed_entry.delete(0, tk.END)
-                        self.speed_entry.insert(0, f"{state['driver_velocity']:.1f}")
-                    except tk.TclError:
-                        pass  # Entry widget may be destroyed
+            except (ValueError, tk.TclError, AttributeError):
+                pass  # Entry widget may be destroyed or invalid
 
             try:
                 self.update_button_states(state)
