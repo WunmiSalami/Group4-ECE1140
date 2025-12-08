@@ -1015,9 +1015,9 @@ class LineNetwork:
                     next_block = current + 1
                 else:
                     print(
-                        f"ERROR: Red Line - No path defined for block {current}, previous {previous}"
+                        f"Red Line - No path defined for block {current}, previous {previous} moving to next sequential block"
                     )
-                    next_block = current
+                    next_block = current + 1
         else:
             # Use backward/forward motion logic
             if previous is not None and previous == current + 1:
