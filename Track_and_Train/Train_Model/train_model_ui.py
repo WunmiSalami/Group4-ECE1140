@@ -59,6 +59,10 @@ class TrainModelUI(ttk.Frame):
         super().__init__(parent)
         self.pack(fill="both", expand=True)
 
+        # Configure parent window dark theme
+        if isinstance(parent, tk.Tk) or isinstance(parent, tk.Toplevel):
+            parent.configure(bg="#2b2d31")
+
         # Configure narrower window
         self.config(width=350)
         self.pack_propagate(False)
@@ -67,14 +71,42 @@ class TrainModelUI(ttk.Frame):
         self.train_data_path = TRAIN_DATA_FILE
 
         style = ttk.Style(self)
-        try:
-            style.theme_use("vista")
-        except Exception:
-            style.theme_use("clam")
-        style.configure("Header.TLabelframe", font=("Segoe UI", 10, "bold"))
-        style.configure("Data.TLabel", font=("Consolas", 9))
-        style.configure("Status.On.TLabel", foreground="#0a7d12")
-        style.configure("Status.Off.TLabel", foreground="#b00")
+        style.theme_use("clam")
+
+        # Dark theme styles
+        style.configure("TFrame", background="#2b2d31")
+        style.configure(
+            "Header.TLabelframe",
+            background="#2b2d31",
+            foreground="#5865f2",
+            borderwidth=2,
+            relief="solid",
+            font=("Segoe UI", 10, "bold"),
+        )
+        style.configure(
+            "Header.TLabelframe.Label",
+            background="#2b2d31",
+            foreground="#5865f2",
+            font=("Segoe UI", 10, "bold"),
+        )
+        style.configure(
+            "Data.TLabel",
+            background="#2b2d31",
+            foreground="#ffffff",
+            font=("Consolas", 9),
+        )
+        style.configure(
+            "Status.On.TLabel",
+            background="#2b2d31",
+            foreground="#3ba55d",
+            font=("Consolas", 9),
+        )
+        style.configure(
+            "Status.Off.TLabel",
+            background="#2b2d31",
+            foreground="#ed4245",
+            font=("Consolas", 9),
+        )
 
         td = ensure_train_data(self.train_data_path)
         if self.train_id is not None and f"train_{self.train_id}" in td:
@@ -105,7 +137,7 @@ class TrainModelUI(ttk.Frame):
         self.update_loop()
 
     def create_info_panel(self, parent):
-        frame = ttk.LabelFrame(parent, text="Dynamics", style="Header.TLabelframe")
+        frame = ttk.LabelFrame(parent, text="📊 DYNAMICS", style="Header.TLabelframe")
         frame.pack(fill="x", padx=4, pady=4)
 
         self.info_labels = {}
@@ -119,7 +151,7 @@ class TrainModelUI(ttk.Frame):
             "Speed Limit (mph)",
         ]
         for i, key in enumerate(fields):
-            row_frame = ttk.Frame(frame)
+            row_frame = ttk.Frame(frame, style="TFrame")
             row_frame.pack(fill="x", padx=8, pady=2)
 
             ttk.Label(row_frame, text=key + ":", style="Data.TLabel", width=25).pack(
@@ -130,12 +162,12 @@ class TrainModelUI(ttk.Frame):
             self.info_labels[key] = lbl
 
     def create_doors_panel(self, parent):
-        frame = ttk.LabelFrame(parent, text="Doors", style="Header.TLabelframe")
+        frame = ttk.LabelFrame(parent, text="🚪 DOORS", style="Header.TLabelframe")
         frame.pack(fill="x", padx=4, pady=4)
 
         self.env_labels = {}
         for key in ["Left Door", "Right Door"]:
-            row_frame = ttk.Frame(frame)
+            row_frame = ttk.Frame(frame, style="TFrame")
             row_frame.pack(fill="x", padx=8, pady=2)
 
             ttk.Label(row_frame, text=key + ":", style="Data.TLabel", width=25).pack(
@@ -146,7 +178,7 @@ class TrainModelUI(ttk.Frame):
             self.env_labels[key] = lbl
 
     def create_specs_panel(self, parent):
-        frame = ttk.LabelFrame(parent, text="Specs", style="Header.TLabelframe")
+        frame = ttk.LabelFrame(parent, text="📋 SPECS", style="Header.TLabelframe")
         frame.pack(fill="x", padx=4, pady=4)
 
         # Only show capacity and crew_count
@@ -163,7 +195,7 @@ class TrainModelUI(ttk.Frame):
         ).pack(anchor="w", padx=8, pady=2)
 
     def create_failure_panel(self, parent):
-        frame = ttk.LabelFrame(parent, text="Failures", style="Header.TLabelframe")
+        frame = ttk.LabelFrame(parent, text="⚠️  FAILURES", style="Header.TLabelframe")
         frame.pack(fill="x", padx=4, pady=4)
 
         self.fail_labels = {}
@@ -175,7 +207,7 @@ class TrainModelUI(ttk.Frame):
         ]
 
         for key, command in failures:
-            row_frame = ttk.Frame(frame)
+            row_frame = ttk.Frame(frame, style="TFrame")
             row_frame.pack(fill="x", padx=6, pady=2)
 
             ttk.Label(row_frame, text=key + ":", style="Data.TLabel", width=18).pack(
@@ -190,11 +222,22 @@ class TrainModelUI(ttk.Frame):
             )
 
     def create_announcements_panel(self, parent):
-        frame = ttk.LabelFrame(parent, text="Announcements", style="Header.TLabelframe")
+        frame = ttk.LabelFrame(
+            parent, text="📢 ANNOUNCEMENTS", style="Header.TLabelframe"
+        )
         frame.pack(fill="both", expand=True, padx=4, pady=4)
 
         self.announcement_box = tk.Text(
-            frame, height=4, wrap="word", state="disabled", bg="white"
+            frame,
+            height=4,
+            wrap="word",
+            state="disabled",
+            bg="#1e1f22",
+            fg="#ffffff",
+            font=("Segoe UI", 9),
+            insertbackground="#ffffff",
+            borderwidth=0,
+            highlightthickness=0,
         )
         self.announcement_box.pack(fill="both", expand=True, padx=6, pady=6)
 

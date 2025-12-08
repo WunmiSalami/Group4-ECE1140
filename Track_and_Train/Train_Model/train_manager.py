@@ -253,7 +253,8 @@ class train_controller:
         position_yds = state.get("position_yds", 0.0)
 
         # If within 3 yards of authority, apply service brake (only if authority is set)
-        if commanded_authority > 0 and commanded_authority - position_yds <= 3:
+        # Note: commanded_authority already represents REMAINING authority (from physics calculation)
+        if commanded_authority > 0 and commanded_authority <= 3:
             service_brake = True
             state["service_brake"] = True
             self.update_state({"service_brake": True, "power_command": 0.0})
@@ -288,15 +289,93 @@ class train_controller_ui(tk.Toplevel):
         self.state_file = state_file
         self.controller = train_controller(train_id, state_file)
 
-        self.title(f"Train {train_id} - Controller")
-        self.geometry("550x450")
-        self.configure(bg="lightgray")
+        self.title(f"🚂 Train {train_id} - Controller")
+        self.geometry("550x520")
+        self.configure(bg="#2b2d31")
 
-        self.active_color = "#ff4444"
-        self.normal_color = "lightgray"
+        # Configure dark theme styles
+        style = ttk.Style()
+        style.theme_use("clam")
 
-        main_frame = ttk.Frame(self)
-        main_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        # Frame styles
+        style.configure("TFrame", background="#2b2d31")
+        style.configure(
+            "TLabelframe",
+            background="#2b2d31",
+            foreground="#ffffff",
+            borderwidth=2,
+            relief="solid",
+        )
+        style.configure(
+            "TLabelframe.Label",
+            background="#2b2d31",
+            foreground="#5865f2",
+            font=("Segoe UI", 11, "bold"),
+        )
+
+        # Label styles
+        style.configure(
+            "TLabel", background="#2b2d31", foreground="#ffffff", font=("Segoe UI", 10)
+        )
+        style.configure(
+            "Bold.TLabel",
+            background="#2b2d31",
+            foreground="#ffffff",
+            font=("Segoe UI", 12, "bold"),
+        )
+        style.configure(
+            "Value.TLabel",
+            background="#1e1f22",
+            foreground="#00d9ff",
+            font=("Segoe UI", 16, "bold"),
+            padding=10,
+            relief="flat",
+        )
+
+        # Entry styles
+        style.configure(
+            "TEntry",
+            fieldbackground="#1e1f22",
+            foreground="#ffffff",
+            borderwidth=1,
+            insertcolor="#ffffff",
+        )
+
+        # Button styles
+        style.configure(
+            "TButton",
+            background="#5865f2",
+            foreground="white",
+            borderwidth=0,
+            focuscolor="none",
+            font=("Segoe UI", 10, "bold"),
+            padding=8,
+        )
+        style.map("TButton", background=[("active", "#4752c4"), ("pressed", "#3c45a5")])
+
+        # Treeview styles
+        style.configure(
+            "Treeview",
+            background="#1e1f22",
+            foreground="#ffffff",
+            fieldbackground="#1e1f22",
+            borderwidth=0,
+            font=("Segoe UI", 10),
+        )
+        style.configure(
+            "Treeview.Heading",
+            background="#5865f2",
+            foreground="#ffffff",
+            borderwidth=0,
+            font=("Segoe UI", 10, "bold"),
+        )
+        style.map("Treeview", background=[("selected", "#5865f2")])
+
+        self.active_color = "#ed4245"
+        self.normal_color = "#313338"
+
+        main_frame = ttk.Frame(self, style="TFrame")
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.create_speed_section(main_frame)
         self.create_info_table(main_frame)
@@ -306,36 +385,48 @@ class train_controller_ui(tk.Toplevel):
         self.periodic_update()
 
     def create_speed_section(self, parent):
-        speed_frame = ttk.LabelFrame(parent, text="Speed Control")
-        speed_frame.pack(fill="x", padx=5, pady=5)
-
-        display_frame = ttk.Frame(speed_frame)
-        display_frame.pack(fill="x", pady=5)
-        ttk.Label(display_frame, text="Current:", font=("Arial", 10)).pack(
-            side="left", padx=5
+        speed_frame = ttk.LabelFrame(
+            parent, text="⚡ SPEED CONTROL", style="TLabelframe"
         )
+        speed_frame.pack(fill="x", padx=5, pady=(0, 10))
+
+        display_frame = ttk.Frame(speed_frame, style="TFrame")
+        display_frame.pack(fill="x", pady=(10, 5), padx=10)
+
+        ttk.Label(
+            display_frame, text="Current Speed", font=("Segoe UI", 9), style="TLabel"
+        ).pack()
         self.speed_display = ttk.Label(
-            display_frame, text="0 MPH", font=("Arial", 14, "bold")
+            display_frame, text="0.0 MPH", style="Value.TLabel"
         )
-        self.speed_display.pack(side="left", padx=5)
+        self.speed_display.pack(pady=(5, 10))
 
-        input_frame = ttk.Frame(speed_frame)
-        input_frame.pack(fill="x", pady=5)
-        ttk.Label(input_frame, text="Set Speed:", font=("Arial", 10)).pack(
-            side="left", padx=5
+        input_frame = ttk.Frame(speed_frame, style="TFrame")
+        input_frame.pack(fill="x", pady=5, padx=10)
+        ttk.Label(
+            input_frame,
+            text="Set Speed (MPH):",
+            font=("Segoe UI", 10, "bold"),
+            style="TLabel",
+        ).pack(side="left", padx=(0, 5))
+        self.speed_entry = ttk.Entry(
+            input_frame, width=10, font=("Segoe UI", 12), style="TEntry"
         )
-        self.speed_entry = ttk.Entry(input_frame, width=8, font=("Arial", 12))
         self.speed_entry.pack(side="left", padx=5)
         self.speed_entry.insert(0, "0")
         self.speed_entry.bind("<Return>", lambda e: self.set_driver_speed())
         ttk.Button(
-            input_frame, text="Set", command=self.set_driver_speed, width=6
+            input_frame,
+            text="Apply",
+            command=self.set_driver_speed,
+            width=8,
+            style="TButton",
         ).pack(side="left", padx=5)
 
         self.set_speed_label = ttk.Label(
-            speed_frame, text="Set: 0 MPH", font=("Arial", 10)
+            speed_frame, text="Target: 0.0 MPH", font=("Segoe UI", 9), style="TLabel"
         )
-        self.set_speed_label.pack(pady=2)
+        self.set_speed_label.pack(pady=(5, 10))
 
     def toggle_mode(self):
         state = self.controller.get_state()
@@ -353,19 +444,25 @@ class train_controller_ui(tk.Toplevel):
 
         # Update button text
         mode_text = "Manual" if new_mode else "Automatic"
-        self.mode_btn.config(text=f"Mode: {mode_text}")
+        self.mode_btn.config(text=f"🔄 Mode: {mode_text}")
 
     def create_info_table(self, parent):
-        table_frame = ttk.LabelFrame(parent, text="Train Information")
-        table_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        table_frame = ttk.LabelFrame(
+            parent, text="📊 TRAIN INFORMATION", style="TLabelframe"
+        )
+        table_frame.pack(fill="both", expand=True, padx=5, pady=(0, 10))
 
         self.info_table = ttk.Treeview(
-            table_frame, columns=("Name", "Value"), show="headings", height=6
+            table_frame,
+            columns=("Name", "Value"),
+            show="headings",
+            height=6,
+            style="Treeview",
         )
         self.info_table.heading("Name", text="Parameter")
         self.info_table.heading("Value", text="Value")
-        self.info_table.column("Name", width=180)
-        self.info_table.column("Value", width=120)
+        self.info_table.column("Name", width=200)
+        self.info_table.column("Value", width=150)
 
         self.info_table.insert(
             "", "end", "commanded_speed", values=("Commanded Speed", "0 mph")
@@ -378,46 +475,64 @@ class train_controller_ui(tk.Toplevel):
         self.info_table.insert("", "end", "power", values=("Power Command", "0 W"))
         self.info_table.insert("", "end", "station_side", values=("Door Side", "--"))
 
-        self.info_table.pack(padx=5, pady=5, fill="both", expand=True)
+        self.info_table.pack(padx=10, pady=10, fill="both", expand=True)
 
     def create_control_section(self, parent):
-        controls_frame = ttk.LabelFrame(parent, text="Controls")
-        controls_frame.pack(fill="x", padx=5, pady=5)
+        controls_frame = ttk.LabelFrame(parent, text="🎛️  CONTROLS", style="TLabelframe")
+        controls_frame.pack(fill="x", padx=5, pady=(0, 5))
 
-        button_frame = ttk.Frame(controls_frame)
+        button_frame = ttk.Frame(controls_frame, style="TFrame")
         button_frame.pack(padx=10, pady=10)
 
         # Row 0: Brake buttons
         self.service_brake_btn = tk.Button(
             button_frame,
-            text="Service Brake",
+            text="🛑 Service Brake",
             command=self.toggle_service_brake,
             bg=self.normal_color,
-            width=14,
-            height=1,
+            fg="#ffffff",
+            activebackground="#4e5058",
+            activeforeground="#ffffff",
+            font=("Segoe UI", 10, "bold"),
+            borderwidth=0,
+            width=16,
+            height=2,
+            cursor="hand2",
         )
-        self.service_brake_btn.grid(row=0, column=0, padx=3, pady=3)
+        self.service_brake_btn.grid(row=0, column=0, padx=5, pady=5)
 
         self.emergency_brake_btn = tk.Button(
             button_frame,
-            text="Emergency Brake",
+            text="🚨 Emergency Brake",
             command=self.emergency_brake,
             bg=self.normal_color,
-            width=14,
-            height=1,
+            fg="#ffffff",
+            activebackground="#4e5058",
+            activeforeground="#ffffff",
+            font=("Segoe UI", 10, "bold"),
+            borderwidth=0,
+            width=16,
+            height=2,
+            cursor="hand2",
         )
-        self.emergency_brake_btn.grid(row=0, column=1, padx=3, pady=3)
+        self.emergency_brake_btn.grid(row=0, column=1, padx=5, pady=5)
 
         # Row 1: Manual/Automatic mode button
         self.mode_btn = tk.Button(
             button_frame,
-            text="Mode: Automatic",
+            text="🔄 Mode: Automatic",
             command=self.toggle_mode,
-            bg=self.normal_color,
-            width=29,
-            height=1,
+            bg="#5865f2",
+            fg="#ffffff",
+            activebackground="#4752c4",
+            activeforeground="#ffffff",
+            font=("Segoe UI", 10, "bold"),
+            borderwidth=0,
+            width=34,
+            height=2,
+            cursor="hand2",
         )
-        self.mode_btn.grid(row=1, column=0, columnspan=2, padx=3, pady=3)
+        self.mode_btn.grid(row=1, column=0, columnspan=2, padx=5, pady=(0, 5))
 
     def periodic_update(self):
         try:
@@ -1003,8 +1118,9 @@ class TrainManager:
 class TrainManagerUI(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Train Manager")
-        self.geometry("400x600+50+50")
+        self.title("🚂 Train Manager")
+        self.geometry("450x650+50+50")
+        self.configure(bg="#2b2d31")
 
         self.manager = TrainManager()
         self.visibility_buttons = {}
@@ -1025,36 +1141,48 @@ class TrainManagerUI(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def create_header(self):
-        header = tk.Frame(self, bg="#2c3e50", height=80)
+        header = tk.Frame(self, bg="#1e1f22", height=100)
         header.grid(row=0, column=0, sticky="EW")
         header.columnconfigure(0, weight=1)
 
         tk.Label(
             header,
-            text="Train Manager",
-            font=("Arial", 18, "bold"),
-            bg="#2c3e50",
-            fg="white",
-        ).grid(row=0, column=0, pady=(10, 0))
+            text="🚂 TRAIN MANAGER",
+            font=("Segoe UI", 20, "bold"),
+            bg="#1e1f22",
+            fg="#ffffff",
+        ).grid(row=0, column=0, pady=(20, 5))
         tk.Label(
             header,
             text="Multi-Train System Control",
-            font=("Arial", 10),
-            bg="#2c3e50",
-            fg="#bdc3c7",
-        ).grid(row=1, column=0, pady=(0, 10))
+            font=("Segoe UI", 10),
+            bg="#1e1f22",
+            fg="#b5bac1",
+        ).grid(row=1, column=0, pady=(0, 15))
 
     def create_train_list(self):
         list_frame = tk.LabelFrame(
-            self, text="Active Trains", font=("Arial", 11, "bold")
+            self,
+            text="🚆 ACTIVE TRAINS",
+            font=("Segoe UI", 11, "bold"),
+            bg="#2b2d31",
+            fg="#5865f2",
+            borderwidth=2,
+            relief="solid",
         )
-        list_frame.grid(row=1, column=0, sticky="NSEW", padx=10, pady=10)
+        list_frame.grid(row=1, column=0, sticky="NSEW", padx=15, pady=15)
         list_frame.columnconfigure(0, weight=1)
         list_frame.rowconfigure(0, weight=1)
 
-        canvas = tk.Canvas(list_frame)
+        canvas = tk.Canvas(
+            list_frame, bg="#2b2d31", highlightthickness=0, borderwidth=0
+        )
         scrollbar = tk.Scrollbar(list_frame, orient="vertical", command=canvas.yview)
         self.train_items_frame = ttk.Frame(canvas)
+
+        # Configure ttk Frame style
+        style = ttk.Style()
+        style.configure("TFrame", background="#2b2d31")
 
         self.train_items_frame.bind(
             "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
@@ -1067,44 +1195,53 @@ class TrainManagerUI(tk.Tk):
         scrollbar.pack(side="right", fill="y")
 
     def create_control_buttons(self):
-        button_frame = tk.Frame(self)
-        button_frame.grid(row=2, column=0, sticky="EW", padx=10, pady=(0, 10))
+        button_frame = tk.Frame(self, bg="#2b2d31")
+        button_frame.grid(row=2, column=0, sticky="EW", padx=15, pady=(0, 15))
         button_frame.columnconfigure(0, weight=1)
 
         tk.Button(
             button_frame,
             text="➕ Add New Train",
-            font=("Arial", 12, "bold"),
-            bg="#27ae60",
+            font=("Segoe UI", 12, "bold"),
+            bg="#3ba55d",
             fg="white",
+            activebackground="#2d7d46",
+            activeforeground="white",
             command=self.add_train,
             height=2,
             cursor="hand2",
+            borderwidth=0,
+            relief="flat",
         ).grid(row=0, column=0, columnspan=2, sticky="EW", pady=(0, 10))
 
         tk.Button(
             button_frame,
-            text="Remove Selected",
-            font=("Arial", 10),
-            bg="#e74c3c",
+            text="🗑️  Remove Selected",
+            font=("Segoe UI", 10, "bold"),
+            bg="#ed4245",
             fg="white",
+            activebackground="#c03537",
+            activeforeground="white",
             command=self.remove_selected_train,
             cursor="hand2",
+            borderwidth=0,
+            relief="flat",
+            height=2,
         ).grid(row=1, column=0, sticky="EW")
 
     def create_status_bar(self):
-        status_frame = tk.Frame(self, bg="#34495e", height=30)
+        status_frame = tk.Frame(self, bg="#1e1f22", height=35)
         status_frame.grid(row=3, column=0, sticky="EW")
 
         self.status_label = tk.Label(
             status_frame,
-            text="Ready - No trains active",
-            font=("Arial", 9),
-            bg="#34495e",
-            fg="white",
+            text="✓ Ready - No trains active",
+            font=("Segoe UI", 9),
+            bg="#1e1f22",
+            fg="#b5bac1",
             anchor="w",
         )
-        self.status_label.pack(side="left", padx=10, pady=5)
+        self.status_label.pack(side="left", padx=15, pady=8)
 
     def add_train(self):
         try:
@@ -1136,38 +1273,66 @@ class TrainManagerUI(tk.Tk):
         train_ids = self.manager.get_all_train_ids()
 
         if not train_ids:
-            ttk.Label(
+            empty_label = tk.Label(
                 self.train_items_frame,
                 text="No trains active",
-                font=("Arial", 10, "italic"),
-            ).pack(pady=10)
+                font=("Segoe UI", 10, "italic"),
+                bg="#2b2d31",
+                fg="#6d6f78",
+            )
+            empty_label.pack(pady=20)
         else:
             for train_id in train_ids:
-                train_frame = ttk.Frame(self.train_items_frame)
-                train_frame.pack(fill="x", padx=5, pady=3)
+                # Create train card with dark theme
+                train_card = tk.Frame(
+                    self.train_items_frame, bg="#313338", relief="flat", borderwidth=0
+                )
+                train_card.pack(fill="x", padx=8, pady=5)
 
-                ttk.Radiobutton(
-                    train_frame,
-                    text=f"Train {train_id}",
-                    value=train_id,
-                    command=lambda tid=train_id: self.select_train(tid),
+                # Inner frame for padding
+                inner_frame = tk.Frame(train_card, bg="#313338")
+                inner_frame.pack(fill="x", padx=12, pady=10)
+
+                # Train ID label
+                tk.Label(
+                    inner_frame,
+                    text=f"🚂 Train {train_id}",
+                    font=("Segoe UI", 11, "bold"),
+                    bg="#313338",
+                    fg="#ffffff",
+                    cursor="hand2",
                 ).pack(side="left", padx=5)
 
-                btn = ttk.Button(
-                    train_frame,
-                    text="Hide",
-                    width=8,
+                # Visibility button
+                btn = tk.Button(
+                    inner_frame,
+                    text="👁️ Hide",
+                    font=("Segoe UI", 9, "bold"),
+                    bg="#5865f2",
+                    fg="white",
+                    activebackground="#4752c4",
+                    activeforeground="white",
+                    borderwidth=0,
+                    cursor="hand2",
+                    width=10,
                     command=lambda tid=train_id: self.toggle_train_visibility(tid),
                 )
                 btn.pack(side="right", padx=2)
 
                 self.visibility_buttons[train_id] = btn
 
+                # Make the entire card clickable
+                def make_select_handler(tid):
+                    return lambda e: self.select_train(tid)
+
+                train_card.bind("<Button-1>", make_select_handler(train_id))
+                inner_frame.bind("<Button-1>", make_select_handler(train_id))
+
         count = self.manager.get_train_count()
         if count == 0:
-            self.update_status("Ready - No trains active")
+            self.update_status("✓ Ready - No trains active")
         else:
-            self.update_status(f"Managing {count} train(s)")
+            self.update_status(f"✓ Managing {count} train(s)")
 
     def _poll_wrapper(self):
         """Periodically update the train manager UI."""
@@ -1194,10 +1359,10 @@ class TrainManagerUI(tk.Tk):
 
         if train.controller_ui and train.controller_ui.state() == "normal":
             train.hide_windows()
-            btn.config(text="Show")
+            btn.config(text="👁️ Show")
         else:
             train.show_windows()
-            btn.config(text="Hide")
+            btn.config(text="👁️ Hide")
 
     def update_status(self, message):
         self.status_label.config(text=message)

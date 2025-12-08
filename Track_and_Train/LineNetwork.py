@@ -57,10 +57,10 @@ def parse_branching_connections(value: str) -> List[Tuple[int, int]]:
 
 UNIDIRECTIONAL_BLOCKS = {
     "Green": [
+        (30, 57),
         (63, 77),
         (101, 150),
-        (0, 63),
-        (57, 0),
+        0,
     ],
     "Red": [],
 }
@@ -322,7 +322,7 @@ class LineNetwork:
     def parse_traffic_lights(self, current_block: int, lights_array: List[int]) -> str:
         """
         Parse traffic light status for current block.
-        Returns: "Super Green", "Green", "Yellow", or "Red"
+        Returns: "Super Green", "Green", "Yellow", "Red", or "N/A" (for blocks without traffic lights)
         """
         # Hard-coded blocks with traffic lights
         if self.line_name == "Green":
@@ -330,9 +330,9 @@ class LineNetwork:
         elif self.line_name == "Red":
             traffic_light_blocks = []  # TODO: Add Red line blocks when available
 
-        # If current block doesn't have a traffic light, return Super Green
+        # If current block doesn't have a traffic light, return N/A
         if current_block not in traffic_light_blocks:
-            return "Super Green"
+            return "N/A"
 
         # Find which traffic light index this is (0-11)
         traffic_light_index = traffic_light_blocks.index(current_block)
@@ -355,8 +355,8 @@ class LineNetwork:
             elif bit1 == 1 and bit2 == 1:
                 return "Red"
 
-        # Default to Super Green if parsing fails
-        return "Super Green"
+        # Default to N/A if parsing fails
+        return "N/A"
 
     def _read_train_motion(self, train_id):
         """Read the current motion status of a train from track_model_Train_Model.json"""
@@ -845,24 +845,6 @@ class LineNetwork:
         self.write_beacon_data_to_train_model(next_block, train_id, current)
         self.write_occupancy_to_json()
         self.write_failures_to_json()
-
-        line_key = self.line_name.replace(" Line", "")
-        unidirectional_ranges = UNIDIRECTIONAL_BLOCKS.get(line_key, [])
-
-        direction = "Bidirectional"
-        for start, end in unidirectional_ranges:
-            if start <= current <= end or end <= current <= start:
-                direction = "Unidirectional"
-                break
-
-        if self.block_manager:
-            for block_id in self.block_manager.line_states.get(self.line_name, {}):
-                block_num_str = "".join(filter(str.isdigit, block_id))
-                if block_num_str and int(block_num_str) == current:
-                    self.block_manager.line_states[self.line_name][block_id][
-                        "direction"
-                    ] = direction
-                    break
 
     def _get_green_line_next_block(self, current: int, previous: Optional[int]) -> int:
         """

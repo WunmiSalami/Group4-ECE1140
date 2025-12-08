@@ -264,7 +264,10 @@ class TrainModel:
             0.0, self.velocity_mph + self.acceleration_ftps2 * self.dt * 0.681818
         )
         self.position_yds += (self.velocity_mph / 0.681818) * self.dt / 3.0
-        self.authority_yds = float(commanded_authority or 0.0)
+        # Calculate remaining authority (commanded - position traveled)
+        self.authority_yds = max(
+            0.0, float(commanded_authority or 0.0) - self.position_yds
+        )
         return {
             "velocity_mph": self.velocity_mph,
             "acceleration_ftps2": self.acceleration_ftps2,

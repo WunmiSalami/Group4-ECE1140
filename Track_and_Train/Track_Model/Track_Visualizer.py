@@ -123,6 +123,22 @@ class RailwayDiagram:
         self.trains = {}
         self.train_icons = {}
 
+        # Load crossing image
+        self.crossing_image = None
+        try:
+            from PIL import Image, ImageTk
+            import os
+
+            crossing_path = os.path.join(
+                os.path.dirname(__file__), "..", "crossing.png.png"
+            )
+            if os.path.exists(crossing_path):
+                img = Image.open(crossing_path)
+                img = img.resize((20, 20), Image.Resampling.LANCZOS)
+                self.crossing_image = ImageTk.PhotoImage(img)
+        except Exception as e:
+            print(f"[Visualizer] Could not load crossing image: {e}")
+
         self.last_clicked_block = None
         self.track_data = {}
         self.parser = None
@@ -201,6 +217,9 @@ class RailwayDiagram:
         """Draw railway line using skeleton paths from parser."""
         self.canvas.delete("all")
         self.elements = []
+
+        # Define traffic light blocks for Red Line
+        self.traffic_light_blocks_red = [0, 8, 14, 26, 31, 37, 42, 51]
 
         if not self.parser:
             messagebox.showwarning("No Parser", "Parser not initialized!")
@@ -378,6 +397,10 @@ class RailwayDiagram:
 
                 self.all_positions_red[block["block_num"]] = (x, y)
 
+                # Store perpendicular vector for this block (for crossing placement)
+                block["perp_x"] = perp_x
+                block["perp_y"] = perp_y
+
                 # Draw block label
                 if self.blocks_var.get():
                     # Check if this block is a branch point
@@ -407,14 +430,72 @@ class RailwayDiagram:
                         }
                     )
 
+                # Draw traffic light if block has one (Red Line)
+                if (
+                    block["block_num"] in self.traffic_light_blocks_red
+                    and self.block_manager
+                ):
+                    block_data = self.block_manager.get_block_dynamic_data(
+                        "Red", block["block_name"]
+                    )
+                    if block_data:
+                        light_state = block_data["traffic_light"]
+                        # Map states to colors
+                        light_color_map = {
+                            "Super Green": "#00ff00",
+                            "Green": "#00ff00",
+                            "Yellow": "#ffff00",
+                            "Red": "#ff0000",
+                            "N/A": "#808080",
+                            "OFF": "#404040",
+                        }
+                        light_color = light_color_map.get(light_state, "#808080")
+
+                        # Draw small circle offset from track on opposite side of label
+                        light_offset = 15
+                        light_x = x - perp_x * light_offset
+                        light_y = y - perp_y * light_offset
+
+                        traffic_light_id = self.canvas.create_oval(
+                            light_x - 4,
+                            light_y - 4,
+                            light_x + 4,
+                            light_y + 4,
+                            fill=light_color,
+                            outline="black",
+                            width=1,
+                            tags="traffic_light",
+                        )
+
+                        self.elements.append(
+                            {
+                                "id": traffic_light_id,
+                                "type": "traffic_light",
+                                "data": {
+                                    "block_num": block["block_num"],
+                                    "block_name": block["block_name"],
+                                    "state": light_state,
+                                },
+                            }
+                        )
+
                 # Draw station
                 if self.stations_var.get() and block["station"] != "N/A":
                     if block["crossing"] == "Yes":
-                        size = 10
-                        pts = [x, y - size, x + size, y, x, y + size, x - size, y]
-                        marker_id = self.canvas.create_polygon(
-                            pts, fill="red", outline="darkred", width=2, tags="station"
-                        )
+                        if self.crossing_image:
+                            marker_id = self.canvas.create_image(
+                                x, y, image=self.crossing_image, tags="station"
+                            )
+                        else:
+                            size = 10
+                            pts = [x, y - size, x + size, y, x, y + size, x - side, y]
+                            marker_id = self.canvas.create_polygon(
+                                pts,
+                                fill="red",
+                                outline="darkred",
+                                width=2,
+                                tags="station",
+                            )
                     else:
                         size = 8
                         marker_id = self.canvas.create_oval(
@@ -536,9 +617,11 @@ class RailwayDiagram:
                 for block in blocks:
                     if block["block_num"] == block1:
                         # Get skeleton for this section
-                        skeleton = self.parser.get_section_path_red(section)
+                        skeleton = self.parser.get_section_path_red(
+                            section
+                        )  # RED LINE MARKER
                         if skeleton:
-                            # Scale these pixels same way
+                            # Scale these pixels same way (RED LINE)
                             block1_pixels = [
                                 (
                                     int(x * scale_factor * size_reduction),
@@ -613,6 +696,22 @@ class RailwayDiagram:
         """Draw railway line using skeleton paths from parser."""
         self.canvas.delete("all")
         self.elements = []
+
+        # Define traffic light blocks for Green Line
+        self.traffic_light_blocks_green = [
+            0,
+            3,
+            7,
+            29,
+            58,
+            62,
+            76,
+            86,
+            100,
+            101,
+            150,
+            151,
+        ]
 
         if not self.parser:
             messagebox.showwarning("No Parser", "Parser not initialized!")
@@ -819,14 +918,72 @@ class RailwayDiagram:
                         }
                     )
 
+                # Draw traffic light if block has one (Green Line)
+                if (
+                    block["block_num"] in self.traffic_light_blocks_green
+                    and self.block_manager
+                ):
+                    block_data = self.block_manager.get_block_dynamic_data(
+                        "Green", block["block_name"]
+                    )
+                    if block_data:
+                        light_state = block_data["traffic_light"]
+                        # Map states to colors
+                        light_color_map = {
+                            "Super Green": "#00ff00",
+                            "Green": "#00ff00",
+                            "Yellow": "#ffff00",
+                            "Red": "#ff0000",
+                            "N/A": "#808080",
+                            "OFF": "#404040",
+                        }
+                        light_color = light_color_map.get(light_state, "#808080")
+
+                        # Draw small circle offset from track on opposite side of label
+                        light_offset = 15
+                        light_x = x - perp_x * light_offset
+                        light_y = y - perp_y * light_offset
+
+                        traffic_light_id = self.canvas.create_oval(
+                            light_x - 4,
+                            light_y - 4,
+                            light_x + 4,
+                            light_y + 4,
+                            fill=light_color,
+                            outline="black",
+                            width=1,
+                            tags="traffic_light",
+                        )
+
+                        self.elements.append(
+                            {
+                                "id": traffic_light_id,
+                                "type": "traffic_light",
+                                "data": {
+                                    "block_num": block["block_num"],
+                                    "block_name": block["block_name"],
+                                    "state": light_state,
+                                },
+                            }
+                        )
+
                 # Draw station
                 if self.stations_var.get() and block["station"] != "N/A":
                     if block["crossing"] == "Yes":
-                        size = 10
-                        pts = [x, y - size, x + size, y, x, y + size, x - size, y]
-                        marker_id = self.canvas.create_polygon(
-                            pts, fill="red", outline="darkred", width=2, tags="station"
-                        )
+                        if self.crossing_image:
+                            marker_id = self.canvas.create_image(
+                                x, y, image=self.crossing_image, tags="station"
+                            )
+                        else:
+                            size = 10
+                            pts = [x, y - size, x + size, y, x, y + size, x - side, y]
+                            marker_id = self.canvas.create_polygon(
+                                pts,
+                                fill="red",
+                                outline="darkred",
+                                width=2,
+                                tags="station",
+                            )
                     else:
                         size = 8
                         marker_id = self.canvas.create_oval(

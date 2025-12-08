@@ -25,8 +25,28 @@ class MainUI(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Train & Track System - Launcher")
-        self.geometry("200x200")
-        self.configure(bg="white")
+        self.geometry("380x480")
+        self.configure(bg="#2b2d31")
+        self.resizable(False, False)
+
+        # Configure dark theme styles
+        style = ttk.Style()
+        style.theme_use("clam")
+
+        # Button style
+        style.configure(
+            "Launcher.TButton",
+            background="#5865f2",
+            foreground="white",
+            borderwidth=0,
+            focuscolor="none",
+            font=("Segoe UI", 11, "bold"),
+            padding=15,
+        )
+        style.map(
+            "Launcher.TButton",
+            background=[("active", "#4752c4"), ("pressed", "#3c45a5")],
+        )
 
         # Component windows
         self.track_window = None
@@ -40,23 +60,64 @@ class MainUI(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def create_button_bar(self):
-        button_frame = ttk.Frame(self)
-        button_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        # Header
+        header_frame = tk.Frame(self, bg="#1e1f22", height=100)
+        header_frame.pack(fill="x", padx=0, pady=0)
+        header_frame.pack_propagate(False)
+
+        tk.Label(
+            header_frame,
+            text="🚆 TRAIN & TRACK SYSTEM",
+            font=("Segoe UI", 16, "bold"),
+            bg="#1e1f22",
+            fg="#ffffff",
+        ).pack(pady=(25, 5))
+
+        tk.Label(
+            header_frame,
+            text="Central Control Launcher",
+            font=("Segoe UI", 9),
+            bg="#1e1f22",
+            fg="#b5bac1",
+        ).pack()
+
+        # Buttons container with border
+        button_container = tk.Frame(self, bg="#2b2d31")
+        button_container.pack(fill="both", expand=True, padx=20, pady=20)
 
         self.btn_track = ttk.Button(
-            button_frame, text="Show Track Model", command=self.toggle_track
+            button_container,
+            text="🛤️  Track Model",
+            command=self.toggle_track,
+            style="Launcher.TButton",
         )
-        self.btn_track.pack(fill="x", pady=5)
+        self.btn_track.pack(fill="x", pady=(0, 12))
 
         self.btn_train_manager = ttk.Button(
-            button_frame, text="Show Train Manager", command=self.toggle_train_manager
+            button_container,
+            text="🚂  Train Manager",
+            command=self.toggle_train_manager,
+            style="Launcher.TButton",
         )
-        self.btn_train_manager.pack(fill="x", pady=5)
+        self.btn_train_manager.pack(fill="x", pady=(0, 12))
 
         self.btn_track_control = ttk.Button(
-            button_frame, text="Show Track Control", command=self.toggle_track_control
+            button_container,
+            text="🎛️  Track Control",
+            command=self.toggle_track_control,
+            style="Launcher.TButton",
         )
-        self.btn_track_control.pack(fill="x", pady=5)
+        self.btn_track_control.pack(fill="x", pady=(0, 0))
+
+        # Footer
+        footer = tk.Label(
+            self,
+            text="Select a module to begin",
+            font=("Segoe UI", 8),
+            bg="#2b2d31",
+            fg="#6d6f78",
+        )
+        footer.pack(side="bottom", pady=(0, 10))
 
     def toggle_track(self):
         if self.track_window is None:

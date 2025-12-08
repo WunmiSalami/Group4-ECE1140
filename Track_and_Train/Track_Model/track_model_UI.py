@@ -27,6 +27,84 @@ class TrackModelUI(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
         self.pack(fill="both", expand=True)
+
+        # Configure parent window dark theme
+        if isinstance(parent, tk.Tk) or isinstance(parent, tk.Toplevel):
+            parent.configure(bg="#2b2d31")
+
+        # Configure dark theme styles
+        style = ttk.Style()
+        style.theme_use("clam")
+
+        # Frame and LabelFrame styles
+        style.configure("TFrame", background="#2b2d31")
+        style.configure(
+            "TLabelframe",
+            background="#2b2d31",
+            foreground="#ffffff",
+            borderwidth=2,
+            relief="solid",
+        )
+        style.configure(
+            "TLabelframe.Label",
+            background="#2b2d31",
+            foreground="#5865f2",
+            font=("Segoe UI", 10, "bold"),
+        )
+
+        # Label styles
+        style.configure(
+            "TLabel", background="#2b2d31", foreground="#ffffff", font=("Segoe UI", 10)
+        )
+        style.configure(
+            "Bold.TLabel",
+            background="#2b2d31",
+            foreground="#ffffff",
+            font=("Segoe UI", 10, "bold"),
+        )
+        style.configure(
+            "Heading.TLabel",
+            background="#2b2d31",
+            foreground="#5865f2",
+            font=("Segoe UI", 11, "bold"),
+        )
+
+        # Button styles
+        style.configure(
+            "TButton",
+            background="#5865f2",
+            foreground="white",
+            borderwidth=0,
+            focuscolor="none",
+            font=("Segoe UI", 10),
+        )
+        style.map("TButton", background=[("active", "#4752c4"), ("pressed", "#3c45a5")])
+
+        # Checkbutton styles
+        style.configure(
+            "TCheckbutton",
+            background="#2b2d31",
+            foreground="#ffffff",
+            font=("Segoe UI", 10),
+        )
+        style.map("TCheckbutton", background=[("active", "#2b2d31")])
+
+        # Combobox styles
+        style.configure(
+            "TCombobox",
+            fieldbackground="#1e1f22",
+            background="#5865f2",
+            foreground="#ffffff",
+            borderwidth=1,
+        )
+        style.map(
+            "TCombobox",
+            fieldbackground=[("readonly", "#1e1f22")],
+            selectbackground=[("readonly", "#5865f2")],
+        )
+
+        self.configure(style="TFrame")
+
         self.block_manager = DynamicBlockManager()
         self.line_network = None
         self.visualizer = None
@@ -44,7 +122,9 @@ class TrackModelUI(ttk.Frame):
             parent.protocol("WM_DELETE_WINDOW", self.on_window_close)
 
         # === LEFT PANEL === #
-        self.left_frame = ttk.LabelFrame(self, text="Track Layout Interactive Diagram")
+        self.left_frame = ttk.LabelFrame(
+            self, text="🛤️  TRACK LAYOUT INTERACTIVE DIAGRAM", style="TLabelframe"
+        )
         self.left_frame.grid(row=0, column=0, sticky="NSEW", padx=10, pady=10)
 
         self.left_frame.grid_rowconfigure(0, weight=1)
@@ -55,25 +135,33 @@ class TrackModelUI(ttk.Frame):
             self.left_frame,
             text="Note: Not Drawn to Scale",
             font=("Segoe UI", 9, "italic"),
+            foreground="#b5bac1",
+            style="TLabel",
         ).pack(pady=(0, 5))
-        legend_frame = ttk.Frame(self.left_frame)
+        legend_frame = ttk.Frame(self.left_frame, style="TFrame")
         legend_frame.pack(pady=5)
         ttk.Label(
-            legend_frame, text="Train Live Position:", font=("Segoe UI", 10, "bold")
+            legend_frame,
+            text="Train Live Position:",
+            font=("Segoe UI", 10, "bold"),
+            style="Bold.TLabel",
         ).pack(side=tk.LEFT, padx=5)
         ttk.Label(
-            legend_frame, text="★", foreground="gold", font=("Segoe UI", 12)
+            legend_frame,
+            text="★",
+            foreground="#faa61a",
+            font=("Segoe UI", 12),
+            style="TLabel",
         ).pack(side=tk.LEFT, padx=3)
 
         # === RIGHT PANEL === #
-        right_frame = ttk.Frame(self)
+        right_frame = ttk.Frame(self, style="TFrame")
         right_frame.grid(row=0, column=1, sticky="NSEW", padx=10, pady=10)
         right_frame.grid_columnconfigure(0, weight=1)
 
         # --- Upload / Line / Block --- #
-        # --- Upload / Line / Block --- #
         control_frame = ttk.LabelFrame(
-            right_frame, text="Track Layout and Line Selection"
+            right_frame, text="📋 TRACK LAYOUT & LINE SELECTION", style="TLabelframe"
         )
         control_frame.grid(row=0, column=0, sticky="EW", padx=5, pady=5)
 
@@ -87,38 +175,41 @@ class TrackModelUI(ttk.Frame):
         )  # Use fill='x' to take full available width
 
         # 2. Line Selection (Packs Top)
-        line_select_frame = ttk.Frame(control_frame)
+        line_select_frame = ttk.Frame(control_frame, style="TFrame")
         line_select_frame.pack(fill="x", padx=5, pady=2)
         ttk.Label(
-            line_select_frame, text="Select Line:", font=("Segoe UI", 10, "bold")
+            line_select_frame,
+            text="Select Line:",
+            font=("Segoe UI", 10, "bold"),
+            style="Bold.TLabel",
         ).pack(side=tk.LEFT, padx=5)
 
         # Initialize line selector empty; populate dynamically after upload
         self.line_selector = ttk.Combobox(
-            line_select_frame, state="readonly", width=10, values=[]
+            line_select_frame, state="readonly", width=10, values=[], style="TCombobox"
         )
-        self.line_selector.pack(
-            side=tk.RIGHT, padx=5
-        )  # pack it to the right within its micro-frame
+        self.line_selector.pack(side=tk.RIGHT, padx=5)
         self.line_selector.bind("<<ComboboxSelected>>", self.on_line_selected)
 
         # 3. Block Selection (Packs Top)
-        block_select_frame = ttk.Frame(control_frame)
+        block_select_frame = ttk.Frame(control_frame, style="TFrame")
         block_select_frame.pack(fill="x", padx=5, pady=2)
         ttk.Label(
-            block_select_frame, text="Select Block:", font=("Segoe UI", 10, "bold")
+            block_select_frame,
+            text="Select Block:",
+            font=("Segoe UI", 10, "bold"),
+            style="Bold.TLabel",
         ).pack(side=tk.LEFT, padx=5)
         self.block_selector = ttk.Combobox(
-            block_select_frame, state="readonly", width=10
+            block_select_frame, state="readonly", width=10, style="TCombobox"
         )
-        self.block_selector.pack(
-            side=tk.RIGHT, padx=5
-        )  # pack it to the right within its micro-frame
+        self.block_selector.pack(side=tk.RIGHT, padx=5)
         self.block_selector.bind("<<ComboboxSelected>>", self.on_block_selected)
 
         # --- Currently Selected Block --- #
-        # --- Currently Selected Block (MODIFIED TO SINGLE COLUMN) --- #
-        block_frame = ttk.LabelFrame(right_frame, text="Currently Selected Block")
+        block_frame = ttk.LabelFrame(
+            right_frame, text="📍 CURRENTLY SELECTED BLOCK", style="TLabelframe"
+        )
         block_frame.grid(row=1, column=0, sticky="EW", padx=5, pady=5)
         # block_frame.grid_columnconfigure(0, weight=1) # Remove these two lines
         # block_frame.grid_columnconfigure(1, weight=1)
@@ -146,63 +237,86 @@ class TrackModelUI(ttk.Frame):
 
         # Single column layout: iterate through all fields and stack them vertically
         for field in all_fields:
-            frame = ttk.Frame(block_frame)
-            # Stack frames vertically inside the block_frame
+            frame = ttk.Frame(block_frame, style="TFrame")
             frame.pack(anchor="w", pady=2, padx=5, fill="x", expand=False)
 
             # Label for the field name (e.g., "Line:")
-            ttk.Label(frame, text=field, font=("Segoe UI", 10, "bold"), width=20).pack(
-                side=tk.LEFT
-            )
+            ttk.Label(
+                frame,
+                text=field,
+                font=("Segoe UI", 10, "bold"),
+                width=20,
+                style="Bold.TLabel",
+            ).pack(side=tk.LEFT)
             # Label for the variable value (e.g., "Red Line")
             ttk.Label(
-                frame, textvariable=self.block_labels[field], font=("Segoe UI", 10)
-            ).pack(
-                side=tk.LEFT
-            )  # Pack the value next to the field name
+                frame,
+                textvariable=self.block_labels[field],
+                font=("Segoe UI", 10),
+                style="TLabel",
+            ).pack(side=tk.LEFT)
 
         # --- Block Information (Dynamic Fields) --- #
-        dynamic_frame = ttk.LabelFrame(right_frame, text="Block Information")
+        dynamic_frame = ttk.LabelFrame(
+            right_frame, text="ℹ️  BLOCK INFORMATION", style="TLabelframe"
+        )
         dynamic_frame.grid(row=2, column=0, sticky="EW", padx=5, pady=5)
         dyn_fields = ["Occupancy:"]
         self.dynamic_labels = {f: tk.StringVar(value="N/A") for f in dyn_fields}
         for field in dyn_fields:
-            frame = ttk.Frame(dynamic_frame)
+            frame = ttk.Frame(dynamic_frame, style="TFrame")
             frame.pack(anchor="w", pady=2)
-            ttk.Label(frame, text=field, font=("Segoe UI", 10, "bold"), width=28).pack(
-                side=tk.LEFT
-            )
             ttk.Label(
-                frame, textvariable=self.dynamic_labels[field], font=("Segoe UI", 10)
+                frame,
+                text=field,
+                font=("Segoe UI", 10, "bold"),
+                width=28,
+                style="Bold.TLabel",
+            ).pack(side=tk.LEFT)
+            ttk.Label(
+                frame,
+                textvariable=self.dynamic_labels[field],
+                font=("Segoe UI", 10),
+                style="TLabel",
             ).pack(side=tk.LEFT)
 
         # --- Environment Line (MODIFIED TO STACK VERTICALLY) --- #
-        env_line = ttk.Frame(right_frame)
+        env_line = ttk.Frame(right_frame, style="TFrame")
         env_line.grid(row=3, column=0, sticky="EW", padx=5, pady=(0, 5))
 
         # Row 1: Track Heating Status
-        heating_frame = ttk.Frame(env_line)
+        heating_frame = ttk.Frame(env_line, style="TFrame")
         heating_frame.pack(fill="x", padx=5, pady=2)
         ttk.Label(
-            heating_frame, text="Track Heating:", font=("Segoe UI", 10, "bold")
+            heating_frame,
+            text="Track Heating:",
+            font=("Segoe UI", 10, "bold"),
+            style="Bold.TLabel",
         ).pack(side=tk.LEFT)
-        self.heating_status = ttk.Label(heating_frame, text="OFF", foreground="red")
+        self.heating_status = ttk.Label(
+            heating_frame, text="OFF", foreground="#ed4245", style="TLabel"
+        )
         self.heating_status.pack(side=tk.LEFT, padx=(5, 5))
 
         # Row 2: Temperature Control
-        temp_frame = ttk.Frame(env_line)
+        temp_frame = ttk.Frame(env_line, style="TFrame")
         temp_frame.pack(fill="x", padx=5, pady=2)
         ttk.Label(
             temp_frame,
             text="Environment Temperature (°F):",
             font=("Segoe UI", 10, "bold"),
+            style="Bold.TLabel",
         ).pack(side=tk.LEFT)
 
         self.temperature = tk.StringVar(value="N/A")
 
         # Packing buttons and display from left to right in the temp_frame
         ttk.Button(
-            temp_frame, text="-", width=3, command=self.decrease_temp_immediate
+            temp_frame,
+            text="-",
+            width=3,
+            command=self.decrease_temp_immediate,
+            style="TButton",
         ).pack(side=tk.LEFT, padx=(5, 2))
         ttk.Label(
             temp_frame,
@@ -210,9 +324,14 @@ class TrackModelUI(ttk.Frame):
             font=("Segoe UI", 10),
             width=5,
             anchor="center",
+            style="TLabel",
         ).pack(side=tk.LEFT)
         ttk.Button(
-            temp_frame, text="+", width=3, command=self.increase_temp_immediate
+            temp_frame,
+            text="+",
+            width=3,
+            command=self.increase_temp_immediate,
+            style="TButton",
         ).pack(side=tk.LEFT, padx=2)
 
         # --- Station Information --- #
@@ -220,15 +339,23 @@ class TrackModelUI(ttk.Frame):
             "Boarding:": tk.StringVar(value="N/A"),
             "Ticket Sales:": tk.StringVar(value="N/A"),
         }
-        station_frame = ttk.LabelFrame(right_frame, text="Station Information")
+        station_frame = ttk.LabelFrame(
+            right_frame, text="🚉 STATION INFORMATION", style="TLabelframe"
+        )
         station_frame.grid(row=4, column=0, sticky="EW", padx=5, pady=5)
         for label, var in self.station_vars.items():
-            frame = ttk.Frame(station_frame)
+            frame = ttk.Frame(station_frame, style="TFrame")
             frame.pack(anchor="w", pady=2, padx=10)
-            ttk.Label(frame, text=label, font=("Segoe UI", 10, "bold"), width=25).pack(
-                side=tk.LEFT
-            )
-            ttk.Label(frame, textvariable=var, font=("Segoe UI", 10)).pack(side=tk.LEFT)
+            ttk.Label(
+                frame,
+                text=label,
+                font=("Segoe UI", 10, "bold"),
+                width=25,
+                style="Bold.TLabel",
+            ).pack(side=tk.LEFT)
+            ttk.Label(
+                frame, textvariable=var, font=("Segoe UI", 10), style="TLabel"
+            ).pack(side=tk.LEFT)
 
         # --- Failure Status --- #
         self.failure_vars = {
@@ -236,17 +363,24 @@ class TrackModelUI(ttk.Frame):
             "Circuit Failure": tk.BooleanVar(value=False),
             "Broken Track": tk.BooleanVar(value=False),
         }
-        failure_frame = ttk.LabelFrame(right_frame, text="Failure Status")
+        failure_frame = ttk.LabelFrame(
+            right_frame, text="⚠️  FAILURE STATUS", style="TLabelframe"
+        )
         failure_frame.grid(row=5, column=0, sticky="EW", padx=5, pady=5)
         for label, var in self.failure_vars.items():
             ttk.Checkbutton(
-                failure_frame, text=label, variable=var, command=self.update_failures
+                failure_frame,
+                text=label,
+                variable=var,
+                command=self.update_failures,
+                style="TCheckbutton",
             ).pack(anchor="w", padx=15, pady=2)
         self.warning_label = ttk.Label(
             failure_frame,
-            text="All Systems Normal",
+            text="✓ All Systems Normal",
             font=("Segoe UI", 10, "italic"),
-            foreground="green",
+            foreground="#3ba55d",
+            style="TLabel",
         )
         self.warning_label.pack(anchor="w", padx=15, pady=(5, 2))
 
@@ -551,25 +685,51 @@ class TrackModelUI(ttk.Frame):
         selected_line = self.line_selector.get()
         selected_block = self.block_selector.get()
 
+        # Update temperature and heater status regardless of block data
+        temp = self.green_line_temp if selected_line == "Green" else self.red_line_temp
+        self.temperature.set(str(temp))
+        heating_on = temp < 32
+        self.heating_status.config(
+            text="ON" if heating_on else "OFF",
+            foreground="#3ba55d" if heating_on else "#ed4245",
+        )
+
         if self.block_manager and selected_block:
             block_data = self.block_manager.get_block_dynamic_data(
                 selected_line, selected_block
             )
 
             if block_data:
-                # Get temperature based on current line
-                selected_line = self.line_selector.get()
-                temp = (
-                    self.green_line_temp
-                    if selected_line == "Green"
-                    else self.red_line_temp
-                )
                 occupancy = block_data["occupancy"]
                 traffic_light = block_data["traffic_light"]
                 gate = block_data["gate"]
                 failures = block_data["failures"]
                 switch_position = block_data["switch_position"]
-                direction = block_data.get("direction", "N/A")
+
+                # Determine direction from UNIDIRECTIONAL_BLOCKS
+                from LineNetwork import UNIDIRECTIONAL_BLOCKS
+
+                line_key = self.line_selector.get().replace(" Line", "")
+                unidirectional_ranges = UNIDIRECTIONAL_BLOCKS.get(line_key, [])
+                direction = "Bidirectional"  # Default to Bidirectional (most blocks)
+                try:
+                    block_num = int(selected_block)
+                    # Check if block is in any unidirectional range
+                    for item in unidirectional_ranges:
+                        if isinstance(item, tuple):
+                            start, end = item
+                            if (start <= end and start <= block_num <= end) or (
+                                start > end and end <= block_num <= start
+                            ):
+                                direction = "Unidirectional"
+                                break
+                        elif isinstance(item, int):
+                            # Single block
+                            if block_num == item:
+                                direction = "Unidirectional"
+                                break
+                except (ValueError, TypeError):
+                    pass
 
                 station_name = self.get_station_name_for_block(selected_block)
                 passengers_boarding = self.block_manager.passengers_boarding
@@ -604,16 +764,13 @@ class TrackModelUI(ttk.Frame):
                 self.station_vars["Boarding:"].set(passengers_boarding)
                 self.station_vars["Ticket Sales:"].set(ticket_sales)
 
-                self.temperature.set(str(temp))
-                heating_on = temp < 32
-                self.heating_status.config(
-                    text="ON" if heating_on else "OFF",
-                    foreground="green" if heating_on else "red",
-                )
-
+                # Only update failure vars if they don't match (to avoid overriding user input)
                 for key in self.failure_vars:
                     state_key = key.split()[0].lower()
-                    self.failure_vars[key].set(failures.get(state_key, False))
+                    stored_value = failures.get(state_key, False)
+                    # Only update if the stored value differs from current checkbox state
+                    if self.failure_vars[key].get() != stored_value:
+                        self.failure_vars[key].set(stored_value)
 
                 failures_active = any(failures.values())
                 if failures_active:
@@ -626,13 +783,20 @@ class TrackModelUI(ttk.Frame):
                         active.append("Broken Track")
                     failure_text = ", ".join(active)
                     self.warning_label.config(
-                        text=f"Warning: Active Failure - {failure_text}",
-                        foreground="orange",
+                        text=f"⚠️ {failure_text}",
+                        foreground="#faa61a",
                     )
                 else:
                     self.warning_label.config(
-                        text="All Systems Normal", foreground="green"
+                        text="✓ All Systems Normal", foreground="#3ba55d"
                     )
+            else:
+                # No block data - reset failure checkboxes
+                for key in self.failure_vars:
+                    self.failure_vars[key].set(False)
+                self.warning_label.config(
+                    text="✓ All Systems Normal", foreground="#3ba55d"
+                )
 
         self.check_and_start_trains()
         self.after(500, self.load_data)

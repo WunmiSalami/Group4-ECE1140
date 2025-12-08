@@ -7,14 +7,26 @@ class DynamicBlockManager:
 
     def initialize_blocks(self, line_name, block_ids):
         """Create empty storage for blocks."""
+        # Define which blocks have traffic lights
+        traffic_light_blocks = {
+            "Green": [0, 3, 7, 29, 58, 62, 76, 86, 100, 101, 150, 151],
+            "Red": [0, 8, 14, 26, 31, 37, 42, 51],
+        }
+
+        light_blocks = traffic_light_blocks.get(line_name, [])
+
         for block_id in block_ids:
+            # Extract numeric block number
+            block_num = int("".join(filter(str.isdigit, str(block_id))))
+            # Initialize light to -1 (N/A) for non-light blocks, 0 (Super Green) for light blocks
+            initial_light = 0 if block_num in light_blocks else -1
+
             self.line_states[line_name][block_id] = {
                 "failures": {"power": False, "circuit": False, "broken": False},
                 "occupancy": False,
-                "light": 0,
+                "light": initial_light,
                 "gate": "N/A",
                 "switch_position": "N/A",
-                "direction": "N/A",
             }
 
     def write_inputs(self, line_name, switches, gates, lights):
@@ -23,13 +35,20 @@ class DynamicBlockManager:
             return
         blocks = self.line_states[line_name].keys()
 
+        # Define which blocks have traffic lights
+        traffic_light_blocks = {
+            "Green": [0, 3, 7, 29, 58, 62, 76, 86, 100, 101, 150, 151],
+            "Red": [0, 8, 14, 26, 31, 37, 42, 51],
+        }
+        light_blocks = traffic_light_blocks.get(line_name, [])
+
         for idx, block_id in enumerate(blocks):
-
-            if idx < len(lights):
-                self.line_states[line_name][block_id]["light"] = lights[idx]
-
             # Extract numeric block number
             block_num = int("".join(filter(str.isdigit, block_id)))
+
+            # Only update light value if this block has a traffic light
+            if block_num in light_blocks and idx < len(lights):
+                self.line_states[line_name][block_id]["light"] = lights[idx]
 
             if block_num in gates:
                 self.line_states[line_name][block_id]["gate"] = gates[block_num]
@@ -51,15 +70,14 @@ class DynamicBlockManager:
             return None
 
         state = self.line_states[line_name][block_id]
-        light_map = {0: "Super Green", 1: "Green", 2: "Yellow", 3: "Red"}
+        light_map = {0: "Super Green", 1: "Green", 2: "Yellow", 3: "Red", -1: "N/A"}
 
         return {
             "occupancy": state["occupancy"],
-            "traffic_light": light_map.get(state["light"], "OFF"),
+            "traffic_light": light_map.get(state["light"], "N/A"),
             "gate": state["gate"],
             "failures": state["failures"],
             "switch_position": state["switch_position"],
-            "direction": state["direction"],
         }
 
     def get_switch_position(self, line_name, block):

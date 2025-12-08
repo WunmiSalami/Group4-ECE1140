@@ -12,6 +12,9 @@ class TrackControl:
     def __init__(self, parent):
         self.parent = parent
 
+        # Configure parent background
+        self.parent.configure(bg="#2b2d31")
+
         # Set up paths
         CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
         PARENT_DIR = os.path.dirname(CURRENT_DIR)
@@ -170,25 +173,44 @@ class TrackControl:
 
     def _build_datetime_and_line_selector(self):
         """Top datetime display with line selector"""
-        frame = tk.Frame(self.parent, bg="white")
-        frame.grid(row=0, column=0, sticky="ew", padx=5, pady=2)
+        frame = tk.Frame(self.parent, bg="#1e1f22")
+        frame.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
 
         # DateTime on left
-        self.date_label = tk.Label(frame, font=("Arial", 12, "bold"), bg="white")
-        self.date_label.pack(side="left")
-        self.time_label = tk.Label(frame, font=("Arial", 12, "bold"), bg="white")
-        self.time_label.pack(side="left")
+        self.date_label = tk.Label(
+            frame, font=("Segoe UI", 12, "bold"), bg="#1e1f22", fg="#ffffff"
+        )
+        self.date_label.pack(side="left", padx=5)
+        self.time_label = tk.Label(
+            frame, font=("Segoe UI", 12, "bold"), bg="#1e1f22", fg="#00d9ff"
+        )
+        self.time_label.pack(side="left", padx=5)
 
         # Line selector on right
-        tk.Label(frame, text="Line:", font=("Arial", 11, "bold"), bg="white").pack(
-            side="right", padx=5
+        tk.Label(
+            frame,
+            text="Line:",
+            font=("Segoe UI", 11, "bold"),
+            bg="#1e1f22",
+            fg="#ffffff",
+        ).pack(side="right", padx=5)
+
+        style = ttk.Style()
+        style.configure(
+            "TrackControl.TCombobox",
+            fieldbackground="#313338",
+            background="#313338",
+            foreground="#ffffff",
+            borderwidth=0,
         )
+
         self.line_selector = ttk.Combobox(
             frame,
             values=["Green", "Red"],
-            font=("Arial", 11),
+            font=("Segoe UI", 11),
             width=10,
             state="readonly",
+            style="TrackControl.TCombobox",
         )
         self.line_selector.set("Green")
         self.line_selector.pack(side="right", padx=5)
@@ -212,33 +234,42 @@ class TrackControl:
 
     def _build_mode_buttons(self):
         """Mode selection buttons"""
-        frame = tk.Frame(self.parent, bg="white")
-        frame.grid(row=1, column=0, sticky="ew", padx=5, pady=2)
+        frame = tk.Frame(self.parent, bg="#2b2d31")
+        frame.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
         frame.grid_columnconfigure((0, 1, 2), weight=1)
 
         self.auto_btn = tk.Button(
             frame,
-            text="Automatic",
+            text="🤖 Automatic",
             command=lambda: self._switch_mode("automatic"),
-            bg="lightgray",
-            font=("Arial", 10, "bold"),
-            height=1,
+            bg="#5865f2",
+            fg="white",
+            font=("Segoe UI", 10, "bold"),
+            height=2,
+            relief="flat",
+            cursor="hand2",
         )
         self.manual_btn = tk.Button(
             frame,
-            text="Manual",
+            text="🎮 Manual",
             command=lambda: self._switch_mode("manual"),
-            bg="white",
-            font=("Arial", 10, "bold"),
-            height=1,
+            bg="#313338",
+            fg="white",
+            font=("Segoe UI", 10, "bold"),
+            height=2,
+            relief="flat",
+            cursor="hand2",
         )
         self.maint_btn = tk.Button(
             frame,
-            text="Maintenance",
+            text="🔧 Maintenance",
             command=lambda: self._switch_mode("maintenance"),
-            bg="white",
-            font=("Arial", 10, "bold"),
-            height=1,
+            bg="#313338",
+            fg="white",
+            font=("Segoe UI", 10, "bold"),
+            height=2,
+            relief="flat",
+            cursor="hand2",
         )
 
         self.auto_btn.grid(row=0, column=0, padx=2, sticky="ew")
@@ -249,9 +280,9 @@ class TrackControl:
         """Switch between modes"""
         self.current_mode = mode
 
-        self.auto_btn.config(bg="lightgray" if mode == "automatic" else "white")
-        self.manual_btn.config(bg="lightgray" if mode == "manual" else "white")
-        self.maint_btn.config(bg="lightgray" if mode == "maintenance" else "white")
+        self.auto_btn.config(bg="#5865f2" if mode == "automatic" else "#313338")
+        self.manual_btn.config(bg="#5865f2" if mode == "manual" else "#313338")
+        self.maint_btn.config(bg="#5865f2" if mode == "maintenance" else "#313338")
 
         if mode == "automatic":
             self.auto_frame.tkraise()
@@ -262,22 +293,22 @@ class TrackControl:
 
     def _build_mode_frames(self):
         """Build frames for each mode"""
-        container = tk.Frame(self.parent, bg="white")
-        container.grid(row=2, column=0, sticky="nsew", padx=5, pady=2)
+        container = tk.Frame(self.parent, bg="#2b2d31")
+        container.grid(row=2, column=0, sticky="nsew", padx=5, pady=5)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
-        self.auto_frame = tk.Frame(container, bg="lightblue", height=100)
+        self.auto_frame = tk.Frame(container, bg="#313338", height=100)
         self.auto_frame.grid(row=0, column=0, sticky="nsew")
         self.auto_frame.grid_propagate(False)
         self._build_automatic_ui()
 
-        self.manual_frame = tk.Frame(container, bg="lightgreen", height=100)
+        self.manual_frame = tk.Frame(container, bg="#313338", height=100)
         self.manual_frame.grid(row=0, column=0, sticky="nsew")
         self.manual_frame.grid_propagate(False)
         self._build_manual_ui()
 
-        self.maint_frame = tk.Frame(container, bg="lightyellow", height=100)
+        self.maint_frame = tk.Frame(container, bg="#313338", height=100)
         self.maint_frame.grid(row=0, column=0, sticky="nsew")
         self.maint_frame.grid_propagate(False)
         self._build_maintenance_ui()
@@ -286,116 +317,191 @@ class TrackControl:
 
     def _build_automatic_ui(self):
         """Automatic mode UI - compact"""
-        frame = tk.Frame(self.auto_frame, bg="lightblue")
-        frame.pack(fill="x", padx=5, pady=5)
+        frame = tk.Frame(self.auto_frame, bg="#313338")
+        frame.pack(fill="x", padx=10, pady=10)
 
         tk.Label(
-            frame, text="Auto Mode", font=("Arial", 11, "bold"), bg="lightblue"
+            frame,
+            text="🤖 Auto Mode",
+            font=("Segoe UI", 11, "bold"),
+            bg="#313338",
+            fg="#ffffff",
         ).pack(side="left", padx=5)
 
         self.auto_start_btn = tk.Button(
             frame,
-            text="START",
-            font=("Arial", 9, "bold"),
-            bg="green",
+            text="▶️ START",
+            font=("Segoe UI", 9, "bold"),
+            bg="#3ba55d",
             fg="white",
-            width=10,
+            width=12,
+            relief="flat",
+            cursor="hand2",
             command=self._start_automatic,
         )
         self.auto_start_btn.pack(side="left", padx=5)
 
         self.auto_stop_btn = tk.Button(
             frame,
-            text="STOP",
-            font=("Arial", 9, "bold"),
-            bg="red",
+            text="⏹️ STOP",
+            font=("Segoe UI", 9, "bold"),
+            bg="#ed4245",
             fg="white",
-            width=10,
+            width=12,
             state="disabled",
+            relief="flat",
+            cursor="hand2",
             command=self._stop_automatic,
         )
         self.auto_stop_btn.pack(side="left", padx=5)
 
         self.auto_status = tk.Label(
-            frame, text="Idle", font=("Arial", 10), bg="lightblue"
+            frame, text="💤 Idle", font=("Segoe UI", 10), bg="#313338", fg="#b5bac1"
         )
         self.auto_status.pack(side="left", padx=10)
 
     def _build_manual_ui(self):
         """Manual mode UI - compact"""
-        top = tk.Frame(self.manual_frame, bg="lightgreen")
-        top.pack(fill="x", padx=5, pady=2)
+        top = tk.Frame(self.manual_frame, bg="#313338")
+        top.pack(fill="x", padx=10, pady=5)
 
-        tk.Label(top, text="Train:", font=("Arial", 9, "bold"), bg="lightgreen").grid(
-            row=0, column=0, padx=2
-        )
+        tk.Label(
+            top,
+            text="🚂 Train:",
+            font=("Segoe UI", 9, "bold"),
+            bg="#313338",
+            fg="#ffffff",
+        ).grid(row=0, column=0, padx=2)
         self.manual_train_box = ttk.Combobox(
-            top, values=[f"Train {i}" for i in range(1, 6)], font=("Arial", 9), width=8
+            top,
+            values=[f"Train {i}" for i in range(1, 6)],
+            font=("Segoe UI", 9),
+            width=8,
+            style="TrackControl.TCombobox",
         )
         self.manual_train_box.grid(row=0, column=1, padx=2)
 
-        tk.Label(top, text="Line:", font=("Arial", 9, "bold"), bg="lightgreen").grid(
-            row=0, column=2, padx=2
-        )
+        tk.Label(
+            top, text="Line:", font=("Segoe UI", 9, "bold"), bg="#313338", fg="#ffffff"
+        ).grid(row=0, column=2, padx=2)
         self.manual_line_box = ttk.Combobox(
-            top, values=["Green", "Red"], font=("Arial", 9), width=8
+            top,
+            values=["Green", "Red"],
+            font=("Segoe UI", 9),
+            width=8,
+            style="TrackControl.TCombobox",
         )
         self.manual_line_box.grid(row=0, column=3, padx=2)
         self.manual_line_box.bind("<<ComboboxSelected>>", self._on_manual_line_changed)
 
-        tk.Label(top, text="Dest:", font=("Arial", 9, "bold"), bg="lightgreen").grid(
-            row=0, column=4, padx=2
+        tk.Label(
+            top,
+            text="🎯 Dest:",
+            font=("Segoe UI", 9, "bold"),
+            bg="#313338",
+            fg="#ffffff",
+        ).grid(row=0, column=4, padx=2)
+        self.manual_dest_box = ttk.Combobox(
+            top,
+            values=[],
+            font=("Segoe UI", 9),
+            width=12,
+            style="TrackControl.TCombobox",
         )
-        self.manual_dest_box = ttk.Combobox(top, values=[], font=("Arial", 9), width=12)
         self.manual_dest_box.grid(row=0, column=5, padx=2)
 
-        tk.Label(top, text="Arrival:", font=("Arial", 9, "bold"), bg="lightgreen").grid(
-            row=0, column=6, padx=2
+        tk.Label(
+            top,
+            text="⏰ Arrival:",
+            font=("Segoe UI", 9, "bold"),
+            bg="#313338",
+            fg="#ffffff",
+        ).grid(row=0, column=6, padx=2)
+        self.manual_time_entry = tk.Entry(
+            top,
+            font=("Segoe UI", 9),
+            width=8,
+            bg="#1e1f22",
+            fg="#ffffff",
+            insertbackground="#ffffff",
+            relief="flat",
         )
-        self.manual_time_entry = tk.Entry(top, font=("Arial", 9), width=8)
         self.manual_time_entry.grid(row=0, column=7, padx=2)
 
         tk.Button(
             top,
-            text="DISPATCH",
-            font=("Arial", 9, "bold"),
-            bg="blue",
+            text="🚀 DISPATCH",
+            font=("Segoe UI", 9, "bold"),
+            bg="#5865f2",
             fg="white",
+            relief="flat",
+            cursor="hand2",
             command=self._manual_dispatch,
         ).grid(row=0, column=8, padx=5)
 
-        bottom = tk.Frame(self.manual_frame, bg="lightgreen")
-        bottom.pack(fill="x", padx=5, pady=2)
+        bottom = tk.Frame(self.manual_frame, bg="#313338")
+        bottom.pack(fill="x", padx=10, pady=5)
 
         tk.Label(
-            bottom, text="Train:", font=("Arial", 9, "bold"), bg="lightgreen"
+            bottom,
+            text="🚂 Train:",
+            font=("Segoe UI", 9, "bold"),
+            bg="#313338",
+            fg="#ffffff",
         ).grid(row=0, column=0, padx=2)
         self.manual_cmd_train_box = ttk.Combobox(
             bottom,
             values=[f"Train {i}" for i in range(1, 6)],
-            font=("Arial", 9),
+            font=("Segoe UI", 9),
             width=8,
+            style="TrackControl.TCombobox",
         )
         self.manual_cmd_train_box.grid(row=0, column=1, padx=2)
 
         tk.Label(
-            bottom, text="Speed:", font=("Arial", 9, "bold"), bg="lightgreen"
+            bottom,
+            text="⚡ Speed:",
+            font=("Segoe UI", 9, "bold"),
+            bg="#313338",
+            fg="#ffffff",
         ).grid(row=0, column=2, padx=2)
-        self.manual_speed_entry = tk.Entry(bottom, font=("Arial", 9), width=8)
+        self.manual_speed_entry = tk.Entry(
+            bottom,
+            font=("Segoe UI", 9),
+            width=8,
+            bg="#1e1f22",
+            fg="#ffffff",
+            insertbackground="#ffffff",
+            relief="flat",
+        )
         self.manual_speed_entry.grid(row=0, column=3, padx=2)
 
-        tk.Label(bottom, text="Auth:", font=("Arial", 9, "bold"), bg="lightgreen").grid(
-            row=0, column=4, padx=2
+        tk.Label(
+            bottom,
+            text="📍 Auth:",
+            font=("Segoe UI", 9, "bold"),
+            bg="#313338",
+            fg="#ffffff",
+        ).grid(row=0, column=4, padx=2)
+        self.manual_auth_entry = tk.Entry(
+            bottom,
+            font=("Segoe UI", 9),
+            width=8,
+            bg="#1e1f22",
+            fg="#ffffff",
+            insertbackground="#ffffff",
+            relief="flat",
         )
-        self.manual_auth_entry = tk.Entry(bottom, font=("Arial", 9), width=8)
         self.manual_auth_entry.grid(row=0, column=5, padx=2)
 
         tk.Button(
             bottom,
-            text="SEND CMD",
-            font=("Arial", 9, "bold"),
-            bg="darkgreen",
+            text="📤 SEND CMD",
+            font=("Segoe UI", 9, "bold"),
+            bg="#3ba55d",
             fg="white",
+            relief="flat",
+            cursor="hand2",
             command=self._manual_send_command,
         ).grid(row=0, column=6, padx=5)
 
@@ -409,46 +515,82 @@ class TrackControl:
 
     def _build_maintenance_ui(self):
         """Maintenance mode UI - compact"""
-        frame = tk.Frame(self.maint_frame, bg="lightyellow")
-        frame.pack(fill="x", padx=5, pady=5)
+        frame = tk.Frame(self.maint_frame, bg="#313338")
+        frame.pack(fill="x", padx=10, pady=10)
 
         # Switch control
         tk.Label(
-            frame, text="Switch:", font=("Arial", 9, "bold"), bg="lightyellow"
+            frame,
+            text="🔀 Switch:",
+            font=("Segoe UI", 9, "bold"),
+            bg="#313338",
+            fg="#ffffff",
         ).grid(row=0, column=0, padx=2)
         self.maint_switch_box = ttk.Combobox(
-            frame, values=[], font=("Arial", 9), width=10
+            frame,
+            values=[],
+            font=("Segoe UI", 9),
+            width=10,
+            style="TrackControl.TCombobox",
         )
         self.maint_switch_box.grid(row=0, column=1, padx=2)
 
         self.maint_switch_state = ttk.Combobox(
-            frame, values=["Pos 0", "Pos 1"], font=("Arial", 9), width=8
+            frame,
+            values=["Pos 0", "Pos 1"],
+            font=("Segoe UI", 9),
+            width=8,
+            style="TrackControl.TCombobox",
         )
         self.maint_switch_state.grid(row=0, column=2, padx=2)
 
         tk.Button(
-            frame, text="SET", font=("Arial", 9, "bold"), command=self._maint_set_switch
+            frame,
+            text="✅ SET",
+            font=("Segoe UI", 9, "bold"),
+            bg="#5865f2",
+            fg="white",
+            relief="flat",
+            cursor="hand2",
+            command=self._maint_set_switch,
         ).grid(row=0, column=3, padx=5)
 
         # Failure control
         tk.Label(
-            frame, text="Block:", font=("Arial", 9, "bold"), bg="lightyellow"
+            frame,
+            text="⚠️ Block:",
+            font=("Segoe UI", 9, "bold"),
+            bg="#313338",
+            fg="#ffffff",
         ).grid(row=0, column=4, padx=(20, 2))
-        self.maint_block_entry = tk.Entry(frame, font=("Arial", 9), width=6)
+        self.maint_block_entry = tk.Entry(
+            frame,
+            font=("Segoe UI", 9),
+            width=6,
+            bg="#1e1f22",
+            fg="#ffffff",
+            insertbackground="#ffffff",
+            relief="flat",
+        )
         self.maint_block_entry.grid(row=0, column=5, padx=2)
 
         self.maint_failure_type = ttk.Combobox(
             frame,
             values=["None", "Broken", "Power", "Circuit"],
-            font=("Arial", 9),
+            font=("Segoe UI", 9),
             width=10,
+            style="TrackControl.TCombobox",
         )
         self.maint_failure_type.grid(row=0, column=6, padx=2)
 
         tk.Button(
             frame,
-            text="SET",
-            font=("Arial", 9, "bold"),
+            text="✅ SET",
+            font=("Segoe UI", 9, "bold"),
+            bg="#faa61a",
+            fg="white",
+            relief="flat",
+            cursor="hand2",
             command=self._maint_set_failure,
         ).grid(row=0, column=7, padx=5)
 
@@ -464,25 +606,37 @@ class TrackControl:
     def _build_bottom_section(self):
         """Build comprehensive bottom display"""
         # Throughput bar
-        throughput_frame = tk.Frame(self.parent, bg="white", height=25)
-        throughput_frame.grid(row=3, column=0, sticky="ew", padx=5, pady=2)
+        throughput_frame = tk.Frame(self.parent, bg="#1e1f22", height=30)
+        throughput_frame.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
         throughput_frame.grid_propagate(False)
 
         tk.Label(
-            throughput_frame, text="Throughput:", font=("Arial", 10, "bold"), bg="white"
+            throughput_frame,
+            text="📊 Throughput:",
+            font=("Segoe UI", 10, "bold"),
+            bg="#1e1f22",
+            fg="#ffffff",
         ).pack(side="left", padx=5)
         self.throughput_green_label = tk.Label(
-            throughput_frame, text="Green: 0 pass/hr", font=("Arial", 9), bg="white"
+            throughput_frame,
+            text="🟢 Green: 0 pass/hr",
+            font=("Segoe UI", 9),
+            bg="#1e1f22",
+            fg="#3ba55d",
         )
         self.throughput_green_label.pack(side="left", padx=10)
         self.throughput_red_label = tk.Label(
-            throughput_frame, text="Red: 0 pass/hr", font=("Arial", 9), bg="white"
+            throughput_frame,
+            text="🔴 Red: 0 pass/hr",
+            font=("Segoe UI", 9),
+            bg="#1e1f22",
+            fg="#ed4245",
         )
         self.throughput_red_label.pack(side="left", padx=10)
 
         # Main bottom area
-        bottom = tk.Frame(self.parent, bg="white")
-        bottom.grid(row=5, column=0, sticky="nsew", padx=5, pady=2)
+        bottom = tk.Frame(self.parent, bg="#2b2d31")
+        bottom.grid(row=5, column=0, sticky="nsew", padx=5, pady=5)
         bottom.grid_rowconfigure(0, weight=1)
         bottom.grid_columnconfigure((0, 1, 2), weight=1)
 
@@ -497,13 +651,17 @@ class TrackControl:
 
     def _build_active_trains(self, parent):
         """Active trains table"""
-        frame = tk.Frame(parent, bg="white")
+        frame = tk.Frame(parent, bg="#2b2d31")
         frame.grid(row=0, column=0, sticky="nsew", padx=2)
         frame.grid_rowconfigure(1, weight=1)
         frame.grid_columnconfigure(0, weight=1)
 
         tk.Label(
-            frame, text="Active Trains", font=("Arial", 11, "bold"), bg="white"
+            frame,
+            text="🚂 Active Trains",
+            font=("Segoe UI", 11, "bold"),
+            bg="#2b2d31",
+            fg="#ffffff",
         ).grid(row=0, column=0, sticky="w", pady=2)
 
         columns = (
@@ -517,8 +675,29 @@ class TrackControl:
             "Cur Stn",
             "Arr Time",
         )
+
+        style = ttk.Style()
+        style.configure(
+            "TrackControl.Treeview",
+            background="#313338",
+            fieldbackground="#313338",
+            foreground="#ffffff",
+            borderwidth=0,
+        )
+        style.configure(
+            "TrackControl.Treeview.Heading",
+            background="#1e1f22",
+            foreground="#ffffff",
+            borderwidth=0,
+        )
+        style.map("TrackControl.Treeview", background=[("selected", "#5865f2")])
+
         self.trains_table = ttk.Treeview(
-            frame, columns=columns, show="headings", height=10
+            frame,
+            columns=columns,
+            show="headings",
+            height=10,
+            style="TrackControl.Treeview",
         )
 
         widths = [50, 50, 45, 80, 50, 45, 60, 80, 70]
@@ -536,18 +715,26 @@ class TrackControl:
 
     def _build_all_blocks(self, parent):
         """All blocks scrollable table"""
-        frame = tk.Frame(parent, bg="white")
+        frame = tk.Frame(parent, bg="#2b2d31")
         frame.grid(row=0, column=1, sticky="nsew", padx=2)
         frame.grid_rowconfigure(1, weight=1)
         frame.grid_columnconfigure(0, weight=1)
 
-        tk.Label(frame, text="All Blocks", font=("Arial", 11, "bold"), bg="white").grid(
-            row=0, column=0, sticky="w", pady=2
-        )
+        tk.Label(
+            frame,
+            text="🛤️ All Blocks",
+            font=("Segoe UI", 11, "bold"),
+            bg="#2b2d31",
+            fg="#ffffff",
+        ).grid(row=0, column=0, sticky="w", pady=2)
 
         columns = ("Block", "Occ", "Switch", "Light", "Gate", "Failure")
         self.blocks_table = ttk.Treeview(
-            frame, columns=columns, show="headings", height=10
+            frame,
+            columns=columns,
+            show="headings",
+            height=10,
+            style="TrackControl.Treeview",
         )
 
         widths = [50, 40, 80, 80, 50, 70]
@@ -568,39 +755,62 @@ class TrackControl:
 
     def _build_right_panel(self, parent):
         """Right panel: selected block + lights + gates"""
-        frame = tk.Frame(parent, bg="white")
+        frame = tk.Frame(parent, bg="#2b2d31")
         frame.grid(row=0, column=2, sticky="nsew", padx=2)
         frame.grid_rowconfigure((0, 1, 2), weight=1)
         frame.grid_columnconfigure(0, weight=1)
 
         # Selected block detail
-        detail_frame = tk.LabelFrame(
-            frame, text="Selected Block", font=("Arial", 10, "bold"), bg="white"
+        style = ttk.Style()
+        style.configure(
+            "TrackControl.TLabelframe",
+            background="#2b2d31",
+            foreground="#5865f2",
+            borderwidth=2,
+        )
+        style.configure(
+            "TrackControl.TLabelframe.Label",
+            foreground="#5865f2",
+            font=("Segoe UI", 10, "bold"),
+            background="#2b2d31",
+        )
+
+        detail_frame = ttk.LabelFrame(
+            frame, text="📍 Selected Block", style="TrackControl.TLabelframe"
         )
         detail_frame.grid(row=0, column=0, sticky="nsew", pady=2)
 
         self.selected_block_label = tk.Label(
             detail_frame,
             text="No block selected",
-            font=("Arial", 9),
-            bg="white",
+            font=("Segoe UI", 9),
+            bg="#313338",
+            fg="#b5bac1",
             justify="left",
         )
         self.selected_block_label.pack(fill="both", expand=True, padx=5, pady=5)
 
         # Lights table
-        lights_frame = tk.Frame(frame, bg="white")
+        lights_frame = tk.Frame(frame, bg="#2b2d31")
         lights_frame.grid(row=1, column=0, sticky="nsew", pady=2)
         lights_frame.grid_rowconfigure(1, weight=1)
         lights_frame.grid_columnconfigure(0, weight=1)
 
         tk.Label(
-            lights_frame, text="Traffic Lights", font=("Arial", 10, "bold"), bg="white"
+            lights_frame,
+            text="🚦 Traffic Lights",
+            font=("Segoe UI", 10, "bold"),
+            bg="#2b2d31",
+            fg="#ffffff",
         ).grid(row=0, column=0, sticky="w")
 
         cols = ("Block", "Status")
         self.lights_table = ttk.Treeview(
-            lights_frame, columns=cols, show="headings", height=4
+            lights_frame,
+            columns=cols,
+            show="headings",
+            height=4,
+            style="TrackControl.Treeview",
         )
         for col in cols:
             self.lights_table.heading(col, text=col)
@@ -608,17 +818,25 @@ class TrackControl:
         self.lights_table.grid(row=1, column=0, sticky="nsew")
 
         # Gates table
-        gates_frame = tk.Frame(frame, bg="white")
+        gates_frame = tk.Frame(frame, bg="#2b2d31")
         gates_frame.grid(row=2, column=0, sticky="nsew", pady=2)
         gates_frame.grid_rowconfigure(1, weight=1)
         gates_frame.grid_columnconfigure(0, weight=1)
 
         tk.Label(
-            gates_frame, text="Crossing Gates", font=("Arial", 10, "bold"), bg="white"
+            gates_frame,
+            text="🚧 Crossing Gates",
+            font=("Segoe UI", 10, "bold"),
+            bg="#2b2d31",
+            fg="#ffffff",
         ).grid(row=0, column=0, sticky="w")
 
         self.gates_table = ttk.Treeview(
-            gates_frame, columns=cols, show="headings", height=2
+            gates_frame,
+            columns=cols,
+            show="headings",
+            height=2,
+            style="TrackControl.Treeview",
         )
         for col in cols:
             self.gates_table.heading(col, text=col)
@@ -682,14 +900,14 @@ class TrackControl:
         self.automatic_running = True
         self.auto_start_btn.config(state="disabled")
         self.auto_stop_btn.config(state="normal")
-        self.auto_status.config(text="Running")
+        self.auto_status.config(text="🟢 Running")
 
     def _stop_automatic(self):
         """Stop automatic control"""
         self.automatic_running = False
         self.auto_start_btn.config(state="normal")
         self.auto_stop_btn.config(state="disabled")
-        self.auto_status.config(text="Stopped")
+        self.auto_status.config(text="🔴 Stopped")
 
     def _manual_dispatch(self):
         """Dispatch train in manual mode"""
@@ -1128,9 +1346,9 @@ class TrackControl:
         self.throughput_red = red_count * 50
 
         self.throughput_green_label.config(
-            text=f"Green: {self.throughput_green} pass/hr"
+            text=f"🟢 Green: {self.throughput_green} pass/hr"
         )
-        self.throughput_red_label.config(text=f"Red: {self.throughput_red} pass/hr")
+        self.throughput_red_label.config(text=f"🔴 Red: {self.throughput_red} pass/hr")
 
     def _update_selected_block_detail(self):
         """Update selected block detail view"""
