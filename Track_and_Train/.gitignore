@@ -7,3 +7,9 @@ train_controller/ui/__pycache__/train_controller_test_ui.cpython-313.pyc
 train_controller/ui/__pycache__/train_controller_sw_ui.cpython-313.pyc
 train_controller/data/train_states.json
 train_controller/__pycache__/train_controller_hardware.cpython-313.pyc
+
+# JSON files
+*.json
+train_controller/data/*.json
+Train_Model/*.json
+Track_Model/*.json

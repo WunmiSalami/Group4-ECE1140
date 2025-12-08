@@ -103,7 +103,7 @@
         0,
         0,
         0,
-        1,
+        0,
         0,
         0,
         0,
@@ -642,12 +642,8 @@
         0
     ],
     "G-Train": {
-        "commanded speed": [
-            9
-        ],
-        "commanded authority": [
-            2004
-        ]
+        "commanded speed": [],
+        "commanded authority": []
     },
     "R-switches": [
         0,
@@ -751,7 +747,7 @@
         0,
         0,
         0,
-        1,
+        0,
         0,
         0,
         0,

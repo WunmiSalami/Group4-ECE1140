@@ -55,6 +55,17 @@ def parse_branching_connections(value: str) -> List[Tuple[int, int]]:
     return connections
 
 
+UNIDIRECTIONAL_BLOCKS = {
+    "Green": [
+        (63, 77),
+        (101, 150),
+        (0, 63),
+        (57, 0),
+    ],
+    "Red": [],
+}
+
+
 @dataclass
 class Path:
     """Represents a train path through the network."""
@@ -402,33 +413,40 @@ class LineNetwork:
 
         return "N/A"
 
-    def find_next_station(self, starting_block_num):
-        """Search forward from starting block to find next station."""
-        # wrong assumes unidirectional
+    def find_next_station(self, current_block, previous_block):
+        """Search for next station based on direction of travel."""
         try:
-            # Load static data inside the helper
             json_path = TRACK_STATIC_JSON
             with open(json_path, "r") as f:
                 static_data = json.load(f)
 
             blocks = static_data.get("static_data", {}).get(self.line_name, [])
 
-            # Find starting block index
-            start_idx = None
+            # Find current block index
+            current_idx = None
             for i, block in enumerate(blocks):
-                if block.get("Block Number") == starting_block_num:
-                    start_idx = i
+                if block.get("Block Number") == current_block:
+                    current_idx = i
                     break
 
-            if start_idx is None:
+            if current_idx is None:
                 return "N/A", "N/A"
 
-            # Search forward for next station
-            for i in range(start_idx + 1, len(blocks)):
-                station = blocks[i].get("Station", "N/A")
-                if station != "N/A":
-                    side_door = blocks[i].get("Station Side", "N/A")
-                    return station, side_door
+            # Determine direction
+            if previous_block is not None and current_block > previous_block:
+                # Moving forward (counting up)
+                for i in range(current_idx + 1, len(blocks)):
+                    station = blocks[i].get("Station", "N/A")
+                    if station != "N/A":
+                        side_door = blocks[i].get("Station Side", "N/A")
+                        return station, side_door
+            else:
+                # Moving backward (counting down)
+                for i in range(current_idx - 1, -1, -1):
+                    station = blocks[i].get("Station", "N/A")
+                    if station != "N/A":
+                        side_door = blocks[i].get("Station Side", "N/A")
+                        return station, side_door
 
             return "N/A", "N/A"
 
@@ -436,7 +454,9 @@ class LineNetwork:
             print(f"Error in find_next_station: {e}")
             return "N/A", "N/A"
 
-    def write_beacon_data_to_train_model(self, next_block: int, train_id: int):
+    def write_beacon_data_to_train_model(
+        self, next_block: int, train_id: int, previous_block: int
+    ):
         """Write beacon data to Train Model JSON for a specific train."""
         try:
             # Check for circuit failure on this block FIRST
@@ -518,7 +538,9 @@ class LineNetwork:
             current_station = self.train_current_stations.get(train_id, "N/A")
 
             # Get next station using helper
-            next_station, next_side_door = self.find_next_station(next_block)
+            next_station, next_side_door = self.find_next_station(
+                previous_block, next_block
+            )
 
             # If we're not at a station, use next station's side door
             if station_at_block == "N/A" and next_side_door != "N/A":
@@ -819,34 +841,21 @@ class LineNetwork:
     def _finalize_block_transition(
         self, next_block: int, current: int, train_id: int
     ) -> None:
-        """
-        Finalize the block transition by updating occupancy, beacon data, and direction.
-
-        Args:
-            next_block: The block number train is moving to
-            current: The current block number
-            train_id: Train identifier
-        """
-        # Update occupancy in block manager
         self.update_block_occupancy(next_block, current)
-        self.write_beacon_data_to_train_model(next_block, train_id)
-
-        # Write occupancy and failures back to Track Controller JSON
+        self.write_beacon_data_to_train_model(next_block, train_id, current)
         self.write_occupancy_to_json()
         self.write_failures_to_json()
 
-        # Determine direction of travel
-        # wrong direction is a static property of the block, not of the train unidirectional or bidirectional
-        if next_block > current:
-            direction = "Forward"
-        elif next_block < current:
-            direction = "Backward"
-        else:
-            direction = "Stopped"
+        line_key = self.line_name.replace(" Line", "")
+        unidirectional_ranges = UNIDIRECTIONAL_BLOCKS.get(line_key, [])
 
-        # Store direction in block_manager
+        direction = "Bidirectional"
+        for start, end in unidirectional_ranges:
+            if start <= current <= end or end <= current <= start:
+                direction = "Unidirectional"
+                break
+
         if self.block_manager:
-            # Find the block_id for current block
             for block_id in self.block_manager.line_states.get(self.line_name, {}):
                 block_num_str = "".join(filter(str.isdigit, block_id))
                 if block_num_str and int(block_num_str) == current:
@@ -886,13 +895,8 @@ class LineNetwork:
             100: 85,  # Block 100 routes through switch 85
         }
 
-        if previous == 0 and current == 63:
-            # Special case: from Yard (0) to Block 63 always goes to 64
-            print(f"[Green] Special case: previous=0, current=63 -> next=64")
-            next_block = 64
-
         # Check if current block is a switch block or routes through a switch
-        elif current in switch_routes:
+        if current in switch_routes:
             print(f"[Green] Block {current} is in switch_routes")
             # Check if this block routes through another switch
             if current in source_to_switch:
@@ -947,12 +951,13 @@ class LineNetwork:
                 print(
                     f"[Green] Forward: previous ({previous}) == current-1 ({current-1}), next={next_block}"
                 )
+
             else:
                 # Should never happen with proper hard-coding
                 print(
-                    f"ERROR: Green Line - No path defined for block {current}, previous {previous}"
+                    f"Green Line - No path defined for block {current}, previous {previous}, moving to next sequential block"
                 )
-                next_block = current
+                next_block = current + 1
 
         print(f"Train at block {current} with next block {next_block} on Green Line.")
 

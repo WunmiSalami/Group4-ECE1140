@@ -1,19 +1,19 @@
 {
     "G_train_1": {
         "block": {
-            "commanded speed": 9,
-            "commanded authority": 2004
+            "commanded speed": 0,
+            "commanded authority": 0
         },
         "beacon": {
-            "speed limit": 70.0,
-            "side_door": "Right",
-            "current station": "Glenbury",
-            "next station": "Dormont",
+            "speed limit": 0.0,
+            "side_door": "N/A",
+            "current station": "N/A",
+            "next station": "N/A",
             "passengers_boarding": 0
         },
         "motion": {
-            "current motion": "moving",
-            "position_yds": 547.3506481691436
+            "current motion": "stopped",
+            "position_yds": 0.0
         }
     },
     "G_train_2": {

@@ -256,6 +256,8 @@ class train_controller:
         if commanded_authority - position_yds <= 3:
             service_brake = True
             state["service_brake"] = True
+            self.update_state({"service_brake": True, "power_command": 0.0})
+            return 0.0
 
         # Normal PI control (accelerate/maintain speed)
         controls = vital_train_controls(
@@ -433,11 +435,8 @@ class train_controller_ui(tk.Toplevel):
                     )
                     state = self.controller.get_state()
 
-            if state["emergency_brake"] and state["train_velocity"] == 0.0:
-                self.controller.vital_control_check_and_update(
-                    {"emergency_brake": False}
-                )
-                state = self.controller.get_state()
+            # Emergency brake stays on until manually released - do not auto-release
+            # Removed auto-release logic that was here
 
             if not state["emergency_brake"] and state["service_brake"] == 0:
                 power = self.controller.calculate_power_command(state)
@@ -514,8 +513,16 @@ class train_controller_ui(tk.Toplevel):
 
     def set_driver_speed(self):
         try:
-            desired_speed = float(self.speed_entry.get())
             state = self.controller.get_state()
+
+            # Only allow speed changes in manual mode
+            if not state.get("manual_mode", False):
+                # In automatic mode, ignore user input and keep commanded speed
+                self.speed_entry.delete(0, tk.END)
+                self.speed_entry.insert(0, f"{state['commanded_speed']:.1f}")
+                return
+
+            desired_speed = float(self.speed_entry.get())
             commanded_speed = self.controller.cmd_speed_auth.commanded_speed
             speed_limit = state["speed_limit"]
 
@@ -890,25 +897,41 @@ class TrainManager:
             safe_write_json(train_states_file, all_states)
             print("[Cleanup] Reset train_states.json")
 
-            # 2. Reset track_io.json to default switch/gate/light states
+            # 2. Reset track_io.json to default switch/gate/light/occupancy states
             track_io_file = os.path.join(parent_dir, "track_io.json")
             if os.path.exists(track_io_file):
                 track_io_data = safe_read_json(track_io_file)
-                # Reset all switches, gates, and lights to 0
+                # Reset all switches, gates, lights, and occupancy to 0
                 if "G-switches" in track_io_data:
                     track_io_data["G-switches"] = [0] * len(track_io_data["G-switches"])
                 if "G-gates" in track_io_data:
                     track_io_data["G-gates"] = [0] * len(track_io_data["G-gates"])
                 if "G-lights" in track_io_data:
                     track_io_data["G-lights"] = [0] * len(track_io_data["G-lights"])
+                if "G-Occupancy" in track_io_data:
+                    track_io_data["G-Occupancy"] = [0] * len(
+                        track_io_data["G-Occupancy"]
+                    )
+                if "G-Train" in track_io_data:
+                    track_io_data["G-Train"]["commanded speed"] = []
+                    track_io_data["G-Train"]["commanded authority"] = []
                 if "R-switches" in track_io_data:
                     track_io_data["R-switches"] = [0] * len(track_io_data["R-switches"])
                 if "R-gates" in track_io_data:
                     track_io_data["R-gates"] = [0] * len(track_io_data["R-gates"])
                 if "R-lights" in track_io_data:
                     track_io_data["R-lights"] = [0] * len(track_io_data["R-lights"])
+                if "R-Occupancy" in track_io_data:
+                    track_io_data["R-Occupancy"] = [0] * len(
+                        track_io_data["R-Occupancy"]
+                    )
+                if "R-Train" in track_io_data:
+                    track_io_data["R-Train"]["commanded speed"] = []
+                    track_io_data["R-Train"]["commanded authority"] = []
                 safe_write_json(track_io_file, track_io_data)
-                print("[Cleanup] Reset track_io.json switches/gates/lights")
+                print(
+                    "[Cleanup] Reset track_io.json switches/gates/lights/occupancy/commands"
+                )
 
             # 3. Reset ctc_data.json trains to initial state
             ctc_file = os.path.join(parent_dir, "ctc_data.json")
