@@ -137,7 +137,7 @@ class RailwayDiagram:
                 img = img.resize((20, 20), Image.Resampling.LANCZOS)
                 self.crossing_image = ImageTk.PhotoImage(img)
         except Exception as e:
-            print(f"[Visualizer] Could not load crossing image: {e}")
+            pass  # Image load failures are non-critical
 
         self.last_clicked_block = None
         self.track_data = {}
@@ -1319,7 +1319,6 @@ class RailwayDiagram:
             highlighted_block: Optional block name to highlight (e.g., "A5")
         """
         if line_name not in self.track_data:
-            print(f"Line '{line_name}' not found in data")
             return
 
         self.current_line = line_name
@@ -1328,17 +1327,13 @@ class RailwayDiagram:
         # Note: line_network should be set by track_model_UI before calling display_line
         # If it's not set, we can't display properly - skip_connections won't be correct
         if not self.line_network:
-            print(
-                f"Warning: No line_network set for {line_name}, visualization may be incomplete"
-            )
+            return
 
         # Draw based on line type
         if line_name == "Red Line":
             self.draw_single_line_red(line_name)
         elif line_name == "Green Line":
             self.draw_single_line_green(line_name)
-        else:
-            print(f"Visualization for {line_name} not yet implemented")
 
         # Highlight selected block if specified
         if highlighted_block:
@@ -1351,7 +1346,6 @@ class RailwayDiagram:
         self.current_line = None
 
         if not self.track_data:
-            print("No track data loaded")
             return
 
         # Store original line_network to restore after drawing both lines
@@ -1526,7 +1520,6 @@ class RailwayDiagram:
         elif line == "Red" or line == "Red Line":
             positions = self.all_positions_red
         else:
-            print(f"Unknown line: {line}")
             return
 
         # ALWAYS START AT YARD (block 0)
@@ -1541,10 +1534,8 @@ class RailwayDiagram:
         # Get yard position from stored positions
         if starting_block in positions:
             x, y = positions[starting_block]
-            print(f"Train {train_id} starting at yard position: ({x}, {y})")
         else:
             x, y = 50, 50
-            print(f"WARNING: Yard position not found for {line}! Using default.")
 
         # Draw the train icon
         if photo:
@@ -1569,7 +1560,6 @@ class RailwayDiagram:
         )
         self.canvas.tag_bind(icon_id, "<Leave>", lambda event: self.hide_train_info())
 
-        print(f"Train {train_id} created at yard (block {starting_block})")
         self.animate_train_step(train_id)
 
     def animate_train_step(self, train_id):
@@ -1593,14 +1583,12 @@ class RailwayDiagram:
         elif line == "Red" or line == "Red Line":
             positions = self.all_positions_red
         else:
-            print(f"Unknown line: {line}")
             return
 
         # Get position for next block - handle case where block position doesn't exist
         if next_block in positions:
             x, y = positions[next_block]
         else:
-            print(f"Warning: Block {next_block} not found in positions for {line}")
             # Keep at current position
             if current_block in positions:
                 x, y = positions[current_block]

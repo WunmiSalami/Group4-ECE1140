@@ -68,18 +68,18 @@ class TrackControl:
                     85: {0: "85->86", 1: "100->85"},
                 },
                 "stations": {
-                    "Pioneer": 3,
-                    "Edgebrook": 7,
-                    "Whited": 16,
-                    "South Bank": 21,
-                    "Central": 31,
-                    "Inglewood": 39,
-                    "Overbrook": 48,
-                    "Glenbury": 57,
-                    "Dormont": 65,
-                    "Mt. Lebanon": 73,
-                    "Poplar": 88,
-                    "Castle Shannon": 96,
+                    "Pioneer": [2],
+                    "Edgebrook": [9],
+                    "Whited": [22],
+                    "South Bank": [31],
+                    "Central": [39, 141],
+                    "Inglewood": [48, 132],
+                    "Overbrook": [57, 123],
+                    "Glenbury": [65, 114],
+                    "Dormont": [73, 105],
+                    "Mt. Lebanon": [77],
+                    "Poplar": [88],
+                    "Castle Shannon": [96],
                 },
             },
             "Red": {
@@ -97,14 +97,14 @@ class TrackControl:
                     52: {0: "52->53", 1: "52->66"},
                 },
                 "stations": {
-                    "Shadyside": 16,
-                    "Herron Ave": 20,
-                    "Swissville": 24,
-                    "Penn Station": 28,
-                    "Steel Plaza": 32,
-                    "First Ave": 36,
-                    "Station Square": 40,
-                    "South Hills": 48,
+                    "Shadyside": [7],
+                    "Herron Ave": [16],
+                    "Swissville": [21],
+                    "Penn Station": [25],
+                    "Steel Plaza": [35],
+                    "First Ave": [45],
+                    "Station Square": [48],
+                    "South Hills": [60],
                 },
             },
         }
@@ -157,6 +157,17 @@ class TrackControl:
             stations = self.infrastructure[line]["stations"]
             station_names = list(stations.keys())
 
+            # Add routes from Yard to all stations
+            # Route should include ALL intermediate station blocks on the path
+            for end_station in station_names:
+                # Build complete route: get block numbers for path from Yard to destination
+                # This returns the actual block numbers with correct platforms
+                route = self._get_stations_on_path_to_destination(
+                    line, end_station, station_names, stations
+                )
+
+                lookup[(line, "Yard", end_station)] = route
+
             for i, start_station in enumerate(station_names):
                 for j, end_station in enumerate(station_names):
                     if i != j:
@@ -164,16 +175,145 @@ class TrackControl:
                         route = []
                         if i < j:  # Forward route
                             route = [
-                                stations[station_names[k]] for k in range(i, j + 1)
+                                (
+                                    stations[station_names[k]][0]
+                                    if isinstance(stations[station_names[k]], list)
+                                    else stations[station_names[k]]
+                                )
+                                for k in range(i, j + 1)
                             ]
                         else:  # Reverse route
                             route = [
-                                stations[station_names[k]] for k in range(i, j - 1, -1)
+                                (
+                                    stations[station_names[k]][0]
+                                    if isinstance(stations[station_names[k]], list)
+                                    else stations[station_names[k]]
+                                )
+                                for k in range(i, j - 1, -1)
                             ]
 
                         lookup[(line, start_station, end_station)] = route
 
         return lookup
+
+    def _get_stations_on_path_to_destination(
+        self, line, destination, station_names, stations
+    ):
+        """Determine which stations are visited on path from Yard to destination.
+        Uses track topology knowledge to build correct station sequence.
+        """
+        if line == "Green":
+            # Green Line topology:
+            # Yard exits at block 63
+            # Path to Pioneer (block 2): 0→63→...→150→28→...→2
+            # Passes through: Glenbury(65), Dormont(73), Mt.Lebanon(77), Poplar(88), Castle Shannon(96),
+            #                 then loops: Dormont(105), Glenbury(114), Overbrook(123), Inglewood(132),
+            #                 Central(141), South Bank(31), Whited(22), Edgebrook(9), Pioneer(2)
+
+            dest_blocks = stations[destination]
+            # For dual-platform stations, determine which platform based on location
+            if isinstance(dest_blocks, list):
+                if len(dest_blocks) == 1:
+                    # Single platform station wrapped in list
+                    dest_block = dest_blocks[0]
+                else:
+                    # Dual-platform station - check if either block is on direct path (63-150)
+                    if dest_blocks[0] >= 63 and dest_blocks[0] <= 150:
+                        dest_block = dest_blocks[
+                            0
+                        ]  # Use outbound platform on direct path
+                    elif dest_blocks[1] >= 63 and dest_blocks[1] <= 150:
+                        dest_block = dest_blocks[
+                            1
+                        ]  # Use outbound platform on direct path
+                    else:
+                        # Both blocks on loop - use first block (outbound/primary platform)
+                        # Trains complete full loop and arrive at outbound platform
+                        dest_block = dest_blocks[0]
+            else:
+                dest_block = dest_blocks
+
+            # Green Line path with correct platform selection
+            # Direct path stations (blocks 63-150) with their blocks
+            direct_path_sequence = [
+                ("Glenbury", 65),  # Outbound platform
+                ("Dormont", 73),  # Outbound platform
+                ("Mt. Lebanon", 77),
+                ("Poplar", 88),
+                ("Castle Shannon", 96),
+            ]
+
+            # Loop path stations (accessed via 150→28, blocks decrease then wrap)
+            # Use INBOUND platforms for dual-platform stations
+            loop_path_sequence = [
+                ("Dormont", 105),  # Inbound platform (NOT 73)
+                ("Glenbury", 114),  # Inbound platform (NOT 65)
+                ("Overbrook", 123),  # Inbound platform
+                ("Inglewood", 132),  # Inbound platform
+                ("Central", 141),  # Inbound platform
+                ("South Bank", 31),
+                ("Central", 39),  # Outbound platform
+                ("Inglewood", 48),  # Outbound platform
+                ("Overbrook", 57),  # Outbound platform
+            ]
+
+            if dest_block >= 63 and dest_block <= 150:
+                # Destination on direct path - include only stations up to destination
+                result_blocks = []
+                for stn_name, stn_block in direct_path_sequence:
+                    if stn_block <= dest_block:
+                        result_blocks.append(stn_block)
+                    if stn_name == destination:
+                        break
+                return result_blocks
+            else:
+                # Destination on loop - include all direct path + loop stations up to destination
+                result_blocks = [stn_block for stn, stn_block in direct_path_sequence]
+                for stn_name, stn_block in loop_path_sequence:
+                    result_blocks.append(stn_block)
+                    # Match by block number to get correct platform for dual-platform stations
+                    if stn_name == destination and stn_block == dest_block:
+                        break
+                return result_blocks
+
+        elif line == "Red":
+            # Red Line: all stations in order from yard
+            # Yard exits at block 9, all stations are sequential
+            dest_blocks = stations[destination]
+            dest_block = (
+                dest_blocks[0] if isinstance(dest_blocks, list) else dest_blocks
+            )
+
+            ordered_stations = [
+                "Shadyside",
+                "Herron Ave",
+                "Swissville",
+                "Penn Station",
+                "Steel Plaza",
+                "First Ave",
+                "Station Square",
+                "South Hills",
+            ]
+
+            result_blocks = []
+            for stn in ordered_stations:
+                stn_blocks = stations.get(stn)
+                if stn_blocks:
+                    block = (
+                        stn_blocks[0] if isinstance(stn_blocks, list) else stn_blocks
+                    )
+                    result_blocks.append(block)
+                if stn == destination:
+                    break
+            return result_blocks
+
+        # Fallback: return destination block
+        dest_blocks = stations.get(destination, [])
+        return (
+            [dest_blocks[0] if isinstance(dest_blocks, list) else dest_blocks]
+            if dest_blocks
+            else []
+        )
 
     def _build_route_lookup_via_id(self):
         """Build route lookup dictionary keyed by route_id for faster lookup"""
@@ -189,11 +329,21 @@ class TrackControl:
                         route = []
                         if i < j:
                             route = [
-                                stations[station_names[k]] for k in range(i, j + 1)
+                                (
+                                    stations[station_names[k]][0]
+                                    if isinstance(stations[station_names[k]], list)
+                                    else stations[station_names[k]]
+                                )
+                                for k in range(i, j + 1)
                             ]
                         else:
                             route = [
-                                stations[station_names[k]] for k in range(i, j - 1, -1)
+                                (
+                                    stations[station_names[k]][0]
+                                    if isinstance(stations[station_names[k]], list)
+                                    else stations[station_names[k]]
+                                )
+                                for k in range(i, j - 1, -1)
                             ]
 
                         lookup[route_id] = {
@@ -978,9 +1128,8 @@ class TrackControl:
             config = self.infrastructure[line]
             stations = config["stations"]
 
-            # Determine starting station (Yard is typically at block 0 or first station)
-            station_names = list(stations.keys())
-            start_station = station_names[0]  # First station as starting point
+            # Starting from Yard (block 0)
+            start_station = "Yard"
 
             # Look up route
             route_key = (line, start_station, dest)
@@ -1128,21 +1277,49 @@ class TrackControl:
         for i, (train_id, train_info) in enumerate(line_trains):
             if i < len(occupied_blocks):
                 actual_block = occupied_blocks[i]
+                old_block = train_info.get("current_block")
                 train_info["current_block"] = actual_block
+
+                # Log block transitions
+                if old_block is not None and old_block != actual_block:
+                    logger = get_logger()
+                    logger.info(
+                        "TRAIN",
+                        f"Train {train_id} BLOCK TRANSITION: {old_block} → {actual_block}",
+                        {
+                            "train_id": train_id,
+                            "old_block": old_block,
+                            "new_block": actual_block,
+                            "state": train_info.get("state"),
+                            "motion": train_info.get("motion_state", "Unknown"),
+                        },
+                    )
 
                 # Path verification: check if train is on expected path
                 expected_path = train_info.get("expected_path", [])
                 if expected_path and actual_block not in expected_path:
-                    self.logger.log(
+                    logger = get_logger()
+                    logger.warn(
                         "ROUTING",
                         f"Train {train_id} DEVIATED: expected path {expected_path}, actual block {actual_block}",
-                        level="warning",
+                        {
+                            "train_id": train_id,
+                            "expected_path": expected_path,
+                            "actual_block": actual_block,
+                        },
                     )
 
                 # Check if at station
                 config = self.infrastructure[line]
                 stations = config["stations"]
-                block_to_station = {v: k for k, v in stations.items()}
+                # Handle list format: create mapping for all blocks
+                block_to_station = {}
+                for station_name, blocks in stations.items():
+                    if isinstance(blocks, list):
+                        for block in blocks:
+                            block_to_station[block] = station_name
+                    else:
+                        block_to_station[blocks] = station_name
 
                 if occupied_blocks[i] in block_to_station:
                     train_info["current_station"] = block_to_station[occupied_blocks[i]]
@@ -1193,9 +1370,9 @@ class TrackControl:
             return
 
         # Get line info needed for calculations
-        line = train_info.get("line")
-
-        # Calculate optimal speed based on arrival time and total distance
+        line = train_info.get(
+            "line"
+        )  # Calculate optimal speed based on arrival time and total distance
         arrival_time_str = train_info.get("arrival_time", "")
         if arrival_time_str:
             from datetime import datetime, timedelta
@@ -1214,7 +1391,7 @@ class TrackControl:
                 time_available = (arrival - now).total_seconds()
 
                 # Calculate total route distance using actual block lengths from static data
-                complete_path = self._calculate_complete_block_path(0, route[-1], line)
+                complete_path = self._expand_route_to_complete_path(route, line)
                 total_distance_meters = 0.0
                 static_data = self._read_static_data()
 
@@ -1332,6 +1509,9 @@ class TrackControl:
         train_info["current_leg_index"] = 0
         train_info["next_station_block"] = next_station_block
         train_info["last_position_yds"] = 0.0
+        train_info["scheduled_speed"] = (
+            optimal_speed  # Store for resumption after dwelling
+        )
 
         # Update CTC data with calculated speed
         ctc_data = self._read_ctc_data()
@@ -1380,6 +1560,24 @@ class TrackControl:
         current_block = train_info.get("current_block", 0)
         next_station_block = train_info.get("next_station_block", 0)
 
+        # DEBUG: Log state at block 68
+        if current_block == 68:
+            logger = get_logger()
+            logger.info(
+                "DEBUG_68",
+                f"Train {train_id} at BLOCK 68",
+                {
+                    "train_id": train_id,
+                    "current_block": current_block,
+                    "next_station_block": next_station_block,
+                    "motion_state": motion_state,
+                    "commanded_speed": train_info.get("commanded_speed", 0),
+                    "commanded_authority": train_info.get("commanded_authority", 0),
+                    "state": train_info.get("state"),
+                    "route": train_info.get("route", []),
+                },
+            )
+
         # Track authority consumption
         last_position = train_info.get("last_position_yds", 0.0)
         distance_traveled = abs(current_position_yds - last_position)
@@ -1392,29 +1590,40 @@ class TrackControl:
             train_info["commanded_authority"] = remaining_authority
             train_info["last_position_yds"] = current_position_yds
 
-            logger = get_logger()
-            if remaining_authority < 100:  # Log when authority running low
-                logger.debug(
-                    "AUTHORITY",
-                    f"Train {train_id} authority low: {remaining_authority:.1f} yds remaining",
-                    {
-                        "train_id": train_id,
-                        "line": train_info.get("line"),
-                        "current_block": current_block,
-                        "authority_remaining": round(remaining_authority, 1),
-                        "distance_to_station": abs(next_station_block - current_block),
-                    },
-                )
+            # Commented out - too frequent position-related logging
+            # logger = get_logger()
+            # if remaining_authority < 100:  # Log when authority running low
+            #     logger.debug(
+            #         "AUTHORITY",
+            #         f"Train {train_id} authority low: {remaining_authority:.1f} yds remaining",
+            #         {
+            #             "train_id": train_id,
+            #             "line": train_info.get("line"),
+            #             "current_block": current_block,
+            #             "authority_remaining": round(remaining_authority, 1),
+            #             "distance_to_station": abs(next_station_block - current_block),
+            #         },
+            #     )
 
-        # Check if reached next station
-        if current_block == next_station_block:
+        # Check if reached next station (allow 1 block overshoot)
+        if current_block == next_station_block or (
+            current_block == next_station_block + 1 and motion_state == "Stopped"
+        ):
             train_info["state"] = "At Station"
             train_info["dwell_start_time"] = datetime.now()
 
             # Update current station
             line = train_info.get("line")
             config = self.infrastructure[line]
-            block_to_station = {v: k for k, v in config["stations"].items()}
+            stations = config["stations"]
+            # Handle list format: create mapping for all blocks
+            block_to_station = {}
+            for station_name, blocks in stations.items():
+                if isinstance(blocks, list):
+                    for block in blocks:
+                        block_to_station[block] = station_name
+                else:
+                    block_to_station[blocks] = station_name
             if next_station_block in block_to_station:
                 train_info["current_station"] = block_to_station[next_station_block]
 
@@ -1496,10 +1705,28 @@ class TrackControl:
         train_info["commanded_speed"] = 0
         train_info["commanded_authority"] = 0
 
+        logger = get_logger()
+        logger.info(
+            "TRAIN",
+            f"Train {train_id} DWELLING at {train_info.get('current_station', 'Unknown')} for {self.DWELL_TIME}s",
+            {
+                "train_id": train_id,
+                "station": train_info.get("current_station"),
+                "dwell_time_s": self.DWELL_TIME,
+                "current_block": train_info.get("current_block"),
+            },
+        )
+
     def _handle_dwelling_state(self, train_id, train_info, track_data, line_prefix):
         """Train dwelling at station: wait 10 seconds then dispatch next leg"""
         dwell_start = train_info.get("dwell_start_time")
         if not dwell_start:
+            logger = get_logger()
+            logger.error(
+                "TRAIN",
+                f"Train {train_id} in Dwelling state but no dwell_start_time set!",
+                {"train_id": train_id, "state": train_info.get("state")},
+            )
             return
 
         dwell_elapsed = (datetime.now() - dwell_start).total_seconds()
@@ -1561,9 +1788,26 @@ class TrackControl:
             train_info["current_leg_index"] = current_leg_index
             train_info["next_station_block"] = next_station_block
             train_info["commanded_authority"] = authority
-            train_info["commanded_speed"] = 30  # Resume same speed
+            train_info["expected_path"] = complete_path  # Update path for next leg
+            # Restore scheduled speed (calculated at initial dispatch)
+            scheduled_speed = train_info.get("scheduled_speed", 30)
+            train_info["commanded_speed"] = scheduled_speed
             train_info["state"] = "En Route"
             train_info["dwell_start_time"] = None
+
+            logger = get_logger()
+            logger.info(
+                "TRAIN",
+                f"Train {train_id} RESUMING after dwell: speed={scheduled_speed:.2f} mph, authority={authority:.0f} yds",
+                {
+                    "train_id": train_id,
+                    "speed": scheduled_speed,
+                    "authority": authority,
+                    "current_block": current_block,
+                    "next_station_block": next_station_block,
+                    "leg": current_leg_index,
+                },
+            )
 
     # ============ PLC INFRASTRUCTURE CONTROL ============
 
@@ -1685,8 +1929,8 @@ class TrackControl:
                 return 1
 
         elif switch_block == 63:
-            # Use pos 1 if coming from yard (route starts before 63)
-            if route and route[0] < 63 and current_block < 63:
+            # Use pos 1 if coming from yard (current position is yard block 0)
+            if current_block == 0:
                 return 1
 
         elif switch_block == 77:
@@ -1937,6 +2181,21 @@ class TrackControl:
                 fail_block, fail_type = closest_failure
                 failure_names = {0: "None", 1: "Broken Rail", 2: "Power", 3: "Circuit"}
 
+                # DEBUG: Always log at block 68
+                if current_block == 68:
+                    logger.error(
+                        "DEBUG_68_FAILURE",
+                        f"Train {train_id} at BLOCK 68 - FAILURE DETECTED!",
+                        {
+                            "train_id": train_id,
+                            "current_block": current_block,
+                            "failure_block": fail_block,
+                            "failure_type": failure_names.get(fail_type),
+                            "distance": min_distance,
+                            "FAILURE_STOP_DISTANCE": self.FAILURE_STOP_DISTANCE,
+                        },
+                    )
+
                 # Stop the train
                 old_speed = train_info.get("commanded_speed", 0)
                 old_authority = train_info.get("commanded_authority", 0)
@@ -1966,60 +2225,221 @@ class TrackControl:
                 # TODO: Attempt rerouting using alternate switches
                 # This would require path-finding algorithm to find alternate route
 
+    def _expand_route_to_complete_path(self, route, line):
+        """
+        Expand a route (list of station blocks) to complete block-by-block path.
+
+        Args:
+            route: List of station block numbers (e.g., [65, 73, 77])
+            line: Line name (e.g., "Green")
+
+        Returns:
+            Complete list of all blocks from yard through entire route
+        """
+        if not route:
+            return [0]
+
+        # Start from yard (block 0)
+        complete_path = [0]
+
+        # Build path by connecting consecutive station blocks
+        for i in range(len(route)):
+            if i == 0:
+                # Connect yard (0) to first station
+                start = 0
+            else:
+                # Connect previous station to current station
+                start = route[i - 1]
+
+            end = route[i]
+
+            # Calculate path segment between start and end
+            segment = self._calculate_complete_block_path(start, end, line)
+
+            # Append segment (skip first block if not first segment to avoid duplicates)
+            if i == 0:
+                complete_path.extend(segment[1:])  # Skip yard block (already in path)
+            else:
+                complete_path.extend(segment[1:])  # Skip start block (already in path)
+
+        return complete_path
+
     def _calculate_complete_block_path(self, start_block, end_block, line):
         """
-        Calculate complete block-by-block path using hardcoded routes from yard to each station.
+        Calculate complete block-by-block path between two blocks.
+        Handles yard-to-station and station-to-station paths dynamically.
         """
-        # Hardcoded paths from Yard (block 0) to each station
-        # Green Line: Yard exits at block 63
-        # - Stations at blocks 63-150: Direct path (0→63→64→...→station)
-        # - Stations at blocks 1-62: Loop around (0→63→...→150→1→...→station)
-        YARD_TO_STATION_PATHS = {
-            "Green": {
-                # Stations requiring loop (blocks 1-62)
-                3: [0] + list(range(63, 151)) + list(range(1, 4)),  # Pioneer
-                7: [0] + list(range(63, 151)) + list(range(1, 8)),  # Edgebrook
-                16: [0] + list(range(63, 151)) + list(range(1, 17)),  # Whited
-                21: [0] + list(range(63, 151)) + list(range(1, 22)),  # South Bank
-                31: [0] + list(range(63, 151)) + list(range(1, 32)),  # Central
-                39: [0] + list(range(63, 151)) + list(range(1, 40)),  # Inglewood
-                48: [0] + list(range(63, 151)) + list(range(1, 49)),  # Overbrook
-                57: [0] + list(range(63, 151)) + list(range(1, 58)),  # Glenbury
-                # Stations on direct path (blocks 63-150)
-                65: [0] + list(range(63, 66)),  # Dormont
-                73: [0] + list(range(63, 74)),  # Mt. Lebanon
-                88: [0] + list(range(63, 89)),  # Poplar
-                96: [0] + list(range(63, 97)),  # Castle Shannon
-            },
-            "Red": {
-                # All Red Line stations are on direct path from yard exit (block 9)
-                16: [0] + list(range(9, 17)),  # Shadyside
-                20: [0] + list(range(9, 21)),  # Herron Ave
-                24: [0] + list(range(9, 25)),  # Swissville
-                28: [0] + list(range(9, 29)),  # Penn Station
-                32: [0] + list(range(9, 33)),  # Steel Plaza
-                36: [0] + list(range(9, 37)),  # First Ave
-                40: [0] + list(range(9, 41)),  # Station Square
-                48: [0] + list(range(9, 49)),  # South Hills
-            },
-        }
+        # Handle yard-to-station paths dynamically
+        if start_block == 0:
+            if line == "Green":
+                # Green Line: Yard exits at block 63
+                if end_block >= 63 and end_block <= 150:
+                    # Direct path: 0 → 63 → 64 → ... → end_block
+                    return [0] + list(range(63, end_block + 1))
+                else:
+                    # Loop path: 0 → 63 → ... → 150 → 28 → ... → end_block
+                    path = [0] + list(range(63, 151))  # 0 to 150
+                    if end_block >= 28:
+                        # End block in range 28-62
+                        path.extend(range(28, end_block + 1))
+                    else:
+                        # End block in range 1-27 (wraps around)
+                        path.extend(range(28, 63))  # 28 to 62
+                        path.extend(range(1, end_block + 1))  # 1 to end_block
+                    return path
+            elif line == "Red":
+                # Red Line: Yard exits at block 9
+                # Direct path: 0 → 9 → 10 → ... → end_block
+                return [0] + list(range(9, end_block + 1))
 
-        # If starting from yard and destination is a station, use hardcoded path
-        if start_block == 0 and end_block in YARD_TO_STATION_PATHS.get(line, {}):
-            return YARD_TO_STATION_PATHS[line][end_block]
+        # For Green Line station-to-station paths, use topology knowledge
+        if line == "Green" and start_block != 0:
+            return self._calculate_green_line_station_to_station_path(
+                start_block, end_block
+            )
 
-        # Otherwise, simple sequential path
-        path = [start_block]
-        current = start_block
-        while current != end_block:
-            if current < end_block:
-                current += 1
+        # For Red Line or simple sequential paths
+        if line == "Red":
+            path = [start_block]
+            current = start_block
+            while current != end_block:
+                if current < end_block:
+                    current += 1
+                else:
+                    current -= 1  # FIXED: was current += 1 in both branches
+                path.append(current)
+                if len(path) > 200:
+                    break
+            return path
+
+        # Fallback for unknown cases
+        return [start_block, end_block]
+
+    def _calculate_green_line_station_to_station_path(self, start_block, end_block):
+        """Calculate path between two blocks on Green Line using track topology.
+        Handles non-sequential transitions like 150→28 via switch.
+        """
+        # Green Line topology:
+        # Direct section: 63-150 (continuous)
+        # Loop section: 28-62 then 1-2 (with switch at 150→28 and wrapping)
+
+        # Special case: crossing switch 28 (block 150 to block 28)
+        if start_block == 150 and end_block <= 62:
+            # Path goes through switch: 150 → 28 → 29 → ... → end_block
+            if end_block >= 28:
+                return [150, 28] + list(range(29, end_block + 1))
             else:
-                current += 1
-            path.append(current)
-            if len(path) > 200:
-                break
-        return path
+                # Wraps around: 150 → 28 → ... → 62 → 1 → ... → end_block
+                return [150, 28] + list(range(29, 63)) + list(range(1, end_block + 1))
+
+        # Both blocks in direct section (63-150)
+        if (
+            start_block >= 63
+            and end_block >= 63
+            and start_block <= 150
+            and end_block <= 150
+        ):
+            if start_block < end_block:
+                return list(range(start_block, end_block + 1))
+            else:
+                return list(range(start_block, end_block - 1, -1))
+
+        # Both blocks in loop section (28-62 or 1-2)
+        if start_block <= 62 and end_block <= 62:
+            if start_block < end_block:
+                return list(range(start_block, end_block + 1))
+            else:
+                return list(range(start_block, end_block - 1, -1))
+
+        # Start in loop, end in direct: need to go through yard
+        if start_block <= 62 and end_block >= 63:
+            # This shouldn't happen in normal operation
+            # Trains don't reverse from loop to direct path
+            return [start_block, end_block]  # Fallback
+
+        # Start in direct, end in loop: continue forward through 150→28
+        if start_block >= 63 and start_block <= 150 and end_block <= 62:
+            if end_block >= 28:
+                # Destination is in 28-62 range
+                return (
+                    list(range(start_block, 151))
+                    + [28]
+                    + list(range(29, end_block + 1))
+                )
+            else:
+                # Destination is in 1-2 range (wraps around)
+                return (
+                    list(range(start_block, 151))
+                    + [28]
+                    + list(range(29, 63))
+                    + list(range(1, end_block + 1))
+                )
+
+        # Fallback for unexpected cases
+        return [start_block, end_block]
+
+    def _calculate_green_line_station_to_station_path(self, start_block, end_block):
+        """Calculate path between two blocks on Green Line using track topology.
+        Handles non-sequential transitions like 150→28 via switch.
+        """
+        # Green Line topology:
+        # Direct section: 63-150 (continuous)
+        # Loop section: 28-62 then 1-2 (with switch at 150→28 and wrapping)
+
+        # Special case: crossing switch 28 (block 150 to block 28)
+        if start_block == 150 and end_block <= 62:
+            # Path goes through switch: 150 → 28 → 29 → ... → end_block
+            if end_block >= 28:
+                return [150, 28] + list(range(29, end_block + 1))
+            else:
+                # Wraps around: 150 → 28 → ... → 62 → 1 → ... → end_block
+                return [150, 28] + list(range(29, 63)) + list(range(1, end_block + 1))
+
+        # Both blocks in direct section (63-150)
+        if (
+            start_block >= 63
+            and end_block >= 63
+            and start_block <= 150
+            and end_block <= 150
+        ):
+            if start_block < end_block:
+                return list(range(start_block, end_block + 1))
+            else:
+                return list(range(start_block, end_block - 1, -1))
+
+        # Both blocks in loop section (28-62 or 1-2)
+        if start_block <= 62 and end_block <= 62:
+            if start_block < end_block:
+                return list(range(start_block, end_block + 1))
+            else:
+                return list(range(start_block, end_block - 1, -1))
+
+        # Start in loop, end in direct: need to go through yard
+        if start_block <= 62 and end_block >= 63:
+            # This shouldn't happen in normal operation
+            # Trains don't reverse from loop to direct path
+            return [start_block, end_block]  # Fallback
+
+        # Start in direct, end in loop: continue forward through 150→28
+        if start_block >= 63 and start_block <= 150 and end_block <= 62:
+            if end_block >= 28:
+                # Destination is in 28-62 range
+                return (
+                    list(range(start_block, 151))
+                    + [28]
+                    + list(range(29, end_block + 1))
+                )
+            else:
+                # Destination is in 1-2 range (wraps around)
+                return (
+                    list(range(start_block, 151))
+                    + [28]
+                    + list(range(29, 63))
+                    + list(range(1, end_block + 1))
+                )
+
+        # Fallback for unexpected cases
+        return [start_block, end_block]
 
     def _set_switches_for_route(
         self, track_data, current_block, route, line, line_prefix
@@ -2084,12 +2504,13 @@ class TrackControl:
         if not data:
             return
 
-        logger = get_logger()
-        logger.debug(
-            "TRAIN",
-            f"_write_train_commands called. Active trains: {list(self.active_trains.keys())}",
-            {"active_trains": len(self.active_trains)},
-        )
+        # Commented out - high-frequency debug logging
+        # logger = get_logger()
+        # logger.debug(
+        #     "TRAIN",
+        #     f"_write_train_commands called. Active trains: {list(self.active_trains.keys())}",
+        #     {"active_trains": len(self.active_trains)},
+        # )
 
         # Separate trains by line
         green_trains = {
@@ -2103,11 +2524,12 @@ class TrackControl:
             if info.get("line") == "Red"
         }
 
-        logger.debug(
-            "TRAIN",
-            f"Green trains: {list(green_trains.keys())}, Red trains: {list(red_trains.keys())}",
-            {"green_count": len(green_trains), "red_count": len(red_trains)},
-        )
+        # Commented out - high-frequency debug logging
+        # logger.debug(
+        #     "TRAIN",
+        #     f"Green trains: {list(green_trains.keys())}, Red trains: {list(red_trains.keys())}",
+        #     {"green_count": len(green_trains), "red_count": len(red_trains)},
+        # )
 
         # Green line commands
         g_speeds = []
@@ -2119,14 +2541,14 @@ class TrackControl:
             g_speeds.append(speed)
             g_authorities.append(authority)
 
-            # Debug logging
-            if speed > 0 or authority > 0:
-                logger = get_logger()
-                logger.debug(
-                    "TRAIN",
-                    f"Writing commands for Train {train_id}: speed={speed}, authority={authority}",
-                    {"train_id": train_id, "speed": speed, "authority": authority},
-                )
+            # Commented out - high-frequency debug logging
+            # if speed > 0 or authority > 0:
+            #     logger = get_logger()
+            #     logger.debug(
+            #         "TRAIN",
+            #         f"Writing commands for Train {train_id}: speed={speed}, authority={authority}",
+            #         {"train_id": train_id, "speed": speed, "authority": authority},
+            #     )
 
         data["G-Train"]["commanded speed"] = g_speeds
         data["G-Train"]["commanded authority"] = g_authorities
@@ -2143,6 +2565,27 @@ class TrackControl:
         data["R-Train"]["commanded authority"] = r_authorities
 
         self._write_track_io(data)
+
+        # Log non-zero commands for visibility
+        logger = get_logger()
+        for train_id in sorted(green_trains.keys()):
+            speed = green_trains[train_id].get("commanded_speed", 0)
+            authority = green_trains[train_id].get("commanded_authority", 0)
+            if speed > 0 or authority > 0:
+                logger.info(
+                    "TRAIN",
+                    f"Train {train_id} commands written: speed={speed:.2f} mph, authority={authority:.0f} yds",
+                    {"train_id": train_id, "speed": speed, "authority": authority},
+                )
+        for train_id in sorted(red_trains.keys()):
+            speed = red_trains[train_id].get("commanded_speed", 0)
+            authority = red_trains[train_id].get("commanded_authority", 0)
+            if speed > 0 or authority > 0:
+                logger.info(
+                    "TRAIN",
+                    f"Train {train_id} commands written: speed={speed:.2f} mph, authority={authority:.0f} yds",
+                    {"train_id": train_id, "speed": speed, "authority": authority},
+                )
 
     # ============ DISPLAY UPDATES ============
 

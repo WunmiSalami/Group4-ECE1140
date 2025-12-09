@@ -599,7 +599,7 @@ class TrackModelUI(ttk.Frame):
                 if getattr(self.visualizer, "current_line", None) != full_line_name:
                     self.visualizer.display_line(full_line_name)
             except Exception as e:
-                print(f"[Visualizer] Failed to display {selected_line}: {e}")
+                pass  # Display failures are non-critical
 
     def load_static_after_upload(self, selected_line):
         if not os.path.exists(STATIC_JSON_PATH):
@@ -634,12 +634,10 @@ class TrackModelUI(ttk.Frame):
         self, excel_path=None, line_name=None, block_name=None
     ):
         if not hasattr(self, "visualizer"):
-            print("Visualizer not initialized!")
             return
         if excel_path:
             self.excel_file_path = excel_path
         if not self.excel_file_path:
-            print("No Excel file loaded yet")
             return
         if line_name is None:
             line_name = self.line_selector.get()
@@ -694,7 +692,7 @@ class TrackModelUI(ttk.Frame):
             try:
                 self.visualizer.highlight_block(selected_block)
             except Exception as e:
-                print(f"Failed to highlight block '{selected_block}': {e}")
+                pass  # Highlight failures are non-critical
 
     def get_crossing_for_block(self, block_id):
         """Helper method to get crossing status for a block from static data."""
@@ -883,8 +881,6 @@ class TrackModelUI(ttk.Frame):
             if clicked in self.block_selector["values"]:
                 self.block_selector.set(clicked)
                 self.on_block_selected()
-            else:
-                print(f"[POLL] '{clicked}' not found in current block list.")
 
         self.after(500, self.poll_visualizer_clicks)
 
@@ -931,14 +927,12 @@ class TrackModelUI(ttk.Frame):
 
     def on_window_close(self):
         """Handle cleanup when track model UI window is closing"""
-        print("[Cleanup] Clearing track_model_static.json from track_model_UI")
         try:
             if os.path.exists(STATIC_JSON_PATH):
                 with open(STATIC_JSON_PATH, "w") as f:
                     json.dump({}, f, indent=4)
-                print("[Cleanup] Cleared track_model_static.json")
         except Exception as e:
-            print(f"[Cleanup Error] Failed to clear track_model_static.json: {e}")
+            pass  # Cleanup failures are non-critical
 
         # Get parent window and destroy it
         root = self.winfo_toplevel()

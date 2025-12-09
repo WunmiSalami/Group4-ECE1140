@@ -163,36 +163,42 @@ def update_track_motion(
     velocity_mph: float,
     position_yds: float,
 ):
+    from logger import get_logger
+
+    logger = get_logger()
+
     motion_state = (
         "stopped"
         if velocity_mph <= 0.01
         else ("braking" if acceleration_ftps2 < 0 else "moving")
     )
 
-    data = safe_read_json(TRACK_INPUT_FILE)
-    if not isinstance(data, dict) or not data:
-        if isinstance(data, dict):
-            legacy = data
-        else:
-            legacy = {}
-        legacy_motion = legacy.get("motion", {})
-        if not isinstance(legacy_motion, dict):
-            legacy_motion = {}
-        legacy_motion["current motion"] = motion_state
-        legacy_motion["position_yds"] = position_yds
-        legacy["motion"] = legacy_motion
-        safe_write_json(TRACK_INPUT_FILE, legacy)
-        return
+    # logger.debug(
+    #     "POSITION",
+    #     f"Train {train_index + 1} motion update: state={motion_state}, vel={velocity_mph:.2f}mph, pos={position_yds:.2f}yds",
+    #     {
+    #         "train_id": train_index + 1,
+    #         "motion_state": motion_state,
+    #         "velocity_mph": velocity_mph,
+    #         "position_yds": position_yds,
+    #         "acceleration_ftps2": acceleration_ftps2,
+    #     },
+    # )
 
+    data = safe_read_json(TRACK_INPUT_FILE)
+    if not isinstance(data, dict):
+        data = {}
+
+    # Get all train keys
     keys = sorted([k for k in data.keys() if "_train_" in k])
+
+    # If no train keys exist, log error and don't corrupt the file
     if not keys:
-        legacy_motion = data.get("motion", {})
-        if not isinstance(legacy_motion, dict):
-            legacy_motion = {}
-        legacy_motion["current motion"] = motion_state
-        legacy_motion["position_yds"] = position_yds
-        data["motion"] = legacy_motion
-        safe_write_json(TRACK_INPUT_FILE, data)
+        logger.error(
+            "DATA",
+            f"No train keys found in track_model_Train_Model.json for train {train_index + 1}",
+            {"train_index": train_index, "file_keys": list(data.keys())},
+        )
         return
 
     idx = train_index if 0 <= train_index < len(keys) else 0
@@ -270,12 +276,6 @@ class TrainModel:
             0.0, float(commanded_authority or 0.0) - self.position_yds
         )
 
-        # DEBUG: Authority tracking
-        print(
-            f"[TRAIN MODEL PHYSICS] pos={self.position_yds:.2f} yds, vel={self.velocity_mph:.2f} mph, "
-            f"cmd_auth={float(commanded_authority or 0.0):.2f}, remaining_auth={self.authority_yds:.2f}, "
-            f"service_brake={service_brake}"
-        )
         return {
             "velocity_mph": self.velocity_mph,
             "acceleration_ftps2": self.acceleration_ftps2,

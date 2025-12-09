@@ -39,7 +39,8 @@ def safe_write_json(path: str, data: dict):
         with open(path, "w") as f:
             json.dump(data, f, indent=4)
     except Exception as e:
-        print(f"Error writing JSON: {e}")
+        logger = get_logger()
+        logger.error("DATA", f"Error writing JSON: {e}", {"error": str(e)})
 
 
 class beacon:
@@ -204,13 +205,27 @@ class train_controller:
             block = track_data[train_key].get("block", {})
             beacon = track_data[train_key].get("beacon", {})
 
+            cmd_speed = float(block.get("commanded speed", 0.0) or 0.0)
+            cmd_auth = float(block.get("commanded authority", 0.0) or 0.0)
+
+            logger = get_logger()
+            # logger.debug(
+            #     "TRAIN",
+            #     f"Train {self.train_id} controller reading from JSON: speed={cmd_speed:.2f} mph, authority={cmd_auth:.2f} yds",
+            #     {
+            #         "train_id": self.train_id,
+            #         "commanded_speed": cmd_speed,
+            #         "commanded_authority": cmd_auth,
+            #         "train_key": train_key,
+            #         "block_data": block,
+            #     },
+            # )
+
             # Update track-related fields and physics outputs from train model
             self.update_state(
                 {
-                    "commanded_speed": float(block.get("commanded speed", 0.0) or 0.0),
-                    "commanded_authority": float(
-                        block.get("commanded authority", 0.0) or 0.0
-                    ),
+                    "commanded_speed": cmd_speed,
+                    "commanded_authority": cmd_auth,
                     "speed_limit": float(beacon.get("speed limit", 0.0) or 0.0),
                     "next_stop": beacon.get("next station", "") or "",
                     "station_side": beacon.get("side_door", "") or "",
@@ -281,21 +296,8 @@ class train_controller:
         # Add safety margin (20% extra distance)
         required_distance = stopping_distance_yds * 1.2
 
-        # DEBUG: Authority checking
-        print(
-            f"[TRAIN CONTROLLER {self.train_id}] pos={position_yds:.2f} yds, "
-            f"vel={train_velocity:.2f} mph ({velocity_yds_per_sec:.2f} yd/s), "
-            f"cmd_auth={commanded_authority:.2f}, remaining_auth={authority_yds:.2f}, "
-            f"stopping_dist={stopping_distance_yds:.2f}, required={required_distance:.2f}, "
-            f"service_brake={service_brake}"
-        )
-
         # Critical authority case: if we're about to exceed authority, force service brake
         if authority_yds <= 1.0 and train_velocity > 0.5:
-            if not service_brake:
-                print(
-                    f"[TRAIN CONTROLLER {self.train_id}] 🚨 CRITICAL STOP! Authority critical: {authority_yds:.2f} yds"
-                )
             service_brake = True
             state["service_brake"] = True
             self.update_state({"service_brake": True, "power_command": 0.0})
@@ -308,18 +310,12 @@ class train_controller:
                 service_brake = True
                 state["service_brake"] = True
                 self.update_state({"service_brake": True, "power_command": 0.0})
-                print(
-                    f"[TRAIN CONTROLLER {self.train_id}] ⚠️ STOPPING! Auth={authority_yds:.2f} yds <= Required={required_distance:.2f} yds"
-                )
             return 0.0
         elif service_brake:
             # Have sufficient authority - release service brake
             service_brake = False
             state["service_brake"] = False
             self.update_state({"service_brake": False})
-            print(
-                f"[TRAIN CONTROLLER {self.train_id}] ✅ BRAKE RELEASED! Auth={authority_yds:.2f} yds > Required={required_distance:.2f} yds"
-            )
 
         # Normal PI control (accelerate/maintain speed)
         controls = vital_train_controls(
@@ -1342,7 +1338,8 @@ class TrainManagerUI(tk.Tk):
             self.update_status(f"Train {train_id} added")
         except Exception as e:
             self.update_status(f"Error: {e}")
-            print(f"Error adding train: {e}")
+            logger = get_logger()
+            logger.error("TRAIN", f"Error adding train: {e}", {"error": str(e)})
 
     def remove_selected_train(self):
         if self.selected_train_id is None:

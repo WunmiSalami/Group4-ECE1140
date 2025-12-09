@@ -230,7 +230,6 @@ class TrackDiagramParser:
         """Group continuous pixels into segments and create bounding boxes."""
 
         if not self.clean_skeleton_pixels_red:
-            print("⚠️ No clean skeleton pixels to segment!")
             return
 
         pixel_set = set(self.clean_skeleton_pixels_red)
@@ -293,7 +292,6 @@ class TrackDiagramParser:
         """Group continuous green pixels into segments and create bounding boxes."""
 
         if not self.clean_skeleton_pixels_green:
-            print("⚠️ No clean green skeleton pixels to segment!")
             return
 
         pixel_set = set(self.clean_skeleton_pixels_green)
@@ -894,8 +892,6 @@ class TrackDiagramParser:
 
     def visualize(self):
         """Show two views side by side: segments with bounding boxes, and final labeled sections."""
-        print("\n=== Visualizing Segments ===")
-
         root = tk.Tk()
         root.title("Track Diagram Parser - Segments & Labels")
         root.geometry("2400x900")
@@ -983,7 +979,6 @@ class TrackDiagramParser:
                     fill="blue",
                 )
 
-        print("=== Visualization Complete ===\n")
         root.mainloop()
 
 

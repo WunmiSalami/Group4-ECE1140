@@ -333,16 +333,11 @@ class TrackNetworkBuilder:
             reconnect_info = ""
             if connects_at:
                 reconnect_type = "main" if connects_to == 0 else f"branch {connects_to}"
-                reconnect_info = (
-                    f" → reconnects to {reconnect_type} at block {connects_at}"
-                )
+            reconnect_info = f" → reconnects to {reconnect_type} at block {connects_at}"
 
-            print(
-                f"  Branch {path_id}: from {branch_point}→{target}, {len(branch_blocks)} blocks {branch_blocks}{reconnect_info}"
+            path_id += (
+                1  # Step 3: Build main path - SEQUENTIAL, but SKIP all branch blocks
             )
-            path_id += 1
-
-        # Step 3: Build main path - SEQUENTIAL, but SKIP all branch blocks
         main_blocks = []
         current = all_blocks[0]
 
@@ -378,11 +373,6 @@ class TrackNetworkBuilder:
 
         for block in main_blocks:
             self.network.block_to_path[block] = 0
-
-        print(
-            f"  Main path: {len(main_blocks)} blocks (ends at {main_blocks[-1] if main_blocks else 'N/A'})"
-        )
-        print(f"  Total traversal order: {len(ordered_blocks)} blocks")
 
     def _validate_paths(self):
         """Validate the built network against all rules."""

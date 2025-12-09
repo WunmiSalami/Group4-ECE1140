@@ -178,6 +178,7 @@ class LineNetwork:
         with open(json_path, "r") as f:
             train_model_data = json.load(f)
 
+        logger = get_logger()
         trains = []
         for i in range(len(commanded_speeds)):
             train_key = f"{self.line_name[0]}_train_{i + 1}"
@@ -185,13 +186,42 @@ class LineNetwork:
                 motion = train_model_data[train_key]["motion"]["current motion"]
                 pos = train_model_data[train_key]["motion"].get("position_yds", 0)
                 trains.append({"train_id": i + 1, "motion": motion})
+
+                old_pos = self.train_positions.get(i + 1, 0)
                 self.train_positions[i + 1] = pos
+
+                # Commented out - high-frequency position logging
+                # if pos != old_pos:
+                #     logger.debug(
+                #         "POSITION",
+                #         f"Train {i + 1} position updated: {old_pos:.2f} → {pos:.2f} yds (delta: {pos - old_pos:.2f} yds)",
+                #         {
+                #             "train_id": i + 1,
+                #             "line": self.line_name,
+                #             "old_position_yds": old_pos,
+                #             "new_position_yds": pos,
+                #             "delta_yds": pos - old_pos,
+                #             "motion": motion,
+                #         },
+                #     )
 
                 train_model_data[train_key]["block"]["commanded speed"] = (
                     commanded_speeds[i]
                 )
                 train_model_data[train_key]["block"]["commanded authority"] = (
                     commanded_authorities[i]
+                )
+
+                logger.info(
+                    "TRAIN",
+                    f"Train {i + 1} commands written to JSON: speed={commanded_speeds[i]:.2f} mph, authority={commanded_authorities[i]:.2f} yds",
+                    {
+                        "train_id": i + 1,
+                        "line": self.line_name,
+                        "commanded_speed": commanded_speeds[i],
+                        "commanded_authority": commanded_authorities[i],
+                        "train_key": train_key,
+                    },
                 )
 
         if self.block_manager:
@@ -363,14 +393,41 @@ class LineNetwork:
             return "Stopped"
 
     def get_next_block(self, train_id, current, previous=None):
+        logger = get_logger()
+
         if not self.should_advance_block(train_id, current):
             return current
 
         # Read motion and handle stopped/undispatched (stays here)
         motion = self._read_train_motion(train_id)
+        logger.debug(
+            "POSITION",
+            f"Train {train_id} Block {current}: motion state = {motion}",
+            {
+                "train_id": train_id,
+                "line": self.line_name,
+                "current_block": current,
+                "motion": motion,
+            },
+        )
+
         if motion == "Stopped":
+            logger.debug(
+                "POSITION",
+                f"Train {train_id} Block {current}: train stopped, staying in current block",
+                {
+                    "train_id": train_id,
+                    "line": self.line_name,
+                    "current_block": current,
+                },
+            )
             return current
         elif motion == "Undispatched":
+            logger.debug(
+                "POSITION",
+                f"Train {train_id}: undispatched, returning to yard (block 0)",
+                {"train_id": train_id, "line": self.line_name},
+            )
             return 0
 
         # Route based on line
@@ -378,6 +435,18 @@ class LineNetwork:
             next_block = self._get_green_line_next_block(current, previous)
         elif self.line_name == "Red":
             next_block = self._get_red_line_next_block(current, previous)
+
+        logger.info(
+            "POSITION",
+            f"Train {train_id}: BLOCK TRANSITION {current} → {next_block}",
+            {
+                "train_id": train_id,
+                "line": self.line_name,
+                "from_block": current,
+                "to_block": next_block,
+                "previous_block": previous,
+            },
+        )
 
         self._handle_station_arrival(next_block)
         self._finalize_block_transition(next_block, current, train_id)
@@ -740,6 +809,16 @@ class LineNetwork:
                                 },
                             )
 
+            # Hardcode switches that route to yard (block 0)
+            if self.line_name == "Green":
+                if 57 not in self.branch_points:
+                    self.branch_points[57] = BranchPoint(block=57, targets=[0, 58])
+                if 63 not in self.branch_points:
+                    self.branch_points[63] = BranchPoint(block=63, targets=[0, 64])
+            elif self.line_name == "Red":
+                if 9 not in self.branch_points:
+                    self.branch_points[9] = BranchPoint(block=9, targets=[0, 10])
+
             logger.info(
                 "NETWORK",
                 f"{self.line_name} Line branch points loaded: {len(self.branch_points)} total",
@@ -789,6 +868,8 @@ class LineNetwork:
         Returns:
             True if train should advance to next block, False otherwise
         """
+        logger = get_logger()
+
         # Initialize train state if not exists
         if not hasattr(self, "previous_position_yds"):
             self.previous_position_yds = {}
@@ -798,6 +879,11 @@ class LineNetwork:
         # Initialize this train's state
         if train_id not in self.previous_position_yds:
             self.previous_position_yds[train_id] = 0
+            logger.debug(
+                "POSITION",
+                f"Train {train_id} position tracking initialized",
+                {"train_id": train_id, "line": self.line_name},
+            )
         if train_id not in self.yards_into_current_block:
             self.yards_into_current_block[train_id] = 0
 
@@ -810,7 +896,20 @@ class LineNetwork:
         # Add delta to yards traveled in current block
         self.yards_into_current_block[train_id] += delta
 
-        # Position tracking removed to reduce log spam
+        # Commented out - high-frequency position logging
+        # logger.debug(
+        #     "POSITION",
+        #     f"Train {train_id} Block {current_block}: pos={current_position_yds:.2f}yds, delta={delta:.2f}yds, block_traveled={self.yards_into_current_block[train_id]:.2f}yds",
+        #     {
+        #         "train_id": train_id,
+        #         "line": self.line_name,
+        #         "current_block": current_block,
+        #         "position_yds": current_position_yds,
+        #         "previous_position_yds": self.previous_position_yds[train_id],
+        #         "delta_yds": delta,
+        #         "yards_in_block": self.yards_into_current_block[train_id],
+        #     },
+        # )
 
         # Get block length from static JSON
         try:
@@ -834,8 +933,15 @@ class LineNetwork:
 
             if block_length_yards is None:
                 # Cannot advance without block length data - error condition
-                print(
-                    f"ERROR: Train {train_id} block {current_block} length unavailable - cannot determine block advance"
+                logger.error(
+                    "POSITION",
+                    f"Train {train_id} Block {current_block}: CRITICAL - block length data unavailable, cannot determine advancement",
+                    {
+                        "train_id": train_id,
+                        "line": self.line_name,
+                        "current_block": current_block,
+                        "yards_in_block": self.yards_into_current_block[train_id],
+                    },
                 )
                 self.previous_position_yds[train_id] = current_position_yds
                 return False  # Stay in current block until data available
@@ -845,14 +951,48 @@ class LineNetwork:
                 # Subtract block length and carry overflow
                 self.yards_into_current_block[train_id] -= block_length_yards
                 self.previous_position_yds[train_id] = current_position_yds
+
+                logger.info(
+                    "POSITION",
+                    f"Train {train_id} Block {current_block}: ADVANCING to next block (traveled {self.yards_into_current_block[train_id] + block_length_yards:.2f}/{block_length_yards:.2f} yds)",
+                    {
+                        "train_id": train_id,
+                        "line": self.line_name,
+                        "current_block": current_block,
+                        "block_length_yds": block_length_yards,
+                        "yards_traveled": self.yards_into_current_block[train_id]
+                        + block_length_yards,
+                        "overflow_yds": self.yards_into_current_block[train_id],
+                    },
+                )
                 return True
             else:
                 # Not enough yards traveled, stay in current block
                 self.previous_position_yds[train_id] = current_position_yds
+
+                # Commented out - high-frequency position logging
+                # logger.debug(
+                #     "POSITION",
+                #     f"Train {train_id} Block {current_block}: staying in block ({self.yards_into_current_block[train_id]:.2f}/{block_length_yards:.2f} yds)",
+                #     {
+                #         "train_id": train_id,
+                #         "line": self.line_name,
+                #         "current_block": current_block,
+                #         "block_length_yds": block_length_yards,
+                #         "yards_in_block": self.yards_into_current_block[train_id],
+                #         "remaining_yds": block_length_yards
+                #         - self.yards_into_current_block[train_id],
+                #     },
+                # )
                 return False
 
         except Exception as e:
-            print(f"ERROR: Train {train_id} block advance check failed: {e}")
+            logger = get_logger()
+            logger.error(
+                "ROUTING",
+                f"Train {train_id} block advance check failed: {e}",
+                {"train_id": train_id, "error": str(e)},
+            )
             self.previous_position_yds[train_id] = current_position_yds
             return False  # Stay in current block on error - do not silently advance
 
@@ -875,7 +1015,10 @@ class LineNetwork:
         self, next_block: int, current: int, train_id: int
     ) -> None:
         self.update_block_occupancy(next_block, current)
-        self.write_beacon_data_to_train_model(next_block, train_id, current)
+        # Only send beacon at stations, not every block
+        station_name = self.get_station_name(next_block)
+        if station_name != "N/A":
+            self.write_beacon_data_to_train_model(next_block, train_id, current)
         self.write_occupancy_to_json()
         self.write_failures_to_json()
 
@@ -890,6 +1033,17 @@ class LineNetwork:
         Returns:
             Next block number
         """
+        logger = get_logger()
+        logger.debug(
+            "ROUTING",
+            f"Green Line routing: current={current}, previous={previous}",
+            {
+                "line": self.line_name,
+                "current_block": current,
+                "previous_block": previous,
+            },
+        )
+
         # Green line switch routes - blocks can appear multiple times for different switch scenarios
         switch_routes = {
             13: {0: "13->12", 1: "13->14"},
@@ -912,51 +1066,183 @@ class LineNetwork:
 
         # Check if current block is a switch block or routes through a switch
         if current in switch_routes:
+            logger.debug(
+                "ROUTING",
+                f"Block {current} is in switch_routes",
+                {
+                    "current_block": current,
+                    "in_source_to_switch": current in source_to_switch,
+                },
+            )
+
             # Check if this block routes through another switch
             if current in source_to_switch:
                 switch_block = source_to_switch[current]
                 switch_target = self.block_manager.get_switch_position(
                     self.line_name, switch_block
                 )
+                logger.debug(
+                    "ROUTING",
+                    f"Block {current} routes through switch {switch_block}, target={switch_target}",
+                    {
+                        "current_block": current,
+                        "switch_block": switch_block,
+                        "switch_target": switch_target,
+                    },
+                )
                 if switch_target == switch_block + 1:
                     switch_target = switch_block
+                    logger.debug(
+                        "ROUTING",
+                        f"Switch target adjusted to {switch_target}",
+                        {"switch_target": switch_target},
+                    )
             else:
                 # This block is the actual switch
                 switch_target = self.block_manager.get_switch_position(
                     self.line_name, current
                 )
+                logger.debug(
+                    "ROUTING",
+                    f"Block {current} is actual switch, target={switch_target}",
+                    {"current_block": current, "switch_target": switch_target},
+                )
 
             if switch_target != "N/A" and isinstance(switch_target, int):
                 next_block = switch_target
+                logger.info(
+                    "ROUTING",
+                    f"Using switch target: {current} → {next_block}",
+                    {
+                        "current_block": current,
+                        "next_block": next_block,
+                        "method": "switch_target",
+                    },
+                )
             else:
                 # Fallback to backward/forward motion
                 if previous is not None and previous == current + 1:
                     next_block = current - 1
+                    logger.debug(
+                        "ROUTING",
+                        f"Fallback backward: {current} → {next_block}",
+                        {
+                            "current_block": current,
+                            "next_block": next_block,
+                            "previous": previous,
+                        },
+                    )
                 elif previous is not None and previous == current - 1:
                     next_block = current + 1
+                    logger.debug(
+                        "ROUTING",
+                        f"Fallback forward: {current} → {next_block}",
+                        {
+                            "current_block": current,
+                            "next_block": next_block,
+                            "previous": previous,
+                        },
+                    )
                 else:
                     next_block = current
+                    logger.warn(
+                        "ROUTING",
+                        f"Fallback staying at {current} (previous={previous})",
+                        {
+                            "current_block": current,
+                            "next_block": next_block,
+                            "previous": previous,
+                        },
+                    )
         else:
+            logger.debug(
+                "ROUTING",
+                f"Block {current} NOT in switch_routes, using motion logic",
+                {"current_block": current, "previous": previous},
+            )
+
             # Use backward/forward motion logic
             if previous is not None and previous == current + 1:
                 next_block = current - 1
+                logger.debug(
+                    "ROUTING",
+                    f"Motion backward: {current} → {next_block}",
+                    {
+                        "current_block": current,
+                        "next_block": next_block,
+                        "previous": previous,
+                    },
+                )
             elif previous is not None and previous == current - 1:
                 next_block = current + 1
+                logger.debug(
+                    "ROUTING",
+                    f"Motion forward: {current} → {next_block}",
+                    {
+                        "current_block": current,
+                        "next_block": next_block,
+                        "previous": previous,
+                    },
+                )
 
             else:
                 # Should never happen with proper hard-coding
                 next_block = current + 1
+                logger.warn(
+                    "ROUTING",
+                    f"DEFAULT CASE: {current} → {next_block} (previous={previous})",
+                    {
+                        "current_block": current,
+                        "next_block": next_block,
+                        "previous": previous,
+                    },
+                )
 
         # HARD RULE: Never return to previous block (physically impossible - train can't reverse)
         if previous is not None and next_block == previous:
+            logger.warn(
+                "ROUTING",
+                f"HARD RULE VIOLATION: would return to previous {previous}, correcting",
+                {
+                    "current_block": current,
+                    "next_block": next_block,
+                    "previous": previous,
+                },
+            )
+
             # If we would go back to previous, try the opposite direction
             if previous == current + 1:
                 next_block = current - 1
+                logger.debug(
+                    "ROUTING",
+                    f"Corrected to backward: {current} → {next_block}",
+                    {"current_block": current, "next_block": next_block},
+                )
             elif previous == current - 1:
                 next_block = current + 1
+                logger.debug(
+                    "ROUTING",
+                    f"Corrected to forward: {current} → {next_block}",
+                    {"current_block": current, "next_block": next_block},
+                )
             else:
                 # Stay put if no valid direction
                 next_block = current
+                logger.error(
+                    "ROUTING",
+                    f"Cannot correct, staying at {current}",
+                    {
+                        "current_block": current,
+                        "next_block": next_block,
+                        "previous": previous,
+                    },
+                )
+
+        logger.info(
+            "ROUTING",
+            f"Green Line final routing decision: {current} → {next_block}",
+            {"current_block": current, "next_block": next_block, "previous": previous},
+        )
 
         return next_block
 
