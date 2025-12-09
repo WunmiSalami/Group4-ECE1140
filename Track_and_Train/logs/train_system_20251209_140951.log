@@ -1,0 +1,44 @@
+================================================================================
+Train Track Control System - Log Started
+Session: 20251209_140951
+================================================================================
+
+[2025-12-09 14:09:51.030] [DEBUG] [NETWORK   ] Red Line loading branch points from static JSON
+[2025-12-09 14:09:51.035] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 16 -> [1, 15]
+[2025-12-09 14:09:51.038] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 27 -> [28, 76]
+[2025-12-09 14:09:51.039] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 33 -> [32, 72]
+[2025-12-09 14:09:51.042] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 38 -> [39, 71]
+[2025-12-09 14:09:51.043] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 44 -> [43, 67]
+[2025-12-09 14:09:51.045] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 52 -> [53, 66]
+[2025-12-09 14:09:51.047] [INFO ] [NETWORK   ] Red Line branch points loaded: 7 total
+[2025-12-09 14:10:19.326] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+[2025-12-09 14:10:19.329] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+[2025-12-09 14:10:19.331] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+[2025-12-09 14:10:19.333] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+[2025-12-09 14:10:19.335] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+[2025-12-09 14:10:19.337] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:10:32.086] [INFO ] [TRAIN     ] Train 1 created successfully
+[2025-12-09 14:10:40.166] [DEBUG] [ROUTE_PATH] Route to Pioneer (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon', 'Dormont', 'Glenbury', 'Overbrook', 'Inglewood', 'Central', 'South Bank', 'Central', 'Inglewood', 'Overbrook'], blocks=[65, 73, 77, 88, 96, 105, 114, 123, 132, 141, 31, 39, 48, 57]
+[2025-12-09 14:10:40.176] [DEBUG] [ROUTE_PATH] Route to Edgebrook (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon', 'Dormont', 'Glenbury', 'Overbrook', 'Inglewood', 'Central', 'South Bank', 'Central', 'Inglewood', 'Overbrook'], blocks=[65, 73, 77, 88, 96, 105, 114, 123, 132, 141, 31, 39, 48, 57]
+[2025-12-09 14:10:40.179] [DEBUG] [ROUTE_PATH] Route to Whited (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon', 'Dormont', 'Glenbury', 'Overbrook', 'Inglewood', 'Central', 'South Bank', 'Central', 'Inglewood', 'Overbrook'], blocks=[65, 73, 77, 88, 96, 105, 114, 123, 132, 141, 31, 39, 48, 57]
+[2025-12-09 14:10:40.182] [DEBUG] [ROUTE_PATH] Route to South Bank (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon', 'Dormont', 'Glenbury', 'Overbrook', 'Inglewood', 'Central', 'South Bank'], blocks=[65, 73, 77, 88, 96, 105, 114, 123, 132, 141, 31]
+[2025-12-09 14:10:40.185] [DEBUG] [ROUTE_PATH] Route to Central (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon'], blocks=[65, 73, 77, 88, 96]
+[2025-12-09 14:10:40.187] [DEBUG] [ROUTE_PATH] Route to Inglewood (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon'], blocks=[65, 73, 77, 88, 96]
+[2025-12-09 14:10:40.189] [DEBUG] [ROUTE_PATH] Route to Overbrook (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon'], blocks=[65, 73, 77, 88, 96]
+[2025-12-09 14:10:40.191] [DEBUG] [ROUTE_PATH] Route to Glenbury (Green Line): stations=['Glenbury'], blocks=[65]
+[2025-12-09 14:10:40.193] [DEBUG] [ROUTE_PATH] Route to Dormont (Green Line): stations=['Glenbury', 'Dormont'], blocks=[65, 73]
+[2025-12-09 14:10:40.197] [DEBUG] [ROUTE_PATH] Route to Mt. Lebanon (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon'], blocks=[65, 73, 77]
+[2025-12-09 14:10:40.200] [DEBUG] [ROUTE_PATH] Route to Poplar (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar'], blocks=[65, 73, 77, 88]
+[2025-12-09 14:10:40.203] [DEBUG] [ROUTE_PATH] Route to Castle Shannon (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon'], blocks=[65, 73, 77, 88, 96]
+[2025-12-09 14:10:40.206] [DEBUG] [ROUTE_PATH] Route to Shadyside (Red Line): stations=['Shadyside'], blocks=[7]
+[2025-12-09 14:10:40.209] [DEBUG] [ROUTE_PATH] Route to Herron Ave (Red Line): stations=['Shadyside', 'Herron Ave'], blocks=[7, 16]
+[2025-12-09 14:10:40.212] [DEBUG] [ROUTE_PATH] Route to Swissville (Red Line): stations=['Shadyside', 'Herron Ave', 'Swissville'], blocks=[7, 16, 21]
+[2025-12-09 14:10:40.215] [DEBUG] [ROUTE_PATH] Route to Penn Station (Red Line): stations=['Shadyside', 'Herron Ave', 'Swissville', 'Penn Station'], blocks=[7, 16, 21, 25]
+[2025-12-09 14:10:40.218] [DEBUG] [ROUTE_PATH] Route to Steel Plaza (Red Line): stations=['Shadyside', 'Herron Ave', 'Swissville', 'Penn Station', 'Steel Plaza'], blocks=[7, 16, 21, 25, 35]
+[2025-12-09 14:10:40.222] [DEBUG] [ROUTE_PATH] Route to First Ave (Red Line): stations=['Shadyside', 'Herron Ave', 'Swissville', 'Penn Station', 'Steel Plaza', 'First Ave'], blocks=[7, 16, 21, 25, 35, 45]
+[2025-12-09 14:10:40.226] [DEBUG] [ROUTE_PATH] Route to Station Square (Red Line): stations=['Shadyside', 'Herron Ave', 'Swissville', 'Penn Station', 'Steel Plaza', 'First Ave', 'Station Square'], blocks=[7, 16, 21, 25, 35, 45, 48]
+[2025-12-09 14:10:40.231] [DEBUG] [ROUTE_PATH] Route to South Hills (Red Line): stations=['Shadyside', 'Herron Ave', 'Swissville', 'Penn Station', 'Steel Plaza', 'First Ave', 'Station Square', 'South Hills'], blocks=[7, 16, 21, 25, 35, 45, 48, 60]
+
+================================================================================
+Log Session Ended: 2025-12-09T14:16:54.143491
+================================================================================

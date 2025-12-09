@@ -1469,6 +1469,85 @@ class TrackControl:
             # Train will be processed by automatic control cycle
             # No need to manually call state machine - it runs automatically
 
+    def dispatch_train_from_schedule(self, schedule_entry):
+        """
+        Dispatch train using schedule entry data (automatic mode).
+        Only updates necessary fields for existing trains.
+        """
+        logger = get_logger()
+        train_id = schedule_entry["train_id"]
+        line = schedule_entry["line"]
+        destination = schedule_entry["destination_station"]
+        arrival_time = schedule_entry["arrival_time"]
+
+        # Determine origin
+        if train_id in self.active_trains:
+            origin = self.active_trains[train_id].get("current_station", "Yard")
+        else:
+            origin = "Yard"
+
+        # Look up route (origin → destination)
+        route_key = (line, origin, destination)
+        route = self.route_lookup_via_station.get(route_key, [])
+
+        # Log dispatch
+        logger.info(
+            "TRAIN",
+            f"Train {train_id}: {origin} → {destination}, arrival {arrival_time}",
+            {
+                "train_id": train_id,
+                "origin": origin,
+                "destination": destination,
+                "arrival_time": arrival_time,
+                "route_stations": len(route),
+            },
+        )
+
+        if train_id not in self.active_trains:
+            self.active_trains[train_id] = {
+                "line": line,
+                "destination": destination,
+                "current_block": 0,
+                "commanded_speed": 0,
+                "commanded_authority": 0,
+                "state": "Dispatching",
+                "current_station": origin,
+                "arrival_time": arrival_time,
+                "route": route,
+                "current_leg_index": 0,
+                "next_station_block": route[0] if route else 0,
+                "dwell_start_time": None,
+                "last_position_yds": 0.0,
+            }
+        else:
+            # Only update necessary fields
+            self.active_trains[train_id]["destination"] = destination
+            self.active_trains[train_id]["arrival_time"] = arrival_time
+            self.active_trains[train_id]["route"] = route
+            self.active_trains[train_id]["state"] = "Dispatching"
+            self.active_trains[train_id]["next_station_block"] = (
+                route[0] if route else 0
+            )
+        # Do not overwrite current_block, dwell_start_time, current_station, current_leg_index, last_position_yds
+
+        # Update CTC data
+        ctc_data = self._read_ctc_data()
+        train_name = f"Train {train_id}"
+        if (
+            ctc_data
+            and "Dispatcher" in ctc_data
+            and "Trains" in ctc_data["Dispatcher"]
+            and train_name in ctc_data["Dispatcher"]["Trains"]
+        ):
+            ctc_data["Dispatcher"]["Trains"][train_name]["Line"] = line
+            ctc_data["Dispatcher"]["Trains"][train_name][
+                "Station Destination"
+            ] = destination
+            ctc_data["Dispatcher"]["Trains"][train_name]["Arrival Time"] = arrival_time
+            ctc_data["Dispatcher"]["Trains"][train_name]["State"] = "Dispatching"
+            ctc_data["Dispatcher"]["Trains"][train_name]["Speed"] = "Calculating..."
+            self._write_ctc_data(ctc_data)
+
     def _maint_set_switch(self):
         """Set switch position"""
         switch_str = self.maint_switch_box.get()
@@ -2029,7 +2108,7 @@ class TrackControl:
             self._handle_failures_for_line(track_data, line, line_prefix, failures)
 
     def _control_switches_for_line(self, track_data, line, line_prefix):
-        """Set switches based on active train routes"""
+        """Set switches based on active train routes (block-based, train-centric)"""
         config = self.infrastructure[line]
         switch_blocks = config["switch_blocks"]
         switch_routes = config["switch_routes"]
@@ -2044,54 +2123,79 @@ class TrackControl:
             if info.get("line") == line
         }
 
-        for idx, switch_block in enumerate(switch_blocks):
-            if idx >= len(switches):
+        # Iterate through trains, not switches
+        for train_id, train_info in line_trains.items():
+            current_block = train_info.get("current_block", 0)
+            route = train_info.get("route", [])
+            expected_path = train_info.get("expected_path", [])
+
+            # If no expected_path, skip this train
+            if not expected_path:
                 continue
 
-            # Determine switch position based on train routes
-            desired_position = 0  # Default position
+            # Find where train is in the path
+            try:
+                current_index = expected_path.index(current_block)
+            except ValueError:
+                logger.error(
+                    "SWITCH",
+                    f"Train {train_id} at block {current_block} not in expected_path",
+                )
+                continue
 
-            for train_id, train_info in line_trains.items():
-                route = train_info.get("route", [])
-                current_block = train_info.get("current_block", 0)
+            # Find the next block train will enter
+            if current_index + 1 >= len(expected_path):
+                continue  # At end of path
+            next_block = expected_path[current_index + 1]
 
-                if not route:
-                    continue
+            # Check if next_block is a switch
+            if next_block not in switch_blocks:
+                continue
 
-                # Check if this switch is relevant to train's route
-                # Line-specific switch logic
-                if line == "Green":
-                    desired_position = self._determine_green_switch_position(
-                        switch_block,
-                        route,
-                        current_block,
-                        train_info.get("destination"),
-                    )
-                else:  # Red line
-                    desired_position = self._determine_red_switch_position(
-                        switch_block,
-                        route,
-                        current_block,
-                        train_info.get("destination"),
-                    )
+            # Get the block after the switch
+            if current_index + 2 >= len(expected_path):
+                continue  # No block after switch
+            block_after_switch = expected_path[current_index + 2]
 
-                # If any train needs non-default position, use it
-                if desired_position != 0:
-                    break
+            # Find which switch index this is
+            try:
+                switch_index = switch_blocks.index(next_block)
+            except ValueError:
+                continue  # Should not happen
 
-            # Update switch if changed
-            if switches[idx] != desired_position:
-                old_pos = switches[idx]
-                switches[idx] = desired_position
+            # Determine which position leads to block_after_switch
+            if line == "Green":
+                desired_position = self._determine_green_switch_position(
+                    next_block,
+                    route,
+                    current_block,
+                    train_info.get("destination"),
+                )
+            else:
+                desired_position = self._determine_red_switch_position(
+                    next_block,
+                    route,
+                    current_block,
+                    train_info.get("destination"),
+                )
+
+            # Set switch to desired position if different
+            if switches[switch_index] != desired_position:
+                old_pos = switches[switch_index]
+                switches[switch_index] = desired_position
                 logger.info(
                     "SWITCH",
-                    f"{line} line block {switch_block} switch: pos {old_pos} → {desired_position}",
+                    f"Train {train_id} approaching block {next_block}: switch {old_pos} → {desired_position}",
                     {
+                        "train_id": train_id,
                         "line": line,
-                        "block": switch_block,
+                        "switch_block": next_block,
+                        "current_block": current_block,
+                        "next_block": next_block,
+                        "block_after_switch": block_after_switch,
                         "old_position": old_pos,
                         "new_position": desired_position,
-                        "route_description": switch_routes[switch_block][
+                        "route_description": switch_routes[next_block][
                             desired_position
                         ],
                     },
