@@ -30,10 +30,8 @@ TRAIN_MODEL_JSON = os.path.join(PROJECT_ROOT, "track_model_Train_Model.json")
 
 
 def parse_branching_connections(value: str) -> List[Tuple[int, int]]:
-    """Parse SWITCH (A-B; C-D) format into connection pairs."""
+    """Parse SWITCH (A-B; C-D) format into connection pairs. Yard is represented as block 0."""
     text = str(value).upper().strip()
-    if "SWITCH TO YARD" in text or "SWITCH FROM YARD" in text:
-        return []
     if "SWITCH" not in text:
         return []
 
@@ -47,6 +45,13 @@ def parse_branching_connections(value: str) -> List[Tuple[int, int]]:
     parts = re.split(r"[;,]", inside)
     for part in parts:
         part = part.strip()
+        # Handle "X-yard" format - yard is block 0
+        yard_match = re.search(r"(\d+)\s*-\s*yard", part, re.IGNORECASE)
+        if yard_match:
+            block_num = int(yard_match.group(1))
+            connections.append((block_num, 0))
+            continue
+
         conn_match = re.search(r"(\d+)\s*-\s*(\d+)", part)
         if conn_match:
             from_block = int(conn_match.group(1))
@@ -277,48 +282,26 @@ class LineNetwork:
         switch_positions = {}
 
         if self.line_name == "Green":
-            branch_point_keys = sorted(self.branch_points.keys())
-            # First 2 switches → first 2 branch points
-            for i in range(2):
-                if i < len(branch_point_keys) and i < len(switches):
-                    block_num = branch_point_keys[i]
+            # Green Line has 6 switches at blocks: 13, 28, 57, 63, 77, 86
+            green_switch_blocks = [13, 28, 57, 63, 77, 86]
+
+            for i, block_num in enumerate(green_switch_blocks):
+                if i < len(switches) and block_num in self.branch_points:
                     switch_setting = switches[i]
                     targets = self.branch_points[block_num].targets
-
-                    # ALWAYS store the position, even if it's the default
-                    if 0 <= switch_setting < len(targets):
-                        switch_positions[block_num] = targets[switch_setting]
-
-            # Middle 2 switches → Yard (blocks 57 and 63)
-            # These switches control whether 57/63 go to yard or continue normally
-            if len(switches) > 2:
-                if switches[2] == 1:
-                    switch_positions[57] = 0  # Go to yard
-                else:
-                    switch_positions[57] = 58  # Continue normally (57→58)
-
-            if len(switches) > 3:
-                if switches[3] == 1:
-                    switch_positions[63] = 0  # Go to yard
-                else:
-                    switch_positions[63] = 64  # Continue normally (63→64)
-
-            # Last 2 switches → last 2 branch points
-            for i in range(2):
-                idx = i + 2  # branch point index
-                switch_idx = i + 4  # switches[4] and switches[5]
-                if idx < len(branch_point_keys) and switch_idx < len(switches):
-                    block_num = branch_point_keys[idx]
-                    switch_setting = switches[switch_idx]
-                    targets = self.branch_points[block_num].targets
-
-                    # ALWAYS store the position
                     if 0 <= switch_setting < len(targets):
                         switch_positions[block_num] = targets[switch_setting]
 
         elif self.line_name == "Red":
-            # Add Red Line switch processing logic
-            pass
+            # Red Line has 7 switches at blocks: 9, 16, 27, 33, 38, 44, 52
+            red_switch_blocks = [9, 16, 27, 33, 38, 44, 52]
+
+            for i, block_num in enumerate(red_switch_blocks):
+                if i < len(switches) and block_num in self.branch_points:
+                    switch_setting = switches[i]
+                    targets = self.branch_points[block_num].targets
+                    if 0 <= switch_setting < len(targets):
+                        switch_positions[block_num] = targets[switch_setting]
 
         return switch_positions
 
@@ -709,6 +692,13 @@ class LineNetwork:
             blocks = static_data.get("static_data", {}).get(self.line_name, [])
             switch_data = {}
 
+            logger = get_logger()
+            logger.debug(
+                "NETWORK",
+                f"{self.line_name} Line loading branch points from static JSON",
+                {"line": self.line_name, "total_blocks": len(blocks)},
+            )
+
             for block in blocks:
                 infra_text = str(block.get("Infrastructure", "")).upper()
                 block_num = block.get("Block Number")
@@ -740,8 +730,31 @@ class LineNetwork:
                             self.branch_points[branch_point] = BranchPoint(
                                 block=branch_point, targets=targets
                             )
-        except Exception:
-            pass
+                            logger.debug(
+                                "NETWORK",
+                                f"{self.line_name} Line branch point loaded: block {branch_point} -> {targets}",
+                                {
+                                    "line": self.line_name,
+                                    "block": branch_point,
+                                    "targets": targets,
+                                },
+                            )
+
+            logger.info(
+                "NETWORK",
+                f"{self.line_name} Line branch points loaded: {len(self.branch_points)} total",
+                {
+                    "line": self.line_name,
+                    "branch_points": list(self.branch_points.keys()),
+                },
+            )
+        except Exception as e:
+            logger = get_logger()
+            logger.warn(
+                "NETWORK",
+                f"{self.line_name} Line failed to load branch points: {str(e)}",
+                {"line": self.line_name, "error": str(e)},
+            )
 
     def load_all_blocks_from_static(self):
         """Load all blocks from static JSON file."""
@@ -797,21 +810,7 @@ class LineNetwork:
         # Add delta to yards traveled in current block
         self.yards_into_current_block[train_id] += delta
 
-        # Log position tracking
-        logger = get_logger()
-        logger.debug(
-            "POSITION",
-            f"Train {train_id} Block {current_block}: pos={current_position_yds:.2f}yds, delta={delta:.2f}yds, block_traveled={self.yards_into_current_block[train_id]:.2f}yds",
-            {
-                "train_id": train_id,
-                "line": self.line_name,
-                "current_block": current_block,
-                "position_yds": round(current_position_yds, 2),
-                "previous_position_yds": round(self.previous_position_yds[train_id], 2),
-                "delta_yds": round(delta, 2),
-                "yards_in_block": round(self.yards_into_current_block[train_id], 2),
-            },
-        )
+        # Position tracking removed to reduce log spam
 
         # Get block length from static JSON
         try:
@@ -830,9 +829,12 @@ class LineNetwork:
                     break
 
             if block_length_yards is None:
-                # Default to allowing advance if block length unknown
+                # Cannot advance without block length data - error condition
+                print(
+                    f"ERROR: Train {train_id} block {current_block} length unavailable - cannot determine block advance"
+                )
                 self.previous_position_yds[train_id] = current_position_yds
-                return True
+                return False  # Stay in current block until data available
 
             # Check if enough yards traveled to advance
             if self.yards_into_current_block[train_id] >= block_length_yards:
@@ -846,8 +848,9 @@ class LineNetwork:
                 return False
 
         except Exception as e:
+            print(f"ERROR: Train {train_id} block advance check failed: {e}")
             self.previous_position_yds[train_id] = current_position_yds
-            return True  # Default to allowing advance on error
+            return False  # Stay in current block on error - do not silently advance
 
     def _handle_station_arrival(self, next_block: int) -> None:
         """
@@ -940,6 +943,17 @@ class LineNetwork:
                 # Should never happen with proper hard-coding
                 next_block = current + 1
 
+        # HARD RULE: Never return to previous block (physically impossible - train can't reverse)
+        if previous is not None and next_block == previous:
+            # If we would go back to previous, try the opposite direction
+            if previous == current + 1:
+                next_block = current - 1
+            elif previous == current - 1:
+                next_block = current + 1
+            else:
+                # Stay put if no valid direction
+                next_block = current
+
         return next_block
 
     def _get_red_line_next_block(self, current: int, previous: Optional[int]) -> int:
@@ -955,9 +969,10 @@ class LineNetwork:
         """
         # Red line switch routes - blocks can appear multiple times for different switch scenarios
         switch_routes = {
-            0: {0: "0->9"},  # Block 0 check: only route to 9
-            9: {0: "9->10", 1: "9->0"},  # Block 9 check: only route back to 0 (Yard)
-            1: {0: "1->2", 1: "1->16"},  # Block 1 check: two routes
+            0: {0: "0->9"},  # Block 0 (yard) exits to block 9
+            9: {0: "9->10", 1: "9->0"},  # Block 9: straight to 10 or branch to yard
+            1: {0: "1->2", 1: "1->16"},  # Block 1: two routes
+            16: {0: "16->17", 1: "16->1"},  # Block 16 switch
             27: {0: "27->28", 1: "27->76"},
             33: {0: "33->34", 1: "33->72"},
             38: {0: "38->39", 1: "38->71"},
@@ -966,7 +981,7 @@ class LineNetwork:
         }
 
         source_to_switch = {
-            0: 9,  # Block 0 routes through switch 9
+            0: 9,  # Block 0 (yard) routes through switch 9
             1: 16,  # Block 1 routes through switch 16
         }
 
@@ -1002,6 +1017,17 @@ class LineNetwork:
                 next_block = current + 1
             else:
                 # Should never happen with proper hard-coding
+                next_block = current + 1
+
+        # HARD RULE: Never return to previous block (physically impossible - train can't reverse)
+        if previous is not None and next_block == previous:
+            # If we would go back to previous, try the opposite direction
+            if previous == current + 1:
+                next_block = current - 1
+            elif previous == current - 1:
+                next_block = current + 1
+            else:
+                # Stay put if no valid direction
                 next_block = current
 
         return next_block

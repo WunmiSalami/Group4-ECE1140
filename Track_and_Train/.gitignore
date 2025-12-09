@@ -1,15 +1,32 @@
-train_controller/database/__pycache__/__init__.cpython-313.pyc
-train_controller/database/__pycache__/database.cpython-313.pyc
-train_controller/train_controller.db
-train_controller/api/__pycache__/train_controller_api.cpython-313.pyc
-train_controller/ui/__pycache__/train_controller_hw_ui.cpython-313.pyc
-train_controller/ui/__pycache__/train_controller_test_ui.cpython-313.pyc
-train_controller/ui/__pycache__/train_controller_sw_ui.cpython-313.pyc
-train_controller/data/train_states.json
-train_controller/__pycache__/train_controller_hardware.cpython-313.pyc
+# Python bytecode and cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
 
-# JSON files
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Database files
+*.db
+train_controller/train_controller.db
+
+# JSON files (all)
 *.json
-train_controller/data/*.json
-Train_Model/*.json
-Track_Model/*.json
+
+# Log files
+logs/
+*.log

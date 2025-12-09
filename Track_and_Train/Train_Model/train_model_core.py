@@ -264,9 +264,17 @@ class TrainModel:
             0.0, self.velocity_mph + self.acceleration_ftps2 * self.dt * 0.681818
         )
         self.position_yds += (self.velocity_mph / 0.681818) * self.dt / 3.0
+
         # Calculate remaining authority (commanded - position traveled)
         self.authority_yds = max(
             0.0, float(commanded_authority or 0.0) - self.position_yds
+        )
+
+        # DEBUG: Authority tracking
+        print(
+            f"[TRAIN MODEL PHYSICS] pos={self.position_yds:.2f} yds, vel={self.velocity_mph:.2f} mph, "
+            f"cmd_auth={float(commanded_authority or 0.0):.2f}, remaining_auth={self.authority_yds:.2f}, "
+            f"service_brake={service_brake}"
         )
         return {
             "velocity_mph": self.velocity_mph,
@@ -295,7 +303,7 @@ def compute_passengers_disembarking(
         return 0, {"station": prev_station, "count": prev_count}
     if prev_station != station:
         non_crew = max(0, int(passengers_onboard) - crew_count)
-        max_out = min(30, int(non_crew * 0.4))
+        max_out = int(non_crew * 0.4)  # 40% of non-crew passengers can disembark
         count = random.randint(0, max_out) if max_out > 0 else 0
         return count, {"station": station, "count": count}
     return int(prev_count), {"station": prev_station, "count": prev_count}

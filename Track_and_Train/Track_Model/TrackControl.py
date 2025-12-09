@@ -1,11 +1,17 @@
 import tkinter as tk
 import json
 import os
+import sys
 import threading
 from datetime import datetime
 from tkinter import filedialog, ttk
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+
+# Add parent directory to path for logger import
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, parent_dir)
+from logger import get_logger
 
 
 class TrackControl:
@@ -22,9 +28,29 @@ class TrackControl:
         # File paths
         self.track_io_file = os.path.join(PARENT_DIR, "track_io.json")
         self.ctc_data_file = os.path.join(PARENT_DIR, "ctc_data.json")
+        self.track_model_file = os.path.join(PARENT_DIR, "track_model_Train_Model.json")
 
         # Current selected line
         self.selected_line = "Green"
+
+        # Dwell time constant (seconds)
+        self.DWELL_TIME = 10
+
+        # Infrastructure control thresholds
+        self.LIGHT_DISTANCE_RED = 1  # Blocks - train within 1 block: Red
+        self.LIGHT_DISTANCE_YELLOW = 3  # Blocks - train within 3 blocks: Yellow
+        self.LIGHT_DISTANCE_GREEN = 5  # Blocks - train within 5 blocks: Green
+        self.GATE_CLOSE_DISTANCE = 5  # Blocks - close gate when train within 5 blocks
+        self.GATE_OPEN_DELAY = (
+            3  # Seconds - delay before opening gate after train passes
+        )
+        self.FAILURE_STOP_DISTANCE = 10  # Blocks - stop if failure within 10 blocks
+
+        # Gate state tracking
+        self.gate_timers = {}  # {(line, block): last_train_pass_time}
+
+        # PLC cycle tracking
+        self.plc_cycle_count = 0
 
         # Track infrastructure configuration
         self.infrastructure = {
@@ -91,8 +117,14 @@ class TrackControl:
             "11": "Red",
         }
 
-        # Active trains tracking
-        self.active_trains = {}
+        # Build route lookup dictionaries (AFTER infrastructure is defined)
+        self.route_lookup_via_station = self._build_route_lookup_via_station()
+        self.route_lookup_via_id = self._build_route_lookup_via_id()
+
+        # Active trains tracking with enhanced state
+        self.active_trains = (
+            {}
+        )  # Will include: line, destination, current_block, current_station, commanded_speed, commanded_authority, state, arrival_time, route, current_leg_index, next_station_block, dwell_start_time, last_position_yds
 
         # Mode state
         self.current_mode = "automatic"
@@ -118,18 +150,76 @@ class TrackControl:
         line = line or self.selected_line
         return self.infrastructure[line]
 
+    def _build_route_lookup_via_station(self):
+        """Build route lookup dictionary keyed by (line, start_station, end_station)"""
+        lookup = {}
+        for line in ["Green", "Red"]:
+            stations = self.infrastructure[line]["stations"]
+            station_names = list(stations.keys())
+
+            for i, start_station in enumerate(station_names):
+                for j, end_station in enumerate(station_names):
+                    if i != j:
+                        # Build route as list of station blocks
+                        route = []
+                        if i < j:  # Forward route
+                            route = [
+                                stations[station_names[k]] for k in range(i, j + 1)
+                            ]
+                        else:  # Reverse route
+                            route = [
+                                stations[station_names[k]] for k in range(i, j - 1, -1)
+                            ]
+
+                        lookup[(line, start_station, end_station)] = route
+
+        return lookup
+
+    def _build_route_lookup_via_id(self):
+        """Build route lookup dictionary keyed by route_id for faster lookup"""
+        lookup = {}
+        route_id = 0
+        for line in ["Green", "Red"]:
+            stations = self.infrastructure[line]["stations"]
+            station_names = list(stations.keys())
+
+            for i, start_station in enumerate(station_names):
+                for j, end_station in enumerate(station_names):
+                    if i != j:
+                        route = []
+                        if i < j:
+                            route = [
+                                stations[station_names[k]] for k in range(i, j + 1)
+                            ]
+                        else:
+                            route = [
+                                stations[station_names[k]] for k in range(i, j - 1, -1)
+                            ]
+
+                        lookup[route_id] = {
+                            "line": line,
+                            "start_station": start_station,
+                            "end_station": end_station,
+                            "route": route,
+                        }
+                        route_id += 1
+
+        return lookup
+
     def _ensure_json_files(self):
         """Initialize JSON files with proper structure"""
         track_default = {
             "G-switches": [0] * 6,
             "G-gates": [1] * 2,
-            "G-lights": ["01"] * 12,
+            "G-lights": [0, 1]
+            * 12,  # 2 bits per light: 00=Super Green, 01=Green, 10=Yellow, 11=Red (24 elements)
             "G-Occupancy": [0] * 151,
             "G-Failures": [0] * 151,
             "G-Train": {"commanded speed": [], "commanded authority": []},
             "R-switches": [0] * 7,  # 7 switches for Red Line
             "R-gates": [1] * 2,
-            "R-lights": ["01"] * 8,
+            "R-lights": [0, 1]
+            * 8,  # 2 bits per light: 00=Super Green, 01=Green, 10=Yellow, 11=Red (16 elements)
             "R-Occupancy": [0] * 77,
             "R-Failures": [0] * 77,
             "R-Train": {"commanded speed": [], "commanded authority": []},
@@ -438,72 +528,6 @@ class TrackControl:
             cursor="hand2",
             command=self._manual_dispatch,
         ).grid(row=0, column=8, padx=5)
-
-        bottom = tk.Frame(self.manual_frame, bg="#313338")
-        bottom.pack(fill="x", padx=10, pady=5)
-
-        tk.Label(
-            bottom,
-            text="🚂 Train:",
-            font=("Segoe UI", 9, "bold"),
-            bg="#313338",
-            fg="#ffffff",
-        ).grid(row=0, column=0, padx=2)
-        self.manual_cmd_train_box = ttk.Combobox(
-            bottom,
-            values=[f"Train {i}" for i in range(1, 6)],
-            font=("Segoe UI", 9),
-            width=8,
-            style="TrackControl.TCombobox",
-        )
-        self.manual_cmd_train_box.grid(row=0, column=1, padx=2)
-
-        tk.Label(
-            bottom,
-            text="⚡ Speed:",
-            font=("Segoe UI", 9, "bold"),
-            bg="#313338",
-            fg="#ffffff",
-        ).grid(row=0, column=2, padx=2)
-        self.manual_speed_entry = tk.Entry(
-            bottom,
-            font=("Segoe UI", 9),
-            width=8,
-            bg="#1e1f22",
-            fg="#ffffff",
-            insertbackground="#ffffff",
-            relief="flat",
-        )
-        self.manual_speed_entry.grid(row=0, column=3, padx=2)
-
-        tk.Label(
-            bottom,
-            text="📍 Auth:",
-            font=("Segoe UI", 9, "bold"),
-            bg="#313338",
-            fg="#ffffff",
-        ).grid(row=0, column=4, padx=2)
-        self.manual_auth_entry = tk.Entry(
-            bottom,
-            font=("Segoe UI", 9),
-            width=8,
-            bg="#1e1f22",
-            fg="#ffffff",
-            insertbackground="#ffffff",
-            relief="flat",
-        )
-        self.manual_auth_entry.grid(row=0, column=5, padx=2)
-
-        tk.Button(
-            bottom,
-            text="📤 SEND CMD",
-            font=("Segoe UI", 9, "bold"),
-            bg="#3ba55d",
-            fg="white",
-            relief="flat",
-            cursor="hand2",
-            command=self._manual_send_command,
-        ).grid(row=0, column=6, padx=5)
 
     def _on_manual_line_changed(self, event=None):
         """Update destination dropdown when line changes in manual mode"""
@@ -893,6 +917,37 @@ class TrackControl:
         with open(self.ctc_data_file, "w") as f:
             json.dump(data, f, indent=4)
 
+    def _read_track_model(self):
+        """Read track model file for train positions and states"""
+        try:
+            with open(self.track_model_file, "r") as f:
+                return json.load(f)
+        except:
+            return None
+
+    def _read_static_data(self):
+        """Read track model static data file"""
+        try:
+            static_file = os.path.join(
+                os.path.dirname(self.track_io_file),
+                "Track_Model",
+                "track_model_static.json",
+            )
+            with open(static_file, "r") as f:
+                data = json.load(f)
+                return data
+        except Exception as e:
+            logger = get_logger()
+            logger.error(
+                "STATIC_DATA",
+                f"Failed to read static data: {str(e)}",
+                {
+                    "file": static_file if "static_file" in locals() else "unknown",
+                    "error": str(e),
+                },
+            )
+            return None
+
     # ============ MODE HANDLERS ============
 
     def _start_automatic(self):
@@ -910,7 +965,7 @@ class TrackControl:
         self.auto_status.config(text="🔴 Stopped")
 
     def _manual_dispatch(self):
-        """Dispatch train in manual mode"""
+        """Dispatch train in manual mode with route planning"""
         train = self.manual_train_box.get()
         line = self.manual_line_box.get()
         dest = self.manual_dest_box.get()
@@ -918,15 +973,36 @@ class TrackControl:
 
         if train and line and dest:
             train_id = int(train.split()[-1])
+
+            # Get route from Yard to destination
+            config = self.infrastructure[line]
+            stations = config["stations"]
+
+            # Determine starting station (Yard is typically at block 0 or first station)
+            station_names = list(stations.keys())
+            start_station = station_names[0]  # First station as starting point
+
+            # Look up route
+            route_key = (line, start_station, dest)
+            route = self.route_lookup_via_station.get(route_key, [])
+
+            if not route:
+                return  # Invalid route
+
             self.active_trains[train_id] = {
                 "line": line,
                 "destination": dest,
                 "current_block": 0,
                 "commanded_speed": 0,
                 "commanded_authority": 0,
-                "state": "Dispatched",
+                "state": "Dispatching",
                 "current_station": "Yard",
                 "arrival_time": arrival,
+                "route": route,
+                "current_leg_index": 0,
+                "next_station_block": route[0] if route else 0,
+                "dwell_start_time": None,
+                "last_position_yds": 0.0,
             }
 
             # Update CTC data
@@ -935,21 +1011,27 @@ class TrackControl:
                 ctc_data["Dispatcher"]["Trains"][train]["Line"] = line
                 ctc_data["Dispatcher"]["Trains"][train]["Station Destination"] = dest
                 ctc_data["Dispatcher"]["Trains"][train]["Arrival Time"] = arrival
-                ctc_data["Dispatcher"]["Trains"][train]["State"] = "Dispatched"
+                ctc_data["Dispatcher"]["Trains"][train]["State"] = "Dispatching"
+                # Speed will be calculated by state machine in next automatic cycle
+                ctc_data["Dispatcher"]["Trains"][train]["Speed"] = "Calculating..."
                 self._write_ctc_data(ctc_data)
 
-    def _manual_send_command(self):
-        """Send manual command to train"""
-        train = self.manual_cmd_train_box.get()
-        speed = self.manual_speed_entry.get()
-        authority = self.manual_auth_entry.get()
+            # Log manual dispatch
+            logger = get_logger()
+            logger.info(
+                "TRAIN",
+                f"Manual dispatch: Train {train_id} to {dest} on {line} Line, arrival {arrival}",
+                {
+                    "train_id": train_id,
+                    "line": line,
+                    "destination": dest,
+                    "arrival_time": arrival,
+                    "route_stations": len(route),
+                },
+            )
 
-        if train and speed and authority:
-            train_id = int(train.split()[-1])
-            if train_id in self.active_trains:
-                self.active_trains[train_id]["commanded_speed"] = int(speed)
-                self.active_trains[train_id]["commanded_authority"] = int(authority)
-                self._write_train_commands()
+            # Train will be processed by automatic control cycle
+            # No need to manually call state machine - it runs automatically
 
     def _maint_set_switch(self):
         """Set switch position"""
@@ -993,20 +1075,34 @@ class TrackControl:
         self._automatic_control_cycle()
 
     def _automatic_control_cycle(self):
-        """Execute one cycle of automatic control"""
+        """Execute one cycle of automatic control with state machine"""
         track_data = self._read_track_io()
-        if track_data:
+        track_model_data = self._read_track_model()
+
+        if track_data and track_model_data:
             # Update train positions from occupancy for each line
             for line in ["Green", "Red"]:
                 line_prefix = "G" if line == "Green" else "R"
                 occupancy = track_data.get(f"{line_prefix}-Occupancy", [])
                 self._update_train_positions(occupancy, line)
 
-            if self.automatic_running:
-                # Route trains and control infrastructure
-                self._route_all_trains(track_data)
-                self._write_train_commands()
-                self._write_track_io(track_data)
+            # Process all active trains through state machine (regardless of manual/automatic mode)
+            # Manual vs Automatic only affects HOW trains are dispatched, not how they're controlled
+            for train_id, train_info in list(self.active_trains.items()):
+                self._process_train_state_machine(
+                    train_id, train_info, track_data, track_model_data
+                )
+
+            # Execute PLC cycle for infrastructure control (switches, lights, gates)
+            self._execute_plc_cycle(track_data, track_model_data)
+
+            # Write track_io with PLC updates (switches, lights, gates)
+            self._write_track_io(track_data)
+
+            # Write train commands (reads track_io, adds commands, writes back)
+            self._write_train_commands()
+
+            self.plc_cycle_count += 1
 
             # Update all displays
             self._update_all_displays(track_data)
@@ -1031,7 +1127,17 @@ class TrackControl:
         # Assign occupied blocks to trains in order
         for i, (train_id, train_info) in enumerate(line_trains):
             if i < len(occupied_blocks):
-                train_info["current_block"] = occupied_blocks[i]
+                actual_block = occupied_blocks[i]
+                train_info["current_block"] = actual_block
+
+                # Path verification: check if train is on expected path
+                expected_path = train_info.get("expected_path", [])
+                if expected_path and actual_block not in expected_path:
+                    self.logger.log(
+                        "ROUTING",
+                        f"Train {train_id} DEVIATED: expected path {expected_path}, actual block {actual_block}",
+                        level="warning",
+                    )
 
                 # Check if at station
                 config = self.infrastructure[line]
@@ -1041,127 +1147,949 @@ class TrackControl:
                 if occupied_blocks[i] in block_to_station:
                     train_info["current_station"] = block_to_station[occupied_blocks[i]]
 
-    def _route_all_trains(self, track_data):
-        """Route all trains on all lines"""
-        for train_id, train_info in self.active_trains.items():
-            line = train_info.get("line")
-            if not line:
-                continue
+    def _process_train_state_machine(
+        self, train_id, train_info, track_data, track_model_data
+    ):
+        """Process train through state machine: Dispatching -> En Route -> At Station -> Dwelling"""
+        state = train_info.get("state", "Idle")
+        line = train_info.get("line")
+        line_prefix = "G" if line == "Green" else "R"
 
-            line_prefix = "G" if line == "Green" else "R"
-            failures = track_data.get(f"{line_prefix}-Failures", [])
+        # Get train data from track model
+        train_key = f"{line_prefix}_train_{train_id}"
+        train_model_info = track_model_data.get(train_key, {})
+        block_info = train_model_info.get("block", {})
 
-            self._route_single_train(
-                train_id, train_info, track_data, failures, line, line_prefix
+        current_position_yds = float(block_info.get("position", 0.0) or 0.0)
+        motion_state = block_info.get("motion", "Stopped")
+
+        # State machine transitions
+        if state == "Dispatching":
+            self._handle_dispatching_state(
+                train_id, train_info, track_data, line_prefix
             )
 
-    def _route_single_train(
-        self, train_id, train_info, track_data, failures, line, line_prefix
-    ):
-        """Route a single train"""
+        elif state == "En Route":
+            self._handle_enroute_state(
+                train_id,
+                train_info,
+                track_data,
+                track_model_data,
+                current_position_yds,
+                motion_state,
+                line_prefix,
+            )
+
+        elif state == "At Station":
+            self._handle_at_station_state(train_id, train_info, track_data, line_prefix)
+
+        elif state == "Dwelling":
+            self._handle_dwelling_state(train_id, train_info, track_data, line_prefix)
+
+    def _handle_dispatching_state(self, train_id, train_info, track_data, line_prefix):
+        """Initial dispatch: calculate route speed and send first leg authority"""
+        route = train_info.get("route", [])
+        if not route:
+            return
+
+        # Get line info needed for calculations
+        line = train_info.get("line")
+
+        # Calculate optimal speed based on arrival time and total distance
+        arrival_time_str = train_info.get("arrival_time", "")
+        if arrival_time_str:
+            from datetime import datetime, timedelta
+
+            try:
+                # Parse arrival time (HH:MM format)
+                hour, minute = map(int, arrival_time_str.split(":"))
+                now = datetime.now()
+                arrival = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+
+                # If arrival time is in the past, assume next day
+                if arrival < now:
+                    arrival += timedelta(days=1)
+
+                # Calculate available time in seconds
+                time_available = (arrival - now).total_seconds()
+
+                # Calculate total route distance using actual block lengths from static data
+                complete_path = self._calculate_complete_block_path(0, route[-1], line)
+                total_distance_meters = 0.0
+                static_data = self._read_static_data()
+
+                if static_data and complete_path:
+                    # Block 0 (yard) is not technically a block - fixed at 200 yards
+                    total_distance_yards = 200.0  # Yard distance
+
+                    line_data = static_data.get("static_data", {}).get(line, [])
+                    for block_num in complete_path[1:]:
+                        for block_info in line_data:
+                            if int(block_info.get("Block Number", -1)) == block_num:
+                                total_distance_meters += float(
+                                    block_info.get("Block Length (m)", 0)
+                                )
+                                break
+                    total_distance_yards += total_distance_meters * 1.09361
+                else:
+                    # No fallback - abort dispatch if static data unavailable
+                    logger = get_logger()
+                    logger.error(
+                        "DISPATCH",
+                        f"Train {train_id} dispatch failed: cannot calculate distance without static data",
+                        {"train_id": train_id, "line": line},
+                    )
+                    return  # Abort dispatch
+
+                # Calculate total dwell time (all intermediate stops)
+                num_stops = len(route) - 1  # Exclude starting point
+                total_dwell_seconds = num_stops * self.DWELL_TIME
+
+                # Calculate travel time (exclude dwell time)
+                travel_time_seconds = time_available - total_dwell_seconds
+
+                if travel_time_seconds > 0:
+                    # Calculate required speed (yards/sec → mph)
+                    # 1 yard/sec = 2.045 mph
+                    speed_yards_per_sec = total_distance_yards / travel_time_seconds
+                    optimal_speed = speed_yards_per_sec * 2.045
+                    # Note: Speed limits enforced per-block by train model via beacon data
+                else:
+                    # Impossible schedule (not enough time)
+                    optimal_speed = 30
+                    # Log warning but don't fail - let train model handle speed limits
+
+                    logger = get_logger()
+                    logger.warn(
+                        "TRAIN",
+                        f"Train {train_id} impossible schedule: arrival time too soon",
+                        {
+                            "train_id": train_id,
+                            "time_available": time_available,
+                            "dwell_time_needed": total_dwell_seconds,
+                            "arrival_time": arrival_time_str,
+                        },
+                    )
+
+            except Exception as e:
+                # Parsing error or calculation issue
+                optimal_speed = 30
+                logger = get_logger()
+                import traceback
+
+                logger.warn(
+                    "TRAIN",
+                    f"Train {train_id} speed calculation failed, using default 30 mph: {str(e)}",
+                    {
+                        "train_id": train_id,
+                        "error": str(e),
+                        "traceback": traceback.format_exc(),
+                        "arrival_time": arrival_time_str,
+                    },
+                )
+        else:
+            optimal_speed = 30
+
+        # Calculate authority to first station using actual block lengths from static data
         current_block = train_info.get("current_block", 0)
-        dest = train_info.get("destination")
+        next_station_block = route[0]
+        complete_path = self._calculate_complete_block_path(
+            current_block, next_station_block, line
+        )
 
-        config = self.infrastructure[line]
-        stations = config["stations"]
+        # Sum up block lengths along the path (in meters, convert to yards)
+        authority_meters = 0.0
+        static_data = self._read_static_data()
 
-        if dest and dest in stations:
-            dest_block = stations[dest]
+        if static_data and complete_path:
+            # Block 0 (yard) is not technically a block - fixed at 200 yards
+            authority = 200.0  # Yard distance in yards
 
-            # Check for failures ahead
-            failure_ahead = False
-            for block in range(current_block, min(current_block + 10, len(failures))):
-                if failures[block] != 0:
-                    failure_ahead = True
-                    break
+            line_data = static_data.get("static_data", {}).get(line, [])
+            for block_num in complete_path[1:]:  # Skip yard block 0
+                # Find this block in static data
+                for block_info in line_data:
+                    if int(block_info.get("Block Number", -1)) == block_num:
+                        block_length_m = float(block_info.get("Block Length (m)", 0))
+                        authority_meters += block_length_m
+                        break
 
-            if failure_ahead:
+            # Convert meters to yards and add to yard distance
+            authority += authority_meters * 1.09361
+        else:
+            # No fallback - log error if static data unavailable
+            logger = get_logger()
+            logger.error(
+                "AUTHORITY",
+                f"Train {train_id} dispatch failed: cannot calculate authority without static data",
+                {"train_id": train_id, "line": line, "destination": next_station_block},
+            )
+            return  # Abort dispatch
+
+        train_info["commanded_speed"] = optimal_speed
+        train_info["commanded_authority"] = int(authority)
+        train_info["state"] = "En Route"
+        train_info["current_leg_index"] = 0
+        train_info["next_station_block"] = next_station_block
+        train_info["last_position_yds"] = 0.0
+
+        # Update CTC data with calculated speed
+        ctc_data = self._read_ctc_data()
+        if ctc_data:
+            train_key = f"Train {train_id}"
+            if train_key in ctc_data.get("Dispatcher", {}).get("Trains", {}):
+                ctc_data["Dispatcher"]["Trains"][train_key][
+                    "Speed"
+                ] = f"{optimal_speed:.1f} mph"
+                self._write_ctc_data(ctc_data)
+
+        # Log dispatch with calculated speed
+        logger = get_logger()
+        logger.info(
+            "TRAIN",
+            f"Train {train_id} dispatched: {optimal_speed:.1f} mph to reach {train_info.get('destination')} by {arrival_time_str if arrival_time_str else 'N/A'}",
+            {
+                "train_id": train_id,
+                "line": train_info.get("line"),
+                "destination": train_info.get("destination"),
+                "calculated_speed_mph": round(optimal_speed, 1),
+                "arrival_time": arrival_time_str if arrival_time_str else "N/A",
+                "route_length_blocks": len(route),
+                "total_dwell_seconds": (
+                    num_stops * self.DWELL_TIME if arrival_time_str else 0
+                ),
+            },
+        )
+
+        # Set switches for route
+        self._set_switches_for_route(
+            track_data, current_block, route, train_info.get("line"), line_prefix
+        )
+
+    def _handle_enroute_state(
+        self,
+        train_id,
+        train_info,
+        track_data,
+        track_model_data,
+        current_position_yds,
+        motion_state,
+        line_prefix,
+    ):
+        """Train is moving: check for station arrival or authority exhaustion"""
+        current_block = train_info.get("current_block", 0)
+        next_station_block = train_info.get("next_station_block", 0)
+
+        # Track authority consumption
+        last_position = train_info.get("last_position_yds", 0.0)
+        distance_traveled = abs(current_position_yds - last_position)
+
+        if distance_traveled > 0:
+            # Update consumed authority
+            current_authority = train_info.get("commanded_authority", 0)
+            authority_consumed = distance_traveled / 3  # Convert feet to yards (approx)
+            remaining_authority = max(0, current_authority - authority_consumed)
+            train_info["commanded_authority"] = remaining_authority
+            train_info["last_position_yds"] = current_position_yds
+
+            logger = get_logger()
+            if remaining_authority < 100:  # Log when authority running low
+                logger.debug(
+                    "AUTHORITY",
+                    f"Train {train_id} authority low: {remaining_authority:.1f} yds remaining",
+                    {
+                        "train_id": train_id,
+                        "line": train_info.get("line"),
+                        "current_block": current_block,
+                        "authority_remaining": round(remaining_authority, 1),
+                        "distance_to_station": abs(next_station_block - current_block),
+                    },
+                )
+
+        # Check if reached next station
+        if current_block == next_station_block:
+            train_info["state"] = "At Station"
+            train_info["dwell_start_time"] = datetime.now()
+
+            # Update current station
+            line = train_info.get("line")
+            config = self.infrastructure[line]
+            block_to_station = {v: k for k, v in config["stations"].items()}
+            if next_station_block in block_to_station:
+                train_info["current_station"] = block_to_station[next_station_block]
+
+                logger = get_logger()
+                logger.info(
+                    "TRAIN",
+                    f"Train {train_id} arrived at {block_to_station[next_station_block]}",
+                    {
+                        "train_id": train_id,
+                        "line": line,
+                        "station": block_to_station[next_station_block],
+                        "block": next_station_block,
+                    },
+                )
+            return
+
+        # Check if authority exhausted (train stopped but not at station)
+        if motion_state == "Stopped" and train_info.get("commanded_authority", 0) <= 10:
+            # Authority used up - send more authority for same leg
+            line = train_info.get("line")
+            complete_path = self._calculate_complete_block_path(
+                current_block, next_station_block, line
+            )
+
+            authority_meters = 0.0
+            static_data = self._read_static_data()
+            if static_data and complete_path:
+                # Block 0 (yard) is not technically a block - fixed at 200 yards
+                authority_remaining = 0.0
+                if current_block == 0:
+                    authority_remaining = 200.0  # Yard distance
+
+                line_data = static_data.get("static_data", {}).get(line, [])
+                # Sum blocks from current position to destination
+                start_found = False
+                for block_num in complete_path:
+                    if block_num == current_block:
+                        start_found = True
+                        continue
+                    if start_found:
+                        for block_info in line_data:
+                            if int(block_info.get("Block Number", -1)) == block_num:
+                                authority_meters += float(
+                                    block_info.get("Block Length (m)", 0)
+                                )
+                                break
+                authority_remaining += int(authority_meters * 1.09361)
+            else:
+                logger = get_logger()
+                logger.error(
+                    "AUTHORITY",
+                    f"Train {train_id} authority replenishment failed: static data unavailable",
+                    {
+                        "train_id": train_id,
+                        "line": line,
+                        "current_block": current_block,
+                    },
+                )
+                return  # Cannot replenish without static data
+
+            train_info["commanded_authority"] = authority_remaining
+
+            logger = get_logger()
+            logger.info(
+                "AUTHORITY",
+                f"Train {train_id} authority replenished: {authority_remaining} yds",
+                {
+                    "train_id": train_id,
+                    "line": train_info.get("line"),
+                    "current_block": current_block,
+                    "next_station_block": next_station_block,
+                    "new_authority": authority_remaining,
+                },
+            )
+
+    def _handle_at_station_state(self, train_id, train_info, track_data, line_prefix):
+        """Train arrived at station: begin dwelling"""
+        train_info["state"] = "Dwelling"
+        train_info["commanded_speed"] = 0
+        train_info["commanded_authority"] = 0
+
+    def _handle_dwelling_state(self, train_id, train_info, track_data, line_prefix):
+        """Train dwelling at station: wait 10 seconds then dispatch next leg"""
+        dwell_start = train_info.get("dwell_start_time")
+        if not dwell_start:
+            return
+
+        dwell_elapsed = (datetime.now() - dwell_start).total_seconds()
+
+        if dwell_elapsed >= self.DWELL_TIME:
+            # Dwell complete - dispatch next leg
+            route = train_info.get("route", [])
+            current_leg_index = train_info.get("current_leg_index", 0)
+
+            # Check if at final destination
+            if current_leg_index >= len(route) - 1:
+                train_info["state"] = "Arrived"
                 train_info["commanded_speed"] = 0
                 train_info["commanded_authority"] = 0
-                train_info["state"] = "Stopped - Failure"
-            else:
-                # Set appropriate speed and authority
-                distance_to_dest = abs(dest_block - current_block)
-                if distance_to_dest > 10:
-                    train_info["commanded_speed"] = 40
-                    train_info["commanded_authority"] = 20
-                    train_info["state"] = "Running"
-                elif distance_to_dest > 3:
-                    train_info["commanded_speed"] = 25
-                    train_info["commanded_authority"] = 10
-                    train_info["state"] = "Approaching"
-                elif distance_to_dest > 0:
-                    train_info["commanded_speed"] = 10
-                    train_info["commanded_authority"] = 5
-                    train_info["state"] = "Slowing"
-                else:
-                    train_info["commanded_speed"] = 0
-                    train_info["commanded_authority"] = 0
-                    train_info["state"] = "Arrived"
+                return
 
-            # Set switches for routing
-            self._set_switches_for_route(
-                track_data, current_block, dest_block, line, line_prefix
+            # Move to next leg
+            current_leg_index += 1
+            next_station_block = route[current_leg_index]
+            current_block = train_info.get("current_block", 0)
+
+            # Calculate authority using actual block lengths
+            line = train_info.get("line")
+            complete_path = self._calculate_complete_block_path(
+                current_block, next_station_block, line
             )
 
-            # Control lights
-            self._control_lights_for_line(track_data, line, line_prefix)
+            authority_meters = 0.0
+            static_data = self._read_static_data()
+            if static_data and complete_path:
+                # Block 0 (yard) is not technically a block - fixed at 200 yards
+                authority = 0.0
+                if current_block == 0:
+                    authority = 200.0  # Yard distance
 
-    def _set_switches_for_route(
-        self, track_data, current_block, dest_block, line, line_prefix
-    ):
-        """Set switches to route train to destination"""
+                line_data = static_data.get("static_data", {}).get(line, [])
+                start_found = False
+                for block_num in complete_path:
+                    if block_num == current_block:
+                        start_found = True
+                        continue
+                    if start_found:
+                        for block_info in line_data:
+                            if int(block_info.get("Block Number", -1)) == block_num:
+                                authority_meters += float(
+                                    block_info.get("Block Length (m)", 0)
+                                )
+                                break
+                authority += int(authority_meters * 1.09361)
+            else:
+                logger = get_logger()
+                logger.error(
+                    "AUTHORITY",
+                    f"Train {train_id} next leg dispatch failed: static data unavailable",
+                    {"train_id": train_id, "line": line, "leg": current_leg_index},
+                )
+                return  # Cannot proceed to next leg without static data
+
+            train_info["current_leg_index"] = current_leg_index
+            train_info["next_station_block"] = next_station_block
+            train_info["commanded_authority"] = authority
+            train_info["commanded_speed"] = 30  # Resume same speed
+            train_info["state"] = "En Route"
+            train_info["dwell_start_time"] = None
+
+    # ============ PLC INFRASTRUCTURE CONTROL ============
+
+    def _execute_plc_cycle(self, track_data, track_model_data):
+        """Execute one PLC cycle: switches, lights, gates, failure handling"""
+        for line in ["Green", "Red"]:
+            line_prefix = "G" if line == "Green" else "R"
+
+            # Get inputs: occupancy, failures, train positions
+            occupancy = track_data.get(f"{line_prefix}-Occupancy", [])
+            failures = track_data.get(f"{line_prefix}-Failures", [])
+
+            # 1. Switch Control
+            self._control_switches_for_line(track_data, line, line_prefix)
+
+            # 2. Traffic Light Control
+            self._control_traffic_lights(track_data, line, line_prefix, occupancy)
+
+            # 3. Crossing Gate Control
+            self._control_crossing_gates(track_data, line, line_prefix, occupancy)
+
+            # 4. Failure Handling
+            self._handle_failures_for_line(track_data, line, line_prefix, failures)
+
+    def _control_switches_for_line(self, track_data, line, line_prefix):
+        """Set switches based on active train routes"""
         config = self.infrastructure[line]
         switch_blocks = config["switch_blocks"]
+        switch_routes = config["switch_routes"]
+        switches = track_data.get(f"{line_prefix}-switches", [])
 
-        # Simple routing logic - set switches based on direction
+        logger = get_logger()
+
+        # Get all trains on this line
+        line_trains = {
+            tid: info
+            for tid, info in self.active_trains.items()
+            if info.get("line") == line
+        }
+
         for idx, switch_block in enumerate(switch_blocks):
-            if current_block < switch_block < dest_block:
-                # Forward routing
-                track_data[f"{line_prefix}-switches"][idx] = 0
-            elif current_block > switch_block > dest_block:
-                # Reverse routing
-                track_data[f"{line_prefix}-switches"][idx] = 1
+            if idx >= len(switches):
+                continue
 
-    def _control_lights_for_line(self, track_data, line, line_prefix):
-        """Control traffic lights for specific line based on train positions"""
+            # Determine switch position based on train routes
+            desired_position = 0  # Default position
+
+            for train_id, train_info in line_trains.items():
+                route = train_info.get("route", [])
+                current_block = train_info.get("current_block", 0)
+
+                if not route:
+                    continue
+
+                # Check if this switch is relevant to train's route
+                # Line-specific switch logic
+                if line == "Green":
+                    desired_position = self._determine_green_switch_position(
+                        switch_block,
+                        route,
+                        current_block,
+                        train_info.get("destination"),
+                    )
+                else:  # Red line
+                    desired_position = self._determine_red_switch_position(
+                        switch_block,
+                        route,
+                        current_block,
+                        train_info.get("destination"),
+                    )
+
+                # If any train needs non-default position, use it
+                if desired_position != 0:
+                    break
+
+            # Update switch if changed
+            if switches[idx] != desired_position:
+                old_pos = switches[idx]
+                switches[idx] = desired_position
+                logger.info(
+                    "SWITCH",
+                    f"{line} line block {switch_block} switch: pos {old_pos} → {desired_position}",
+                    {
+                        "line": line,
+                        "block": switch_block,
+                        "old_position": old_pos,
+                        "new_position": desired_position,
+                        "route_description": switch_routes[switch_block][
+                            desired_position
+                        ],
+                    },
+                )
+
+    def _determine_green_switch_position(
+        self, switch_block, route, current_block, destination
+    ):
+        """Determine Green Line switch position based on route"""
+        # Green Line switches and their routing logic:
+        # 13: 0="13->12" (main), 1="1->13" (yard entry)
+        # 28: 0="28->29" (main), 1="150->28" (loop back)
+        # 57: 0="57->58" (main), 1="57->Yard" (to yard)
+        # 63: 0="63->64" (main), 1="Yard->63" (from yard)
+        # 77: 0="76->77" (main), 1="77->101" (shortcut)
+        # 85: 0="85->86" (main), 1="100->85" (from shortcut)
+
+        if switch_block == 13:
+            # Use pos 1 if route includes blocks < 13 (coming from yard)
+            if any(b < 13 for b in route):
+                return 1
+
+        elif switch_block == 28:
+            # Use pos 1 if route includes blocks > 100 (loop back)
+            if any(b > 100 for b in route):
+                return 1
+
+        elif switch_block == 57:
+            # Use pos 1 if destination is yard or route ends before 58
+            if destination == "Yard" or (route and route[-1] < 58):
+                return 1
+
+        elif switch_block == 63:
+            # Use pos 1 if coming from yard (route starts before 63)
+            if route and route[0] < 63 and current_block < 63:
+                return 1
+
+        elif switch_block == 77:
+            # Use pos 1 if route includes blocks in 101-150 range (shortcut)
+            if any(101 <= b <= 150 for b in route):
+                return 1
+
+        elif switch_block == 85:
+            # Use pos 1 if coming from blocks 100+ (from shortcut)
+            if current_block >= 100 or any(b >= 100 for b in route[: len(route) // 2]):
+                return 1
+
+        return 0  # Default to main line
+
+    def _determine_red_switch_position(
+        self, switch_block, route, current_block, destination
+    ):
+        """Determine Red Line switch position based on route"""
+        # Red Line switches and their routing logic:
+        # 9: 0="0->9" (from yard), 1="9->0" (to yard)
+        # 16: 0="15->16" (main), 1="1->16" (from yard)
+        # 27: 0="27->28" (main), 1="27->76" (loop)
+        # 33: 0="32->33" (main), 1="33->72" (shortcut)
+        # 38: 0="38->39" (main), 1="38->71" (shortcut)
+        # 44: 0="43->44" (main), 1="44->67" (shortcut)
+        # 52: 0="52->53" (main), 1="52->66" (shortcut)
+
+        if switch_block == 9:
+            # Use pos 1 if going to yard
+            if destination == "Yard" or (route and route[-1] == 0):
+                return 1
+
+        elif switch_block == 16:
+            # Use pos 1 if coming from yard (blocks 1-15)
+            if current_block < 16 and route and route[0] <= 16:
+                return 1
+
+        elif switch_block == 27:
+            # Use pos 1 if route includes blocks 76+ (loop)
+            if any(b >= 76 for b in route):
+                return 1
+
+        elif switch_block in [33, 38, 44, 52]:
+            # Use pos 1 if route uses return path (blocks 66-76)
+            if any(66 <= b <= 76 for b in route):
+                return 1
+
+        return 0  # Default to main line
+
+    def _control_traffic_lights(self, track_data, line, line_prefix, occupancy):
+        """Control traffic lights based on train proximity and occupancy ahead"""
         config = self.infrastructure[line]
         light_blocks = config["light_blocks"]
         lights = track_data.get(f"{line_prefix}-lights", [])
 
+        logger = get_logger()
+        light_code_map = {
+            "Super Green": [0, 0],  # 00
+            "Green": [0, 1],  # 01
+            "Yellow": [1, 0],  # 10
+            "Red": [1, 1],  # 11
+        }
+
+        # For logging old state
+        def decode_light(light):
+            if light == [0, 0]:
+                return "Super Green"
+            if light == [0, 1]:
+                return "Green"
+            if light == [1, 0]:
+                return "Yellow"
+            if light == [1, 1]:
+                return "Red"
+            return "Unknown"
+
         for idx, light_block in enumerate(light_blocks):
-            if idx >= len(lights):
+            bit_idx = idx * 2  # Each light uses 2 elements
+            if bit_idx + 1 >= len(lights):
                 continue
 
-            # Check if any train on this line is near this light
-            train_nearby = False
+            # Find closest train to this light
+            min_distance = float("inf")
+            closest_train_ahead = False
+
             for train_id, train_info in self.active_trains.items():
                 if train_info.get("line") != line:
                     continue
 
                 train_block = train_info.get("current_block", 0)
-                distance = abs(light_block - train_block)
+                distance = train_block - light_block
 
-                if distance < 3:
-                    train_nearby = True
-                    if distance < 1:
-                        lights[idx] = "11"  # Red - train at light
-                    elif distance < 2:
-                        lights[idx] = "10"  # Yellow - train approaching
-                    else:
-                        lights[idx] = "01"  # Green - train nearby
-                    break
+                # Only consider trains ahead of the light
+                if distance >= 0 and distance < min_distance:
+                    min_distance = distance
+                    closest_train_ahead = True
 
-            if not train_nearby:
-                lights[idx] = "01"  # Green - no trains
+            # Determine light state based on distance
+            old_light = [lights[bit_idx], lights[bit_idx + 1]]
+            new_light_state = "Green"  # Default
 
-        track_data[f"{line_prefix}-lights"] = lights
+            if closest_train_ahead:
+                if min_distance <= self.LIGHT_DISTANCE_RED:
+                    new_light_state = "Red"
+                elif min_distance <= self.LIGHT_DISTANCE_YELLOW:
+                    new_light_state = "Yellow"
+                elif min_distance <= self.LIGHT_DISTANCE_GREEN:
+                    new_light_state = "Green"
+                else:
+                    new_light_state = "Super Green"
+            else:
+                # No trains ahead - check occupancy ahead
+                blocks_ahead_occupied = 0
+                for check_block in range(
+                    light_block + 1, min(light_block + 4, len(occupancy))
+                ):
+                    if occupancy[check_block] == 1:
+                        blocks_ahead_occupied += 1
+
+                if blocks_ahead_occupied >= 2:
+                    new_light_state = "Red"
+                elif blocks_ahead_occupied == 1:
+                    new_light_state = "Yellow"
+                else:
+                    new_light_state = "Super Green"
+
+            new_light = light_code_map[new_light_state]
+
+            # Update if changed
+            if old_light != new_light:
+                lights[bit_idx] = new_light[0]
+                lights[bit_idx + 1] = new_light[1]
+                old_state = decode_light(old_light)
+                logger.debug(
+                    "LIGHT",
+                    f"{line} line block {light_block} light: {old_state} → {new_light_state}",
+                    {
+                        "line": line,
+                        "block": light_block,
+                        "old_state": old_state,
+                        "new_state": new_light_state,
+                        "min_train_distance": (
+                            min_distance if closest_train_ahead else None
+                        ),
+                    },
+                )
+
+    def _control_crossing_gates(self, track_data, line, line_prefix, occupancy):
+        """Control crossing gates based on train proximity"""
+        config = self.infrastructure[line]
+        gate_blocks = config["gate_blocks"]
+        gates = track_data.get(f"{line_prefix}-gates", [])
+
+        logger = get_logger()
+
+        for idx, gate_block in enumerate(gate_blocks):
+            if idx >= len(gates):
+                continue
+
+            # Find trains near this crossing
+            train_approaching = False
+            train_at_crossing = False
+
+            for train_id, train_info in self.active_trains.items():
+                if train_info.get("line") != line:
+                    continue
+
+                train_block = train_info.get("current_block", 0)
+                distance = abs(gate_block - train_block)
+
+                if train_block == gate_block:
+                    train_at_crossing = True
+                elif distance <= self.GATE_CLOSE_DISTANCE:
+                    train_approaching = True
+
+            old_gate = gates[idx]
+            new_gate = old_gate
+
+            # Gate control logic
+            if train_at_crossing or train_approaching:
+                new_gate = 0  # Close gate (down)
+                # Record time for delay
+                if (line, gate_block) not in self.gate_timers:
+                    self.gate_timers[(line, gate_block)] = datetime.now()
+            else:
+                # Check if enough time has passed since train cleared
+                if (line, gate_block) in self.gate_timers:
+                    elapsed = (
+                        datetime.now() - self.gate_timers[(line, gate_block)]
+                    ).total_seconds()
+                    if elapsed >= self.GATE_OPEN_DELAY:
+                        new_gate = 1  # Open gate (up)
+                        del self.gate_timers[(line, gate_block)]
+                else:
+                    new_gate = 1  # Open gate (up)
+
+            # Update if changed
+            if old_gate != new_gate:
+                gates[idx] = new_gate
+                old_state = "Up" if old_gate == 1 else "Down"
+                new_state = "Up" if new_gate == 1 else "Down"
+                logger.info(
+                    "GATE",
+                    f"{line} line block {gate_block} crossing gate: {old_state} → {new_state}",
+                    {
+                        "line": line,
+                        "block": gate_block,
+                        "old_state": old_state,
+                        "new_state": new_state,
+                        "reason": (
+                            "train_present"
+                            if (train_at_crossing or train_approaching)
+                            else "delay_complete"
+                        ),
+                    },
+                )
+
+    def _handle_failures_for_line(self, track_data, line, line_prefix, failures):
+        """Handle failures: stop trains, adjust authority, attempt rerouting"""
+        logger = get_logger()
+
+        for train_id, train_info in list(self.active_trains.items()):
+            if train_info.get("line") != line:
+                continue
+
+            current_block = train_info.get("current_block", 0)
+            route = train_info.get("route", [])
+
+            # Check for failures ahead on route
+            failure_blocks = []
+            for block in route:
+                if block < len(failures) and failures[block] != 0:
+                    failure_blocks.append((block, failures[block]))
+
+            if not failure_blocks:
+                continue
+
+            # Find closest failure
+            closest_failure = None
+            min_distance = float("inf")
+
+            for fail_block, fail_type in failure_blocks:
+                distance = abs(fail_block - current_block)
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_failure = (fail_block, fail_type)
+
+            if closest_failure and min_distance <= self.FAILURE_STOP_DISTANCE:
+                fail_block, fail_type = closest_failure
+                failure_names = {0: "None", 1: "Broken Rail", 2: "Power", 3: "Circuit"}
+
+                # Stop the train
+                old_speed = train_info.get("commanded_speed", 0)
+                old_authority = train_info.get("commanded_authority", 0)
+
+                train_info["commanded_speed"] = 0
+                train_info["commanded_authority"] = 0
+                train_info["state"] = (
+                    f"Stopped - {failure_names.get(fail_type, 'Unknown')} Failure"
+                )
+
+                if old_speed > 0 or old_authority > 0:
+                    logger.warn(
+                        "FAILURE",
+                        f"Train {train_id} stopped due to {failure_names.get(fail_type)} at block {fail_block}",
+                        {
+                            "train_id": train_id,
+                            "line": line,
+                            "current_block": current_block,
+                            "failure_block": fail_block,
+                            "failure_type": failure_names.get(fail_type),
+                            "distance_to_failure": min_distance,
+                            "old_speed": old_speed,
+                            "old_authority": old_authority,
+                        },
+                    )
+
+                # TODO: Attempt rerouting using alternate switches
+                # This would require path-finding algorithm to find alternate route
+
+    def _calculate_complete_block_path(self, start_block, end_block, line):
+        """
+        Calculate complete block-by-block path using hardcoded routes from yard to each station.
+        """
+        # Hardcoded paths from Yard (block 0) to each station
+        # Green Line: Yard exits at block 63
+        # - Stations at blocks 63-150: Direct path (0→63→64→...→station)
+        # - Stations at blocks 1-62: Loop around (0→63→...→150→1→...→station)
+        YARD_TO_STATION_PATHS = {
+            "Green": {
+                # Stations requiring loop (blocks 1-62)
+                3: [0] + list(range(63, 151)) + list(range(1, 4)),  # Pioneer
+                7: [0] + list(range(63, 151)) + list(range(1, 8)),  # Edgebrook
+                16: [0] + list(range(63, 151)) + list(range(1, 17)),  # Whited
+                21: [0] + list(range(63, 151)) + list(range(1, 22)),  # South Bank
+                31: [0] + list(range(63, 151)) + list(range(1, 32)),  # Central
+                39: [0] + list(range(63, 151)) + list(range(1, 40)),  # Inglewood
+                48: [0] + list(range(63, 151)) + list(range(1, 49)),  # Overbrook
+                57: [0] + list(range(63, 151)) + list(range(1, 58)),  # Glenbury
+                # Stations on direct path (blocks 63-150)
+                65: [0] + list(range(63, 66)),  # Dormont
+                73: [0] + list(range(63, 74)),  # Mt. Lebanon
+                88: [0] + list(range(63, 89)),  # Poplar
+                96: [0] + list(range(63, 97)),  # Castle Shannon
+            },
+            "Red": {
+                # All Red Line stations are on direct path from yard exit (block 9)
+                16: [0] + list(range(9, 17)),  # Shadyside
+                20: [0] + list(range(9, 21)),  # Herron Ave
+                24: [0] + list(range(9, 25)),  # Swissville
+                28: [0] + list(range(9, 29)),  # Penn Station
+                32: [0] + list(range(9, 33)),  # Steel Plaza
+                36: [0] + list(range(9, 37)),  # First Ave
+                40: [0] + list(range(9, 41)),  # Station Square
+                48: [0] + list(range(9, 49)),  # South Hills
+            },
+        }
+
+        # If starting from yard and destination is a station, use hardcoded path
+        if start_block == 0 and end_block in YARD_TO_STATION_PATHS.get(line, {}):
+            return YARD_TO_STATION_PATHS[line][end_block]
+
+        # Otherwise, simple sequential path
+        path = [start_block]
+        current = start_block
+        while current != end_block:
+            if current < end_block:
+                current += 1
+            else:
+                current += 1
+            path.append(current)
+            if len(path) > 200:
+                break
+        return path
+
+    def _set_switches_for_route(
+        self, track_data, current_block, route, line, line_prefix
+    ):
+        """Set switches to route train through the specified route (list of station blocks)"""
+        config = self.infrastructure[line]
+        switch_blocks = config["switch_blocks"]
+
+        # Calculate complete block-by-block path to first station in route
+        if not route:
+            return
+
+        destination_block = route[0]  # Next station
+        complete_path = self._calculate_complete_block_path(
+            current_block, destination_block, line
+        )
+
+        # Store expected path for verification
+        train_id = None
+        for tid, info in self.active_trains.items():
+            if info.get("line") == line and info.get("current_block") == current_block:
+                train_id = tid
+                break
+
+        if train_id:
+            self.active_trains[train_id]["expected_path"] = complete_path
+
+        # For each switch, check if it's in the path and which direction is needed
+        for idx, switch_block in enumerate(switch_blocks):
+            switch_position = 0  # Default: straight
+
+            # Find if this switch is in our path
+            if switch_block in complete_path:
+                switch_idx = complete_path.index(switch_block)
+
+                # Check both what comes BEFORE and AFTER this switch in the path
+                prev_block = complete_path[switch_idx - 1] if switch_idx > 0 else None
+                next_block = (
+                    complete_path[switch_idx + 1]
+                    if switch_idx + 1 < len(complete_path)
+                    else None
+                )
+
+                # Determine switch position based on incoming OR outgoing direction
+                needs_branch = False
+
+                # Check if approaching from non-sequential block (e.g., yard to switch)
+                if prev_block is not None and abs(switch_block - prev_block) > 1:
+                    needs_branch = True
+
+                # Check if departing to non-sequential block
+                if next_block is not None and abs(next_block - switch_block) > 1:
+                    needs_branch = True
+
+                switch_position = 1 if needs_branch else 0
+
+            track_data[f"{line_prefix}-switches"][idx] = switch_position
 
     def _write_train_commands(self):
         """Write commanded speeds/authorities to track I/O for all lines"""
         data = self._read_track_io()
         if not data:
             return
+
+        logger = get_logger()
+        logger.debug(
+            "TRAIN",
+            f"_write_train_commands called. Active trains: {list(self.active_trains.keys())}",
+            {"active_trains": len(self.active_trains)},
+        )
 
         # Separate trains by line
         green_trains = {
@@ -1175,13 +2103,30 @@ class TrackControl:
             if info.get("line") == "Red"
         }
 
+        logger.debug(
+            "TRAIN",
+            f"Green trains: {list(green_trains.keys())}, Red trains: {list(red_trains.keys())}",
+            {"green_count": len(green_trains), "red_count": len(red_trains)},
+        )
+
         # Green line commands
         g_speeds = []
         g_authorities = []
         for train_id in sorted(green_trains.keys()):
             train_info = green_trains[train_id]
-            g_speeds.append(train_info.get("commanded_speed", 0))
-            g_authorities.append(train_info.get("commanded_authority", 0))
+            speed = train_info.get("commanded_speed", 0)
+            authority = train_info.get("commanded_authority", 0)
+            g_speeds.append(speed)
+            g_authorities.append(authority)
+
+            # Debug logging
+            if speed > 0 or authority > 0:
+                logger = get_logger()
+                logger.debug(
+                    "TRAIN",
+                    f"Writing commands for Train {train_id}: speed={speed}, authority={authority}",
+                    {"train_id": train_id, "speed": speed, "authority": authority},
+                )
 
         data["G-Train"]["commanded speed"] = g_speeds
         data["G-Train"]["commanded authority"] = g_authorities
@@ -1333,22 +2278,37 @@ class TrackControl:
                 self.gates_table.insert("", "end", values=(block, state))
 
     def _update_throughput(self):
-        """Update throughput display"""
-        # Count trains per line
-        green_count = sum(
-            1 for t in self.active_trains.values() if t.get("line") == "Green"
-        )
-        red_count = sum(
-            1 for t in self.active_trains.values() if t.get("line") == "Red"
-        )
+        """Update throughput display using actual boarding data"""
+        track_model_data = self._read_track_model()
 
-        self.throughput_green = green_count * 50
-        self.throughput_red = red_count * 50
+        green_passengers = 0
+        red_passengers = 0
+
+        if track_model_data:
+            # Sum passengers from all trains on each line
+            for train_id, train_info in self.active_trains.items():
+                line = train_info.get("line")
+                line_prefix = "G" if line == "Green" else "R"
+                train_key = f"{line_prefix}_train_{train_id}"
+
+                if train_key in track_model_data:
+                    beacon_data = track_model_data[train_key].get("beacon", {})
+                    passengers = beacon_data.get("passengers_boarding", 0)
+
+                    if line == "Green":
+                        green_passengers += passengers
+                    else:
+                        red_passengers += passengers
+
+        self.throughput_green = green_passengers
+        self.throughput_red = red_passengers
 
         self.throughput_green_label.config(
-            text=f"🟢 Green: {self.throughput_green} pass/hr"
+            text=f"🟢 Green: {self.throughput_green} passengers"
         )
-        self.throughput_red_label.config(text=f"🔴 Red: {self.throughput_red} pass/hr")
+        self.throughput_red_label.config(
+            text=f"🔴 Red: {self.throughput_red} passengers"
+        )
 
     def _update_selected_block_detail(self):
         """Update selected block detail view"""
@@ -1431,14 +2391,3 @@ class TrackControl:
             recursive=False,
         )
         threading.Thread(target=self.observer.start, daemon=True).start()
-
-
-# For standalone testing
-if __name__ == "__main__":
-    root = tk.Tk()
-    root.title("Track Control - Standalone Test")
-    root.geometry("1600x900")
-
-    control = TrackControl(root)
-
-    root.mainloop()

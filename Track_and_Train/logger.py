@@ -25,6 +25,9 @@ class TrainLogger:
         # Ensure log directory exists
         os.makedirs(self.log_dir, exist_ok=True)
 
+        # Delete old log files (keep only current session)
+        self._cleanup_old_logs()
+
         # Create log file with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.log_file = os.path.join(self.log_dir, f"train_system_{timestamp}.log")
@@ -40,6 +43,21 @@ class TrainLogger:
         self._write_to_file(f"Train Track Control System - Log Started\n")
         self._write_to_file(f"Session: {timestamp}\n")
         self._write_to_file(f"{'='*80}\n\n")
+
+    def _cleanup_old_logs(self):
+        """Delete all existing log files in log directory"""
+        try:
+            for filename in os.listdir(self.log_dir):
+                if filename.startswith("train_system_") and (
+                    filename.endswith(".log") or filename.endswith(".json")
+                ):
+                    file_path = os.path.join(self.log_dir, filename)
+                    try:
+                        os.remove(file_path)
+                    except Exception:
+                        pass  # Ignore errors (file might be in use)
+        except Exception:
+            pass  # Ignore if directory doesn't exist
 
     def _write_to_file(self, message):
         """Write message to log file"""
@@ -168,7 +186,10 @@ def get_logger():
     """Get or create global logger instance"""
     global _global_logger
     if _global_logger is None:
-        _global_logger = TrainLogger()
+        # Use absolute path to logs directory in Track_and_Train folder
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        logs_dir = os.path.join(script_dir, "logs")
+        _global_logger = TrainLogger(log_dir=logs_dir)
     return _global_logger
 
 

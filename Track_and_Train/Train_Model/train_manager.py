@@ -254,14 +254,64 @@ class train_controller:
         commanded_authority = state.get("commanded_authority", 0.0)
         speed_limit = state.get("speed_limit", 0.0)
         position_yds = state.get("position_yds", 0.0)
+        authority_yds = state.get(
+            "authority_yds", 0.0
+        )  # Get REMAINING authority from physics
 
-        # If within 3 yards of authority, apply service brake (only if authority is set)
-        # Note: commanded_authority already represents REMAINING authority (from physics calculation)
-        if commanded_authority > 0 and commanded_authority <= 3:
+        # Calculate stopping distance needed at current velocity
+        # Service brake: -3.94 ft/s² = -1.313 yd/s²
+        # Stopping distance: d = v² / (2 * |a|)
+        # Convert velocity: mph → yd/s:  mph * 1.46667 / 3 = mph * 0.48889
+        velocity_yds_per_sec = train_velocity * 0.48889
+        service_brake_decel = 1.313  # yd/s² (magnitude)
+        stopping_distance_yds = (
+            (velocity_yds_per_sec**2) / (2 * service_brake_decel)
+            if service_brake_decel > 0
+            else 0
+        )
+
+        # Add safety margin (20% extra distance)
+        required_distance = stopping_distance_yds * 1.2
+
+        # DEBUG: Authority checking
+        print(
+            f"[TRAIN CONTROLLER {self.train_id}] pos={position_yds:.2f} yds, "
+            f"vel={train_velocity:.2f} mph ({velocity_yds_per_sec:.2f} yd/s), "
+            f"cmd_auth={commanded_authority:.2f}, remaining_auth={authority_yds:.2f}, "
+            f"stopping_dist={stopping_distance_yds:.2f}, required={required_distance:.2f}, "
+            f"service_brake={service_brake}"
+        )
+
+        # Emergency case: if we're about to exceed authority, force brake
+        if authority_yds <= 1.0 and train_velocity > 0.5:
             service_brake = True
             state["service_brake"] = True
             self.update_state({"service_brake": True, "power_command": 0.0})
+            print(
+                f"[TRAIN CONTROLLER {self.train_id}] 🚨 EMERGENCY BRAKE! Authority critical: {authority_yds:.2f} yds"
+            )
             return 0.0
+
+        # Apply service brake if remaining authority <= required stopping distance
+        # This ensures we start braking BEFORE we exceed authority
+        if authority_yds > 0 and authority_yds <= required_distance:
+            if not service_brake:
+                service_brake = True
+                state["service_brake"] = True
+                self.update_state({"service_brake": True, "power_command": 0.0})
+                print(
+                    f"[TRAIN CONTROLLER {self.train_id}] ⚠️ STOPPING! Auth={authority_yds:.2f} yds <= Required={required_distance:.2f} yds"
+                )
+            return 0.0
+
+        # Release service brake if we have plenty of authority
+        if authority_yds > required_distance and service_brake:
+            service_brake = False
+            state["service_brake"] = False
+            self.update_state({"service_brake": False})
+            print(
+                f"[TRAIN CONTROLLER {self.train_id}] ✅ BRAKE RELEASED! Auth={authority_yds:.2f} yds > Required={required_distance:.2f} yds"
+            )
 
         # Normal PI control (accelerate/maintain speed)
         controls = vital_train_controls(

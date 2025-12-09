@@ -648,11 +648,14 @@ class TrackModelUI(ttk.Frame):
         if not self.visualizer.track_data:
             self.visualizer.load_excel_data(self.excel_file_path)
 
-        # Ensure line_network is created before displaying
-        if line_name and not self.line_network:
+        # Ensure line_network is created before displaying (only create once per line)
+        full_line_name = f"{line_name} Line" if line_name else None
+        if line_name and (
+            not self.line_network
+            or getattr(self.line_network, "line_name", None) != full_line_name
+        ):
             self.on_line_selected()
 
-        full_line_name = f"{line_name} Line" if line_name else None
         self.visualizer.display_line(full_line_name, highlighted_block=block_name)
 
     def on_block_selected(self, event=None):
