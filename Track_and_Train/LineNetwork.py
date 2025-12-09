@@ -68,7 +68,9 @@ UNIDIRECTIONAL_BLOCKS = {
         (101, 150),
         0,
     ],
-    "Red": [],
+    "Red": [
+        (52, 66),
+    ],
 }
 
 
@@ -821,15 +823,24 @@ class LineNetwork:
                                 },
                             )
 
-            # Hardcode switches that route to yard (block 0)
+            # Hardcode switches that route to yard (block 0) and special 28 logic
             if self.line_name == "Green":
                 if 57 not in self.branch_points:
                     self.branch_points[57] = BranchPoint(block=57, targets=[0, 58])
                 if 63 not in self.branch_points:
                     self.branch_points[63] = BranchPoint(block=63, targets=[0, 64])
+                # Special logic for 28: if coming from 150, branch (1) goes to 27
+                if 28 in self.branch_points:
+                    # Remove 29 from targets if present, add 27 for branch
+                    targets = self.branch_points[28].targets
+                    if 29 in targets:
+                        targets.remove(29)
+                    if 27 not in targets:
+                        targets.append(27)
+                    self.branch_points[28].targets = sorted(targets)
             elif self.line_name == "Red":
                 if 9 not in self.branch_points:
-                    self.branch_points[9] = BranchPoint(block=9, targets=[0, 10])
+                    self.branch_points[9] = BranchPoint(block=9, targets=[10, 0])
 
             logger.info(
                 "NETWORK",

@@ -281,7 +281,11 @@ class TrackControl:
             logger.debug(
                 "ROUTE_PATH",
                 f"Route to {destination} (Green Line): stations={station_sequence}, blocks={block_sequence}",
-                {"destination": destination, "station_sequence": station_sequence, "block_sequence": block_sequence},
+                {
+                    "destination": destination,
+                    "station_sequence": station_sequence,
+                    "block_sequence": block_sequence,
+                },
             )
             return block_sequence
 
@@ -320,7 +324,11 @@ class TrackControl:
             logger.debug(
                 "ROUTE_PATH",
                 f"Route to {destination} (Red Line): stations={station_sequence}, blocks={block_sequence}",
-                {"destination": destination, "station_sequence": station_sequence, "block_sequence": block_sequence},
+                {
+                    "destination": destination,
+                    "station_sequence": station_sequence,
+                    "block_sequence": block_sequence,
+                },
             )
             return block_sequence
 
@@ -525,14 +533,6 @@ class TrackControl:
             fg="white",
             font=("Segoe UI", 10, "bold"),
             height=2,
-                # DEBUG: Log both station and block sequence
-                logger = get_logger()
-                logger.debug(
-                    "ROUTE_PATH",
-                    f"Route to {destination} (Green Line): stations={station_sequence}, blocks={block_sequence}",
-                    {"destination": destination, "station_sequence": station_sequence, "block_sequence": block_sequence},
-                )
-                return block_sequence
             relief="flat",
             cursor="hand2",
         )
@@ -1176,21 +1176,28 @@ class TrackControl:
                 },
             )
 
-            self.active_trains[train_id] = {
-                "line": line,
-                "destination": dest,
-                "current_block": 0,
-                "commanded_speed": 0,
-                "commanded_authority": 0,
-                "state": "Dispatching",
-                "current_station": "Yard",
-                "arrival_time": arrival,
-                "route": route,
-                "current_leg_index": 0,
-                "next_station_block": route[0] if route else 0,
-                "dwell_start_time": None,
-                "last_position_yds": 0.0,
-            }
+            if train_id not in self.active_trains:
+                self.active_trains[train_id] = {
+                    "line": line,
+                    "destination": dest,
+                    "current_block": 0,
+                    "commanded_speed": 0,
+                    "commanded_authority": 0,
+                    "state": "Dispatching",
+                    "current_station": "Yard",
+                    "arrival_time": arrival,
+                    "route": route,
+                    "current_leg_index": 0,
+                    "next_station_block": route[0] if route else 0,
+                    "dwell_start_time": None,
+                    "last_position_yds": 0.0,
+                }
+            else:
+                self.active_trains[train_id]["destination"] = dest
+                self.active_trains[train_id]["route"] = route
+                self.active_trains[train_id]["next_station_block"] = (
+                    route[0] if route else 0
+                )
 
             # Update CTC data
             ctc_data = self._read_ctc_data()
@@ -1521,7 +1528,7 @@ class TrackControl:
             authority = 200.0  # Yard distance in yards
 
             line_data = static_data.get("static_data", {}).get(line, [])
-            for block_num in complete_path[1:]:  # Skip yard block 0
+            for block_num in complete_path[1:-1]:  # Exclude last block (destination)
                 # Find this block in static data
                 for block_info in line_data:
                     if int(block_info.get("Block Number", -1)) == block_num:
@@ -1529,8 +1536,8 @@ class TrackControl:
                         authority_meters += block_length_m
                         break
 
-            # Convert meters to yards and add to yard distance, then subtract 50 yard safety margin
-            authority += authority_meters * 1.09361 - 50.0
+            # Convert meters to yards and add to yard distance, then add 50 yard buffer
+            authority += authority_meters * 1.09361 + 50.0
         else:
             # No fallback - log error if static data unavailable
             logger = get_logger()
@@ -2207,13 +2214,6 @@ class TrackControl:
                 # Green Line: Yard exits at block 63
                 if end_block >= 63 and end_block <= 150:
                     # Direct path: 0 → 63 → 64 → ... → end_block
-                    # DEBUG: Log both station and block sequence
-                    logger = get_logger()
-                    logger.debug(
-                        "ROUTE_PATH",
-                        f"Route to {destination} (Red Line): stations={station_sequence}, blocks={block_sequence}",
-                        {"destination": destination, "station_sequence": station_sequence, "block_sequence": block_sequence},
-                    )
                     return [0] + list(range(63, end_block + 1))
                 else:
                     # Loop path: 0 → 63 → ... → 150 → 28 → ... → end_block
@@ -2410,11 +2410,9 @@ class TrackControl:
         for idx, switch_block in enumerate(switch_blocks):
             switch_position = 0  # Default: straight
 
-            # Find if this switch is in our path
+            # Only set switch if it's in the path
             if switch_block in complete_path:
                 switch_idx = complete_path.index(switch_block)
-
-                # Check both what comes BEFORE and AFTER this switch in the path
                 prev_block = complete_path[switch_idx - 1] if switch_idx > 0 else None
                 next_block = (
                     complete_path[switch_idx + 1]
@@ -2422,18 +2420,54 @@ class TrackControl:
                     else None
                 )
 
-                # Determine switch position based on incoming OR outgoing direction
-                needs_branch = False
+                # Hardcoded switch logic for Green Line
+                if line == "Green":
+                    # 13: 0=straight to 12, 1=branch to 1
+                    if switch_block == 13:
+                        switch_position = 0 if next_block == 12 else 1
+                    # 28: 0=straight to 29, 1=branch to 150
+                    elif switch_block == 28:
+                        # If coming from 150 to 28, branch (1) should go to 27
+                        if prev_block == 150:
+                            switch_position = 1 if next_block == 27 else 0
+                        else:
+                            switch_position = 0 if next_block == 29 else 1
+                    # 57: 0=straight to 58, 1=branch to Yard
+                    elif switch_block == 57:
+                        switch_position = 0 if next_block == 58 else 1
+                    # 63: 0=straight to 64, 1=branch from Yard
+                    elif switch_block == 63:
+                        switch_position = 0 if prev_block == 62 else 1
+                    # 77: 0=straight to 76, 1=branch to 101
+                    elif switch_block == 77:
+                        switch_position = 0 if next_block == 76 else 1
+                    # 85: 0=straight to 86, 1=branch to 100
+                    elif switch_block == 85:
+                        switch_position = 0 if next_block == 86 else 1
 
-                # Check if approaching from non-sequential block (e.g., yard to switch)
-                if prev_block is not None and abs(switch_block - prev_block) > 1:
-                    needs_branch = True
-
-                # Check if departing to non-sequential block
-                if next_block is not None and abs(next_block - switch_block) > 1:
-                    needs_branch = True
-
-                switch_position = 1 if needs_branch else 0
+                # Hardcoded switch logic for Red Line
+                elif line == "Red":
+                    # 9: 0=to 10, 1=to Yard
+                    if switch_block == 9:
+                        switch_position = 0 if next_block == 10 else 1
+                    # 16: 0=straight to 15, 1=branch to 1
+                    elif switch_block == 16:
+                        switch_position = 0 if prev_block == 15 else 1
+                    # 27: 0=straight to 28, 1=branch to 76
+                    elif switch_block == 27:
+                        switch_position = 0 if next_block == 28 else 1
+                    # 33: 0=straight to 32, 1=branch to 72
+                    elif switch_block == 33:
+                        switch_position = 0 if prev_block == 32 else 1
+                    # 38: 0=straight to 39, 1=branch to 71
+                    elif switch_block == 38:
+                        switch_position = 0 if next_block == 39 else 1
+                    # 44: 0=straight to 43, 1=branch to 67
+                    elif switch_block == 44:
+                        switch_position = 0 if prev_block == 43 else 1
+                    # 52: 0=straight to 53, 1=branch to 66
+                    elif switch_block == 52:
+                        switch_position = 0 if next_block == 53 else 1
 
             track_data[f"{line_prefix}-switches"][idx] = switch_position
 

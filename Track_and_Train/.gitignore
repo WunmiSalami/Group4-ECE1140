@@ -27,6 +27,3 @@ train_controller/train_controller.db
 # JSON files (all)
 *.json
 
-# Log files
-logs/
-*.log
