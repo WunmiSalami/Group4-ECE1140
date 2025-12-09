@@ -592,11 +592,11 @@ class TrainModelUI(ttk.Frame):
                         "1.0", f"Running\nDisembark: {disembarking}"
                     )
                 self.announcement_box.config(state="disabled")
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Error updating announcement box: {e}")
         except Exception as e:
             # Widget may be destroyed, ignore UI update errors
-            pass
+            print(f"Error updating UI: {e}")
 
     def _watch_files(self):
         paths = {
@@ -614,8 +614,8 @@ class TrainModelUI(ttk.Frame):
                         changed = True
                 if changed:
                     self.after(1, lambda: self._run_cycle(schedule=False))
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Error in file watch: {e}")
             time.sleep(0.2)
 
     def on_close(self):
@@ -632,6 +632,6 @@ class TrainModelUI(ttk.Frame):
                     train_data["outputs"] = {}
                 safe_write_json(self.train_data_path, train_data)
         except Exception as e:
-            pass
+            print(f"Error resetting train data on close: {e}")
 
         self.destroy()

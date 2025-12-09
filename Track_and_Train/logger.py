@@ -92,8 +92,8 @@ class TrainLogger:
                 self._write_to_file(f"{'='*80}\n")
                 self._write_to_file(f"Log rotated at {timestamp}\n")
                 self._write_to_file(f"{'='*80}\n\n")
-        except:
-            pass
+        except Exception as e:
+            print(f"Error rotating log: {e}")
 
     def _is_duplicate(self, message):
         """Check if message is a recent duplicate"""

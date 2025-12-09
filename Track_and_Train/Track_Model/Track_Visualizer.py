@@ -203,7 +203,7 @@ class RailwayDiagram:
             self.parser = TrackDiagramParser(os.path.join(VISUALIZER_DIR, "track.png"))
             self.parser.parse()
         except Exception as e:
-            pass
+            print(f"Error loading track file: {e}")
 
     def show_all_lines(self):
         """Show overview of all lines."""
@@ -1266,8 +1266,8 @@ class RailwayDiagram:
             try:
                 if "station" in self.canvas.gettags(self.hover_id):
                     self.canvas.itemconfig(self.hover_id, width=2)
-            except:
-                pass
+            except Exception as e:
+                print(f"Error handling hover: {e}")
             self.hover_id = None
 
         self.canvas.delete("tooltip")
@@ -1413,8 +1413,8 @@ class RailwayDiagram:
                     light_color = light_color_map.get(light_state, "#808080")
                     try:
                         self.canvas.itemconfig(element["id"], fill=light_color)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        print(f"Error updating light color: {e}")
 
     def highlight_block(self, block_name: str):
         """Ensure only one block is highlighted at a time."""
@@ -1428,8 +1428,8 @@ class RailwayDiagram:
                     self.canvas.itemconfig(
                         element["id"], fill=base_color, font=("Arial", 8)
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"Error resetting block highlight: {e}")
 
         # Highlight the selected block
         for element in self.elements:

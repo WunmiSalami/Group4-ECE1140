@@ -44,8 +44,8 @@ def safe_write_json(path, data):
             try:
                 if os.path.exists(tmp):
                     os.remove(tmp)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Error removing temp file {tmp}: {e}")
             time.sleep(0.1 * (attempt + 1))
         except Exception:
             break
@@ -230,6 +230,7 @@ class TrainModel:
         self.acceleration_ftps2 = 0.0
         self.position_yds = 0.0
         self.authority_yds = 0.0
+        self.last_commanded_authority = 0.0
         self.dt = 0.5
 
     def update(
@@ -249,6 +250,62 @@ class TrainModel:
         right_door=False,
         driver_velocity=0.0,
     ):
+        # Preserve position when new authority is commanded (new leg after dwelling)
+        current_authority = float(commanded_authority or 0.0)
+        if current_authority != self.last_commanded_authority and current_authority > 0:
+            # Get yards_into_current_block from train data JSON instead of resetting to 0
+            from logger import get_logger
+
+            logger = get_logger()
+
+            # Try to read yards_into_current_block from JSON
+            yards_in_block = 0.0
+            try:
+                import json
+                import os
+
+                json_path = os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)),
+                    "..",
+                    "track_model_Train_Model.json",
+                )
+
+                # Determine train key based on current data
+                # This is a bit hacky but necessary to find our train's data
+                with open(json_path, "r") as f:
+                    data = json.load(f)
+
+                # Search for the train that matches our specs/authority
+                for train_key, train_data in data.items():
+                    if train_key.endswith(f"train_1"):  # Simplified - assumes train 1
+                        motion_data = train_data.get("motion", {})
+                        yards_in_block = motion_data.get(
+                            "yards_into_current_block", 0.0
+                        )
+                        break
+
+            except Exception as e:
+                logger.error(
+                    "TRAIN_MODEL",
+                    f"Could not read yards_into_current_block from JSON: {e}",
+                    {"error": str(e)},
+                )
+                yards_in_block = 0.0
+
+            self.position_yds = yards_in_block
+            self.last_commanded_authority = current_authority
+
+            logger.info(
+                "TRAIN_MODEL",
+                f"Position preserved on new authority: {current_authority:.0f} yds (yards_in_block: {yards_in_block:.2f})",
+                {
+                    "commanded_authority": current_authority,
+                    "position_yds": self.position_yds,
+                    "yards_into_current_block": yards_in_block,
+                    "position_preserved": True,
+                },
+            )
+
         if emergency_brake:
             self.acceleration_ftps2 = self.emergency_brake_ftps2
         else:
@@ -266,15 +323,35 @@ class TrainModel:
                     self.acceleration_ftps2 = max(
                         -self.max_accel_ftps2, min(self.max_accel_ftps2, accel_ftps2)
                     )
+
+        old_velocity = self.velocity_mph
         self.velocity_mph = max(
             0.0, self.velocity_mph + self.acceleration_ftps2 * self.dt * 0.681818
         )
         self.position_yds += (self.velocity_mph / 0.681818) * self.dt / 3.0
 
-        # Calculate remaining authority (commanded - position traveled)
-        self.authority_yds = max(
-            0.0, float(commanded_authority or 0.0) - self.position_yds
-        )
+        # Calculate remaining authority (commanded - position traveled on current leg)
+        self.authority_yds = max(0.0, current_authority - self.position_yds)
+
+        # Log power and speed changes (only when significant changes occur)
+        if abs(self.velocity_mph - old_velocity) > 0.5 or (
+            power_command > 0 and self.velocity_mph > 0.1
+        ):
+            from logger import get_logger
+
+            logger = get_logger()
+            logger.debug(
+                "TRAIN_MODEL",
+                f"Power={power_command:.0f}W, Speed={self.velocity_mph:.2f}mph, Authority={self.authority_yds:.0f}yds",
+                {
+                    "power_W": round(power_command, 0),
+                    "velocity_mph": round(self.velocity_mph, 2),
+                    "acceleration_ftps2": round(self.acceleration_ftps2, 2),
+                    "position_yds": round(self.position_yds, 2),
+                    "authority_remaining_yds": round(self.authority_yds, 0),
+                    "commanded_authority": current_authority,
+                },
+            )
 
         return {
             "velocity_mph": self.velocity_mph,

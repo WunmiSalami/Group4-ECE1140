@@ -176,8 +176,8 @@ class TrackNetworkBuilder:
                 try:
                     block_num = int(block_num_val)
                     self.network.block_to_idx[block_num] = idx
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Error converting block number {block_num_val}: {e}")
 
     def _parse_switches(self):
         """Extract all SWITCH statements from dataframe."""
@@ -383,12 +383,12 @@ class TrackNetworkBuilder:
         for path in self.network.paths:
             for block in path.blocks:
                 if block in assigned:
-                    pass
+                    print(f"Warning: Block {block} assigned multiple times")
                 assigned.add(block)
 
         missing = all_blocks - assigned
         if missing:
-            pass
+            print(f"Warning: Missing blocks: {missing}")
 
         # Rule 2: Branch blocks are sequential
         for path in self.network.paths:
@@ -399,9 +399,9 @@ class TrackNetworkBuilder:
 
     def print_network_summary(self):
         """Print detailed network summary for debugging."""
-        pass
+        print("Network summary not implemented")
 
 
 # Example usage
 if __name__ == "__main__":
-    pass
+    print("TrackNetworkBuilder module")

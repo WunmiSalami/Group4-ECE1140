@@ -296,8 +296,8 @@ class train_controller:
         # Add safety margin (20% extra distance)
         required_distance = stopping_distance_yds * 1.2
 
-        # Critical authority case: if we're about to exceed authority, force service brake
-        if authority_yds <= 1.0 and train_velocity > 0.5:
+        # Critical authority case: if authority exhausted, STAY STOPPED
+        if authority_yds <= 1.0:
             service_brake = True
             state["service_brake"] = True
             self.update_state({"service_brake": True, "power_command": 0.0})
@@ -671,10 +671,10 @@ class train_controller_ui(tk.Toplevel):
 
             try:
                 self.update_button_states(state)
-            except tk.TclError:
-                pass  # Button may be destroyed
+            except tk.TclError as e:
+                print(f"Button destroyed during update: {e}")
         except Exception as e:
-            pass
+            print(f"Error in periodic update: {e}")
         finally:
             self.after(self.update_interval, self.periodic_update)
 
@@ -1014,13 +1014,13 @@ class TrainManager:
         if train.model_ui:
             try:
                 train.model_ui.master.destroy()
-            except:
-                pass
+            except Exception as e:
+                print(f"Error destroying model UI: {e}")
         if train.controller_ui:
             try:
                 train.controller_ui.destroy()
-            except:
-                pass
+            except Exception as e:
+                print(f"Error destroying controller UI: {e}")
 
         del self.trains[train_id]
 
@@ -1200,7 +1200,7 @@ class TrainManager:
                 safe_write_json(static_file, {})
 
         except Exception as e:
-            pass
+            print(f"Error in cleanup: {e}")
 
 
 class TrainManagerUI(tk.Tk):
@@ -1498,7 +1498,7 @@ class TrainManagerUI(tk.Tk):
                     self._add_train_with_id(train_id)
 
         except Exception as e:
-            pass
+            print(f"Error polling for new trains: {e}")
         finally:
             self.after(1000, self._poll_track_model_for_new_trains)
 

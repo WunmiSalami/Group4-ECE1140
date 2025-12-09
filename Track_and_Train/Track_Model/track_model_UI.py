@@ -506,8 +506,8 @@ class TrackModelUI(ttk.Frame):
                     if block_num not in ["N/A", "nan"]:
                         try:
                             return branch_map.get(int(float(block_num)), "N/A")
-                        except:
-                            pass
+                        except Exception as e:
+                            print(f"Error looking up branch for block {block_num}: {e}")
                     return "N/A"
 
                 df["Branching"] = df.apply(assign_branching, axis=1)
@@ -761,8 +761,8 @@ class TrackModelUI(ttk.Frame):
                                 if block_num == item:
                                     direction = "Unidirectional"
                                     break
-                except (ValueError, TypeError):
-                    pass
+                except (ValueError, TypeError) as e:
+                    print(f"Error checking direction: {e}")
 
                 station_name = self.get_station_name_for_block(selected_block)
                 passengers_boarding = self.block_manager.passengers_boarding

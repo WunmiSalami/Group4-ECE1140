@@ -205,7 +205,7 @@ class MainUI(tk.Tk):
 
             TrainManager.cleanup_all_files()
         except Exception as e:
-            pass
+            print(f"Error during cleanup: {e}")
 
         # Close logger
         try:
@@ -213,7 +213,7 @@ class MainUI(tk.Tk):
 
             close_logger()
         except Exception as e:
-            pass
+            print(f"Error closing logger: {e}")
 
         # Close any open child windows
         if self.track_window:

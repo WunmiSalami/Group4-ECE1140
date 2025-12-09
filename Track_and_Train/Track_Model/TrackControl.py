@@ -257,24 +257,33 @@ class TrackControl:
                 ("Overbrook", 57),  # Outbound platform
             ]
 
+            station_sequence = []
+            block_sequence = []
             if dest_block >= 63 and dest_block <= 150:
                 # Destination on direct path - include only stations up to destination
-                result_blocks = []
                 for stn_name, stn_block in direct_path_sequence:
                     if stn_block <= dest_block:
-                        result_blocks.append(stn_block)
+                        station_sequence.append(stn_name)
+                        block_sequence.append(stn_block)
                     if stn_name == destination:
                         break
-                return result_blocks
             else:
                 # Destination on loop - include all direct path + loop stations up to destination
-                result_blocks = [stn_block for stn, stn_block in direct_path_sequence]
+                for stn, stn_block in direct_path_sequence:
+                    station_sequence.append(stn)
+                    block_sequence.append(stn_block)
                 for stn_name, stn_block in loop_path_sequence:
-                    result_blocks.append(stn_block)
-                    # Match by block number to get correct platform for dual-platform stations
+                    station_sequence.append(stn_name)
+                    block_sequence.append(stn_block)
                     if stn_name == destination and stn_block == dest_block:
                         break
-                return result_blocks
+            logger = get_logger()
+            logger.debug(
+                "ROUTE_PATH",
+                f"Route to {destination} (Green Line): stations={station_sequence}, blocks={block_sequence}",
+                {"destination": destination, "station_sequence": station_sequence, "block_sequence": block_sequence},
+            )
+            return block_sequence
 
         elif line == "Red":
             # Red Line: all stations in order from yard
@@ -295,17 +304,25 @@ class TrackControl:
                 "South Hills",
             ]
 
-            result_blocks = []
+            station_sequence = []
+            block_sequence = []
             for stn in ordered_stations:
                 stn_blocks = stations.get(stn)
                 if stn_blocks:
                     block = (
                         stn_blocks[0] if isinstance(stn_blocks, list) else stn_blocks
                     )
-                    result_blocks.append(block)
+                    station_sequence.append(stn)
+                    block_sequence.append(block)
                 if stn == destination:
                     break
-            return result_blocks
+            logger = get_logger()
+            logger.debug(
+                "ROUTE_PATH",
+                f"Route to {destination} (Red Line): stations={station_sequence}, blocks={block_sequence}",
+                {"destination": destination, "station_sequence": station_sequence, "block_sequence": block_sequence},
+            )
+            return block_sequence
 
         # Fallback: return destination block
         dest_blocks = stations.get(destination, [])
@@ -508,6 +525,14 @@ class TrackControl:
             fg="white",
             font=("Segoe UI", 10, "bold"),
             height=2,
+                # DEBUG: Log both station and block sequence
+                logger = get_logger()
+                logger.debug(
+                    "ROUTE_PATH",
+                    f"Route to {destination} (Green Line): stations={station_sequence}, blocks={block_sequence}",
+                    {"destination": destination, "station_sequence": station_sequence, "block_sequence": block_sequence},
+                )
+                return block_sequence
             relief="flat",
             cursor="hand2",
         )
@@ -1138,6 +1163,19 @@ class TrackControl:
             if not route:
                 return  # Invalid route
 
+            # Log the route for debugging
+            logger = get_logger()
+            logger.info(
+                "ROUTE",
+                f"Train {train_id} route to {dest}: {route}, first station block: {route[0] if route else 'NONE'}",
+                {
+                    "train_id": train_id,
+                    "destination": dest,
+                    "route": route,
+                    "first_station": route[0] if route else None,
+                },
+            )
+
             self.active_trains[train_id] = {
                 "line": line,
                 "destination": dest,
@@ -1276,7 +1314,7 @@ class TrackControl:
         # Assign occupied blocks to trains in order
         for i, (train_id, train_info) in enumerate(line_trains):
             if i < len(occupied_blocks):
-                actual_block = occupied_blocks[i]
+                actual_block = occupied_blocks[i] + 1
                 old_block = train_info.get("current_block")
                 train_info["current_block"] = actual_block
 
@@ -1491,8 +1529,8 @@ class TrackControl:
                         authority_meters += block_length_m
                         break
 
-            # Convert meters to yards and add to yard distance
-            authority += authority_meters * 1.09361
+            # Convert meters to yards and add to yard distance, then subtract 50 yard safety margin
+            authority += authority_meters * 1.09361 - 50.0
         else:
             # No fallback - log error if static data unavailable
             logger = get_logger()
@@ -1511,6 +1549,20 @@ class TrackControl:
         train_info["last_position_yds"] = 0.0
         train_info["scheduled_speed"] = (
             optimal_speed  # Store for resumption after dwelling
+        )
+
+        # Log initial dispatch authority and speed
+        logger = get_logger()
+        logger.info(
+            "AUTHORITY",
+            f"Train {train_id} INITIAL DISPATCH: speed={optimal_speed:.2f} mph, authority={int(authority)} yds",
+            {
+                "train_id": train_id,
+                "commanded_speed_mph": round(optimal_speed, 2),
+                "commanded_authority_yds": int(authority),
+                "destination_block": next_station_block,
+                "complete_path": complete_path,
+            },
         )
 
         # Update CTC data with calculated speed
@@ -1560,55 +1612,8 @@ class TrackControl:
         current_block = train_info.get("current_block", 0)
         next_station_block = train_info.get("next_station_block", 0)
 
-        # DEBUG: Log state at block 68
-        if current_block == 68:
-            logger = get_logger()
-            logger.info(
-                "DEBUG_68",
-                f"Train {train_id} at BLOCK 68",
-                {
-                    "train_id": train_id,
-                    "current_block": current_block,
-                    "next_station_block": next_station_block,
-                    "motion_state": motion_state,
-                    "commanded_speed": train_info.get("commanded_speed", 0),
-                    "commanded_authority": train_info.get("commanded_authority", 0),
-                    "state": train_info.get("state"),
-                    "route": train_info.get("route", []),
-                },
-            )
-
-        # Track authority consumption
-        last_position = train_info.get("last_position_yds", 0.0)
-        distance_traveled = abs(current_position_yds - last_position)
-
-        if distance_traveled > 0:
-            # Update consumed authority
-            current_authority = train_info.get("commanded_authority", 0)
-            authority_consumed = distance_traveled / 3  # Convert feet to yards (approx)
-            remaining_authority = max(0, current_authority - authority_consumed)
-            train_info["commanded_authority"] = remaining_authority
-            train_info["last_position_yds"] = current_position_yds
-
-            # Commented out - too frequent position-related logging
-            # logger = get_logger()
-            # if remaining_authority < 100:  # Log when authority running low
-            #     logger.debug(
-            #         "AUTHORITY",
-            #         f"Train {train_id} authority low: {remaining_authority:.1f} yds remaining",
-            #         {
-            #             "train_id": train_id,
-            #             "line": train_info.get("line"),
-            #             "current_block": current_block,
-            #             "authority_remaining": round(remaining_authority, 1),
-            #             "distance_to_station": abs(next_station_block - current_block),
-            #         },
-            #     )
-
-        # Check if reached next station (allow 1 block overshoot)
-        if current_block == next_station_block or (
-            current_block == next_station_block + 1 and motion_state == "Stopped"
-        ):
+        # Check if reached next station (exact match only, no overshoot)
+        if current_block == next_station_block:
             train_info["state"] = "At Station"
             train_info["dwell_start_time"] = datetime.now()
 
@@ -1639,65 +1644,6 @@ class TrackControl:
                     },
                 )
             return
-
-        # Check if authority exhausted (train stopped but not at station)
-        if motion_state == "Stopped" and train_info.get("commanded_authority", 0) <= 10:
-            # Authority used up - send more authority for same leg
-            line = train_info.get("line")
-            complete_path = self._calculate_complete_block_path(
-                current_block, next_station_block, line
-            )
-
-            authority_meters = 0.0
-            static_data = self._read_static_data()
-            if static_data and complete_path:
-                # Block 0 (yard) is not technically a block - fixed at 200 yards
-                authority_remaining = 0.0
-                if current_block == 0:
-                    authority_remaining = 200.0  # Yard distance
-
-                line_data = static_data.get("static_data", {}).get(line, [])
-                # Sum blocks from current position to destination
-                start_found = False
-                for block_num in complete_path:
-                    if block_num == current_block:
-                        start_found = True
-                        continue
-                    if start_found:
-                        for block_info in line_data:
-                            if int(block_info.get("Block Number", -1)) == block_num:
-                                authority_meters += float(
-                                    block_info.get("Block Length (m)", 0)
-                                )
-                                break
-                authority_remaining += int(authority_meters * 1.09361)
-            else:
-                logger = get_logger()
-                logger.error(
-                    "AUTHORITY",
-                    f"Train {train_id} authority replenishment failed: static data unavailable",
-                    {
-                        "train_id": train_id,
-                        "line": line,
-                        "current_block": current_block,
-                    },
-                )
-                return  # Cannot replenish without static data
-
-            train_info["commanded_authority"] = authority_remaining
-
-            logger = get_logger()
-            logger.info(
-                "AUTHORITY",
-                f"Train {train_id} authority replenished: {authority_remaining} yds",
-                {
-                    "train_id": train_id,
-                    "line": train_info.get("line"),
-                    "current_block": current_block,
-                    "next_station_block": next_station_block,
-                    "new_authority": authority_remaining,
-                },
-            )
 
     def _handle_at_station_state(self, train_id, train_info, track_data, line_prefix):
         """Train arrived at station: begin dwelling"""
@@ -1748,7 +1694,7 @@ class TrackControl:
             next_station_block = route[current_leg_index]
             current_block = train_info.get("current_block", 0)
 
-            # Calculate authority using actual block lengths
+            # Calculate authority using actual block lengths (INCLUDE current block)
             line = train_info.get("line")
             complete_path = self._calculate_complete_block_path(
                 current_block, next_station_block, line
@@ -1763,18 +1709,19 @@ class TrackControl:
                     authority = 200.0  # Yard distance
 
                 line_data = static_data.get("static_data", {}).get(line, [])
-                start_found = False
-                for block_num in complete_path:
-                    if block_num == current_block:
-                        start_found = True
-                        continue
-                    if start_found:
-                        for block_info in line_data:
-                            if int(block_info.get("Block Number", -1)) == block_num:
-                                authority_meters += float(
-                                    block_info.get("Block Length (m)", 0)
-                                )
-                                break
+                # Find index of current_block in complete_path
+                try:
+                    idx = complete_path.index(current_block)
+                except ValueError:
+                    idx = 0  # fallback: start at beginning
+                # Sum all blocks from current_block onward (including current_block)
+                for block_num in complete_path[idx:]:
+                    for block_info in line_data:
+                        if int(block_info.get("Block Number", -1)) == block_num:
+                            authority_meters += float(
+                                block_info.get("Block Length (m)", 0)
+                            )
+                            break
                 authority += int(authority_meters * 1.09361)
             else:
                 logger = get_logger()
@@ -2181,21 +2128,6 @@ class TrackControl:
                 fail_block, fail_type = closest_failure
                 failure_names = {0: "None", 1: "Broken Rail", 2: "Power", 3: "Circuit"}
 
-                # DEBUG: Always log at block 68
-                if current_block == 68:
-                    logger.error(
-                        "DEBUG_68_FAILURE",
-                        f"Train {train_id} at BLOCK 68 - FAILURE DETECTED!",
-                        {
-                            "train_id": train_id,
-                            "current_block": current_block,
-                            "failure_block": fail_block,
-                            "failure_type": failure_names.get(fail_type),
-                            "distance": min_distance,
-                            "FAILURE_STOP_DISTANCE": self.FAILURE_STOP_DISTANCE,
-                        },
-                    )
-
                 # Stop the train
                 old_speed = train_info.get("commanded_speed", 0)
                 old_authority = train_info.get("commanded_authority", 0)
@@ -2275,6 +2207,13 @@ class TrackControl:
                 # Green Line: Yard exits at block 63
                 if end_block >= 63 and end_block <= 150:
                     # Direct path: 0 → 63 → 64 → ... → end_block
+                    # DEBUG: Log both station and block sequence
+                    logger = get_logger()
+                    logger.debug(
+                        "ROUTE_PATH",
+                        f"Route to {destination} (Red Line): stations={station_sequence}, blocks={block_sequence}",
+                        {"destination": destination, "station_sequence": station_sequence, "block_sequence": block_sequence},
+                    )
                     return [0] + list(range(63, end_block + 1))
                 else:
                     # Loop path: 0 → 63 → ... → 150 → 28 → ... → end_block

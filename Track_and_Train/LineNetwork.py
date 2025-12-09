@@ -171,7 +171,7 @@ class LineNetwork:
             self.write_to_train_model_json(commanded_speeds, commanded_authorities)
 
         except Exception as e:
-            pass
+            self.logger.error("NETWORK", f"Error updating train model data: {e}")
 
     def write_to_train_model_json(self, commanded_speeds, commanded_authorities):
         json_path = TRAIN_MODEL_JSON
@@ -211,6 +211,14 @@ class LineNetwork:
                 train_model_data[train_key]["block"]["commanded authority"] = (
                     commanded_authorities[i]
                 )
+
+                # Write yards_into_current_block for Train Model to use on authority change
+                if not hasattr(self, "yards_into_current_block"):
+                    self.yards_into_current_block = {}
+                yards_in_block = self.yards_into_current_block.get(i + 1, 0)
+                train_model_data[train_key]["motion"][
+                    "yards_into_current_block"
+                ] = yards_in_block
 
                 logger.info(
                     "TRAIN",
@@ -465,7 +473,9 @@ class LineNetwork:
                 if block.get("Block Number") == block_num:
                     return block.get("Station", "N/A")
         except Exception as e:
-            pass
+            self.logger.error(
+                "TRACK", f"Error finding station for block {block_num}: {e}"
+            )
 
         return "N/A"
 
@@ -554,7 +564,7 @@ class LineNetwork:
                         return  # Exit early - don't process normal beacon data
 
         except Exception as e:
-            pass
+            self.logger.error("BEACON", f"Error processing beacon data: {e}")
         try:
             # Read static track data
             json_path = TRACK_STATIC_JSON
@@ -591,7 +601,7 @@ class LineNetwork:
 
             # Get next station using helper
             next_station, next_side_door = self.find_next_station(
-                previous_block, next_block
+                next_block, previous_block
             )
 
             # If we're not at a station, use next station's side door
@@ -640,7 +650,7 @@ class LineNetwork:
             )
 
         except Exception as e:
-            pass
+            self.logger.error("TRACK", f"Error writing to track control: {e}")
 
     def update_block_occupancy(
         self, current_block: int, previous_block: Optional[int] = None
@@ -667,7 +677,6 @@ class LineNetwork:
                 continue
 
     def write_occupancy_to_json(self, json_path=TRACK_CONTROLLER_JSON):
-        """Write occupancy data back to Track Controller JSON."""
         if not self.block_manager:
             return
 
@@ -692,9 +701,9 @@ class LineNetwork:
 
             with open(json_path, "w") as f:
                 json.dump(data, f, indent=4)
-
         except Exception as e:
-            pass
+            logger = get_logger()
+            logger.error("ERROR", f"Exception: {str(e)}", {"error": str(e)})
 
     def write_failures_to_json(self, json_path=TRACK_CONTROLLER_JSON):
         """Write failure data back to Track Controller JSON."""
@@ -726,7 +735,7 @@ class LineNetwork:
                 json.dump(data, f, indent=4)
 
         except Exception as e:
-            pass
+            self.logger.error("TRACK", f"Error writing track IO data: {e}")
 
     def load_crossing_blocks_from_static(self):
         """Load crossing blocks from static JSON file."""
@@ -744,12 +753,15 @@ class LineNetwork:
                     if block_num not in ["N/A", "nan", None]:
                         try:
                             crossing_blocks.append(int(block_num))
-                        except:
-                            pass
+                        except Exception as e:
+                            self.logger.error(
+                                "TRACK",
+                                f"Error converting crossing block number {block_num}: {e}",
+                            )
 
             self.crossing_blocks = sorted(crossing_blocks)
         except Exception as e:
-            pass
+            self.logger.error("TRACK", f"Error loading crossing blocks: {e}")
 
     def load_branch_points_from_static(self):
         """Load branch points from static JSON file."""
@@ -850,12 +862,14 @@ class LineNetwork:
                 if block_num not in ["N/A", "nan", None]:
                     try:
                         all_blocks.append(int(block_num))
-                    except:
-                        pass
+                    except Exception as e:
+                        self.logger.error(
+                            "TRACK", f"Error converting block number {block_num}: {e}"
+                        )
 
             self.all_blocks = sorted(set(all_blocks))
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.error("TRACK", f"Error loading all blocks: {e}")
 
     def should_advance_block(self, train_id: int, current_block: int) -> bool:
         """
@@ -890,26 +904,43 @@ class LineNetwork:
         # Read current position from train_positions (already populated by write_to_train_model_json)
         current_position_yds = self.train_positions.get(train_id, 0)
 
+        # Detect backwards jump (position reset on new authority)
+        if current_position_yds < self.previous_position_yds[train_id] - 50:
+            # Position jumped backwards - sync previous to current to avoid negative delta
+            logger.debug(
+                "POSITION",
+                f"Train {train_id} Block {current_block}: POSITION RESET DETECTED - syncing previous position",
+                {
+                    "train_id": train_id,
+                    "line": self.line_name,
+                    "current_block": current_block,
+                    "old_previous_position": self.previous_position_yds[train_id],
+                    "new_previous_position": current_position_yds,
+                    "yards_in_block_preserved": self.yards_into_current_block[train_id],
+                },
+            )
+            self.previous_position_yds[train_id] = current_position_yds
+
         # Calculate delta
         delta = current_position_yds - self.previous_position_yds[train_id]
 
         # Add delta to yards traveled in current block
         self.yards_into_current_block[train_id] += delta
 
-        # Commented out - high-frequency position logging
-        # logger.debug(
-        #     "POSITION",
-        #     f"Train {train_id} Block {current_block}: pos={current_position_yds:.2f}yds, delta={delta:.2f}yds, block_traveled={self.yards_into_current_block[train_id]:.2f}yds",
-        #     {
-        #         "train_id": train_id,
-        #         "line": self.line_name,
-        #         "current_block": current_block,
-        #         "position_yds": current_position_yds,
-        #         "previous_position_yds": self.previous_position_yds[train_id],
-        #         "delta_yds": delta,
-        #         "yards_in_block": self.yards_into_current_block[train_id],
-        #     },
-        # )
+        # Debug logging for position tracking (enable when debugging position issues)
+        logger.debug(
+            "POSITION",
+            f"Train {train_id} Block {current_block}: pos={current_position_yds:.2f}yds, delta={delta:.2f}yds, block_traveled={self.yards_into_current_block[train_id]:.2f}yds",
+            {
+                "train_id": train_id,
+                "line": self.line_name,
+                "current_block": current_block,
+                "position_yds": current_position_yds,
+                "previous_position_yds": self.previous_position_yds[train_id],
+                "delta_yds": delta,
+                "yards_in_block": self.yards_into_current_block[train_id],
+            },
+        )
 
         # Get block length from static JSON
         try:
@@ -1352,8 +1383,11 @@ class LineNetworkBuilder:
             if block_num != "N/A" and str(block_num) != "nan":
                 try:
                     self.all_blocks.append(int(block_num))
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.error(
+                        "TRACK",
+                        f"Error converting block number {block_num} in builder: {e}",
+                    )
         self.all_blocks = sorted(set(self.all_blocks))
         self.network.all_blocks = self.all_blocks
 
