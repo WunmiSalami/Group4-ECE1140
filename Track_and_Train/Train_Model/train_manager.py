@@ -171,6 +171,7 @@ class train_controller:
                 "power_command": 0.0,
                 "current_station": "",
                 "position_yds": 0.0,
+                "authority_yds": 0.0,
             }
 
             # Fill in any missing fields
@@ -194,11 +195,16 @@ class train_controller:
         track_data = safe_read_json(track_model_file)
         train_key = f"G_train_{self.train_id}"
 
+        # Also read train_data.json to get physics outputs
+        train_data_file = os.path.join(parent_dir, "Train_Model", "train_data.json")
+        train_data = safe_read_json(train_data_file)
+        train_outputs = train_data.get(f"train_{self.train_id}", {}).get("outputs", {})
+
         if train_key in track_data:
             block = track_data[train_key].get("block", {})
             beacon = track_data[train_key].get("beacon", {})
 
-            # Only update track-related fields, preserve controller state
+            # Update track-related fields and physics outputs from train model
             self.update_state(
                 {
                     "commanded_speed": float(block.get("commanded speed", 0.0) or 0.0),
@@ -209,6 +215,8 @@ class train_controller:
                     "next_stop": beacon.get("next station", "") or "",
                     "station_side": beacon.get("side_door", "") or "",
                     "position_yds": float(block.get("position", 0.0) or 0.0),
+                    "train_velocity": float(train_outputs.get("velocity_mph", 0.0)),
+                    "authority_yds": float(train_outputs.get("authority_yds", 0.0)),
                 }
             )
 
@@ -282,19 +290,20 @@ class train_controller:
             f"service_brake={service_brake}"
         )
 
-        # Emergency case: if we're about to exceed authority, force brake
+        # Critical authority case: if we're about to exceed authority, force service brake
         if authority_yds <= 1.0 and train_velocity > 0.5:
+            if not service_brake:
+                print(
+                    f"[TRAIN CONTROLLER {self.train_id}] 🚨 CRITICAL STOP! Authority critical: {authority_yds:.2f} yds"
+                )
             service_brake = True
             state["service_brake"] = True
             self.update_state({"service_brake": True, "power_command": 0.0})
-            print(
-                f"[TRAIN CONTROLLER {self.train_id}] 🚨 EMERGENCY BRAKE! Authority critical: {authority_yds:.2f} yds"
-            )
             return 0.0
 
-        # Apply service brake if remaining authority <= required stopping distance
-        # This ensures we start braking BEFORE we exceed authority
+        # Decide whether to brake or release brake based on authority
         if authority_yds > 0 and authority_yds <= required_distance:
+            # Need to brake - apply service brake
             if not service_brake:
                 service_brake = True
                 state["service_brake"] = True
@@ -303,9 +312,8 @@ class train_controller:
                     f"[TRAIN CONTROLLER {self.train_id}] ⚠️ STOPPING! Auth={authority_yds:.2f} yds <= Required={required_distance:.2f} yds"
                 )
             return 0.0
-
-        # Release service brake if we have plenty of authority
-        if authority_yds > required_distance and service_brake:
+        elif service_brake:
+            # Have sufficient authority - release service brake
             service_brake = False
             state["service_brake"] = False
             self.update_state({"service_brake": False})
@@ -604,12 +612,14 @@ class train_controller_ui(tk.Toplevel):
                     state = self.controller.get_state()
 
             # Emergency brake stays on until manually released - do not auto-release
-            # Removed auto-release logic that was here
+            # Service brake is managed by calculate_power_command based on authority
 
-            if not state["emergency_brake"] and not state["service_brake"]:
+            if not state["emergency_brake"]:
+                # Always call calculate_power_command - it handles service brake logic
                 power = self.controller.calculate_power_command(state)
                 self.controller.vital_control_check_and_update({"power_command": power})
             else:
+                # Emergency brake is on - stop train
                 self.controller._accumulated_error = 0
                 self.controller.vital_control_check_and_update(
                     {"power_command": 0, "driver_velocity": 0}

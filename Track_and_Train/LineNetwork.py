@@ -820,13 +820,17 @@ class LineNetwork:
             blocks = static_data.get("static_data", {}).get(self.line_name, [])
             block_length_yards = None
 
-            for block in blocks:
-                if block.get("Block Number") == current_block:
-                    length_m = block.get("Block Length (m)", 0)
-                    if length_m not in ["N/A", "nan", None]:
-                        # Convert meters to yards (1m = 1.09361 yards)
-                        block_length_yards = float(length_m) * 1.09361
-                    break
+            # Special case: Block 0 (yard) is always 200 yards
+            if current_block == 0:
+                block_length_yards = 200.0
+            else:
+                for block in blocks:
+                    if block.get("Block Number") == current_block:
+                        length_m = block.get("Block Length (m)", 0)
+                        if length_m not in ["N/A", "nan", None]:
+                            # Convert meters to yards (1m = 1.09361 yards)
+                            block_length_yards = float(length_m) * 1.09361
+                        break
 
             if block_length_yards is None:
                 # Cannot advance without block length data - error condition
