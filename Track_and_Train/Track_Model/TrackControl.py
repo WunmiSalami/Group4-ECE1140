@@ -15,6 +15,160 @@ from logger import get_logger
 
 
 class TrackControl:
+    def validate_schedule_csv(self, csv_path):
+        import csv
+        import re
+
+        logger = get_logger()
+        error_count = 0
+        trains_first_seen = {}
+        previous_times_per_train = {}
+        current_time = datetime.now().strftime("%H:%M")
+
+        def valid_time_format(t):
+            return bool(re.match(r"^\d{2}:\d{2}$", t))
+
+        def time_to_minutes(t):
+            h, m = map(int, t.split(":"))
+            return h * 60 + m
+
+        valid_stations_dict = (
+            self.infrastructure if hasattr(self, "infrastructure") else {}
+        )
+
+        with open(csv_path, newline="") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row_number, row in enumerate(reader, 1):
+                train_id = row["train_id"]
+                line = row["line"]
+                destination = row["destination_station"]
+                dispatch_time = row["dispatch_time"]
+                arrival_time = row["arrival_time"]
+
+                if train_id not in trains_first_seen:
+                    trains_first_seen[train_id] = row_number
+                    logger.info(
+                        "SCHEDULE",
+                        f"Train {train_id} first seen at row {row_number}, will dispatch from Yard",
+                        {"train_id": train_id, "row": row_number},
+                    )
+
+                if line not in ["Green", "Red"]:
+                    logger.error(
+                        "SCHEDULE",
+                        f"Row {row_number}: Invalid line '{line}', must be 'Green' or 'Red'",
+                        {"row": row_number, "line": line},
+                    )
+                    error_count += 1
+
+                valid_stations = (
+                    valid_stations_dict.get(line, {}).get("stations", {})
+                    if valid_stations_dict
+                    else {}
+                )
+                if destination not in valid_stations:
+                    logger.error(
+                        "SCHEDULE",
+                        f"Row {row_number}: Invalid station '{destination}' for {line} Line",
+                        {"row": row_number, "station": destination, "line": line},
+                    )
+                    error_count += 1
+
+                if not valid_time_format(dispatch_time):
+                    logger.error(
+                        "SCHEDULE",
+                        f"Row {row_number}: Invalid dispatch_time format '{dispatch_time}', must be HH:MM",
+                        {"row": row_number, "dispatch_time": dispatch_time},
+                    )
+                    error_count += 1
+                if not valid_time_format(arrival_time):
+                    logger.error(
+                        "SCHEDULE",
+                        f"Row {row_number}: Invalid arrival_time format '{arrival_time}', must be HH:MM",
+                        {"row": row_number, "arrival_time": arrival_time},
+                    )
+                    error_count += 1
+
+                if valid_time_format(dispatch_time) and valid_time_format(arrival_time):
+                    if dispatch_time >= arrival_time:
+                        logger.error(
+                            "SCHEDULE",
+                            f"Row {row_number}: dispatch_time {dispatch_time} must be before arrival_time {arrival_time}",
+                            {
+                                "row": row_number,
+                                "dispatch_time": dispatch_time,
+                                "arrival_time": arrival_time,
+                            },
+                        )
+                        error_count += 1
+
+                    if dispatch_time < current_time:
+                        logger.error(
+                            "SCHEDULE",
+                            f"Row {row_number}: dispatch_time {dispatch_time} is in the past (current time: {current_time})",
+                            {
+                                "row": row_number,
+                                "dispatch_time": dispatch_time,
+                                "current_time": current_time,
+                            },
+                        )
+                        error_count += 1
+
+                    time_difference = time_to_minutes(arrival_time) - time_to_minutes(
+                        dispatch_time
+                    )
+                    if time_difference < 1:
+                        logger.error(
+                            "SCHEDULE",
+                            f"Row {row_number}: Impossible schedule - only {time_difference} minutes between dispatch and arrival",
+                            {
+                                "row": row_number,
+                                "dispatch_time": dispatch_time,
+                                "arrival_time": arrival_time,
+                                "diff": time_difference,
+                            },
+                        )
+                        error_count += 1
+
+                    if train_id in previous_times_per_train:
+                        previous_arrival = previous_times_per_train[train_id]
+                        if dispatch_time < previous_arrival:
+                            logger.error(
+                                "SCHEDULE",
+                                f"Row {row_number}: Train {train_id} dispatch_time {dispatch_time} is before previous arrival_time {previous_arrival}",
+                                {
+                                    "row": row_number,
+                                    "train_id": train_id,
+                                    "dispatch_time": dispatch_time,
+                                    "previous_arrival": previous_arrival,
+                                },
+                            )
+                            error_count += 1
+                    previous_times_per_train[train_id] = arrival_time
+
+        total_rows = row_number if "row_number" in locals() else 0
+        if error_count > 10:
+            logger.critical(
+                "SCHEDULE",
+                f"Schedule validation failed with {error_count} errors - rejecting file",
+                {"error_count": error_count},
+            )
+            return False
+        elif error_count > 0:
+            logger.warning(
+                "SCHEDULE",
+                f"Schedule has {error_count} errors but proceeding",
+                {"error_count": error_count},
+            )
+            return True
+        else:
+            logger.info(
+                "SCHEDULE",
+                f"Schedule validation passed - {total_rows} entries loaded",
+                {"total_rows": total_rows},
+            )
+            return True
+
     def __init__(self, parent):
         self.parent = parent
 
@@ -144,6 +298,83 @@ class TrackControl:
         self._build_ui()
         self._start_file_watcher()
         self._start_automatic_loop()
+
+    def process_schedule(self):
+        """
+        Called every 200ms in automatic cycle to process train schedule.
+        Dispatches trains according to schedule timing and state.
+        """
+        logger = get_logger()
+        # Don't process if schedule not loaded or auto mode not running
+        if not hasattr(self, "schedule_loaded") or not self.schedule_loaded:
+            return
+        if not hasattr(self, "automatic_running") or not self.automatic_running:
+            return
+
+        # Get current simulation time (HH:MM)
+        current_time = datetime.now().strftime("%H:%M")
+
+        # Look at current entry in schedule
+        if not hasattr(self, "active_schedule") or not self.active_schedule:
+            return
+        if not hasattr(self, "schedule_index"):
+            self.schedule_index = 0
+        if self.schedule_index >= len(self.active_schedule):
+            return
+        current_entry = self.active_schedule[self.schedule_index]
+
+        train_id = current_entry["train_id"]
+        dispatch_time = current_entry["dispatch_time"]
+
+        # Check if it's time to dispatch
+        if current_time >= dispatch_time:
+            # Check if this train already exists
+            if train_id in self.active_trains:
+                train_state = self.active_trains[train_id].get("state", None)
+                # Only dispatch if train is ready (finished previous leg)
+                if train_state == "Arrived":
+                    origin = self.active_trains[train_id].get(
+                        "current_station", "Unknown"
+                    )
+                    destination = current_entry.get("destination_station", "Unknown")
+                    logger.info(
+                        "SCHEDULE",
+                        f"Dispatching Train {train_id} from {origin} to {destination}",
+                        {
+                            "train_id": train_id,
+                            "origin": origin,
+                            "destination": destination,
+                        },
+                    )
+                    self.dispatch_train_from_schedule(current_entry)
+                    self.schedule_index += 1
+                elif train_state == "Dwelling":
+                    logger.debug(
+                        "SCHEDULE",
+                        f"Train {train_id} still dwelling, waiting to dispatch next leg",
+                        {"train_id": train_id},
+                    )
+                    return
+                else:
+                    # Train is "En Route" or "At Station" or "Dispatching"
+                    return
+            else:
+                # Train doesn't exist - this is first dispatch from Yard
+                destination = current_entry.get("destination_station", "Unknown")
+                logger.info(
+                    "SCHEDULE",
+                    f"Dispatching NEW Train {train_id} from Yard to {destination}",
+                    {
+                        "train_id": train_id,
+                        "origin": "Yard",
+                        "destination": destination,
+                    },
+                )
+                self.dispatch_train_from_schedule(current_entry)
+                self.schedule_index += 1
+        else:
+            # Not time yet - do nothing
+            return
 
     def _get_line_config(self, line=None):
         """Get configuration for specified line (or current selected line)"""
@@ -1193,11 +1424,22 @@ class TrackControl:
                     "last_position_yds": 0.0,
                 }
             else:
+                # Update all fields except current_station and current_leg_index
+                self.active_trains[train_id]["line"] = line
                 self.active_trains[train_id]["destination"] = dest
+                self.active_trains[train_id]["current_block"] = 0
+                self.active_trains[train_id]["commanded_speed"] = 0
+                self.active_trains[train_id]["commanded_authority"] = 0
+                self.active_trains[train_id]["state"] = "Dispatching"
+                # self.active_trains[train_id]["current_station"] = (do not update)
+                self.active_trains[train_id]["arrival_time"] = arrival
                 self.active_trains[train_id]["route"] = route
+                # self.active_trains[train_id]["current_leg_index"] = (do not update)
                 self.active_trains[train_id]["next_station_block"] = (
                     route[0] if route else 0
                 )
+                self.active_trains[train_id]["dwell_start_time"] = None
+                self.active_trains[train_id]["last_position_yds"] = 0.0
 
             # Update CTC data
             ctc_data = self._read_ctc_data()
@@ -1908,7 +2150,7 @@ class TrackControl:
         # 16: 0="15->16" (main), 1="1->16" (from yard)
         # 27: 0="27->28" (main), 1="27->76" (loop)
         # 33: 0="32->33" (main), 1="33->72" (shortcut)
-        # 38: 0="38->39" (main), 1="38->71" (shortcut)
+        # 38: 0="38->39" (main), 1:="38->71" (shortcut)
         # 44: 0="43->44" (main), 1="44->67" (shortcut)
         # 52: 0="52->53" (main), 1="52->66" (shortcut)
 
@@ -2252,69 +2494,6 @@ class TrackControl:
             return path
 
         # Fallback for unknown cases
-        return [start_block, end_block]
-
-    def _calculate_green_line_station_to_station_path(self, start_block, end_block):
-        """Calculate path between two blocks on Green Line using track topology.
-        Handles non-sequential transitions like 150→28 via switch.
-        """
-        # Green Line topology:
-        # Direct section: 63-150 (continuous)
-        # Loop section: 28-62 then 1-2 (with switch at 150→28 and wrapping)
-
-        # Special case: crossing switch 28 (block 150 to block 28)
-        if start_block == 150 and end_block <= 62:
-            # Path goes through switch: 150 → 28 → 29 → ... → end_block
-            if end_block >= 28:
-                return [150, 28] + list(range(29, end_block + 1))
-            else:
-                # Wraps around: 150 → 28 → ... → 62 → 1 → ... → end_block
-                return [150, 28] + list(range(29, 63)) + list(range(1, end_block + 1))
-
-        # Both blocks in direct section (63-150)
-        if (
-            start_block >= 63
-            and end_block >= 63
-            and start_block <= 150
-            and end_block <= 150
-        ):
-            if start_block < end_block:
-                return list(range(start_block, end_block + 1))
-            else:
-                return list(range(start_block, end_block - 1, -1))
-
-        # Both blocks in loop section (28-62 or 1-2)
-        if start_block <= 62 and end_block <= 62:
-            if start_block < end_block:
-                return list(range(start_block, end_block + 1))
-            else:
-                return list(range(start_block, end_block - 1, -1))
-
-        # Start in loop, end in direct: need to go through yard
-        if start_block <= 62 and end_block >= 63:
-            # This shouldn't happen in normal operation
-            # Trains don't reverse from loop to direct path
-            return [start_block, end_block]  # Fallback
-
-        # Start in direct, end in loop: continue forward through 150→28
-        if start_block >= 63 and start_block <= 150 and end_block <= 62:
-            if end_block >= 28:
-                # Destination is in 28-62 range
-                return (
-                    list(range(start_block, 151))
-                    + [28]
-                    + list(range(29, end_block + 1))
-                )
-            else:
-                # Destination is in 1-2 range (wraps around)
-                return (
-                    list(range(start_block, 151))
-                    + [28]
-                    + list(range(29, 63))
-                    + list(range(1, end_block + 1))
-                )
-
-        # Fallback for unexpected cases
         return [start_block, end_block]
 
     def _calculate_green_line_station_to_station_path(self, start_block, end_block):
