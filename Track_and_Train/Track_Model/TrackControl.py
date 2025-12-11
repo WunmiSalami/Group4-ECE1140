@@ -1827,6 +1827,19 @@ class TrackControl:
 
         # Check if reached next station (exact match only, no overshoot)
         if current_block == next_station_block:
+            # Log arrival at destination block
+            logger = get_logger()
+            logger.info(
+                "ARRIVAL",
+                f"Train {train_id} arrived at destination block {next_station_block}",
+                {
+                    "train_id": train_id,
+                    "block": next_station_block,
+                    "station": train_info.get("current_station", "Unknown"),
+                    "destination": train_info.get("destination", "Unknown"),
+                },
+            )
+
             train_info["state"] = "At Station"
             train_info["dwell_start_time"] = datetime.now()
 
@@ -2507,83 +2520,116 @@ class TrackControl:
         Handles switches and special topology.
         Works for both station blocks and arbitrary blocks.
         """
-        # Special transitions via switches
+        from logger import get_logger
+
+        logger = get_logger()
+
+        logger.debug(
+            "PATH",
+            f"Calculating path from {start_block} to {end_block}",
+            {"start": start_block, "end": end_block},
+        )
+
         # 77 → 101+ (main loop via switch)
         if start_block == 77 and end_block >= 101:
             return [77, 101] + list(range(102, end_block + 1))
+
         # 77 → 78-100 (Poplar/Castle Shannon spur)
         if start_block == 77 and 78 <= end_block <= 100:
             return list(range(77, end_block + 1))
-        # Coming FROM Poplar/Castle Shannon spur (78-100) going to main loop (101+)
-        # Must loop back: current → 100 → 99 → ... → 85 → 84 → ... → 77 → 101 → destination
+
+        # From Poplar/Castle Shannon spur to main loop
         if 78 <= start_block <= 100 and end_block >= 101:
-            path = list(range(start_block, 101))  # Go to end of spur (block 100)
-            path.extend(range(100, 76, -1))  # Count down 100→99→...→77
-            path.extend([101])  # Switch at 77 to main loop (77→101)
-            path.extend(range(102, end_block + 1))  # Continue to destination
+            path = list(range(start_block, 101))
+            path.extend(range(100, 76, -1))
+            path.extend([101] + list(range(102, end_block + 1)))
             return path
-        # Coming FROM Poplar/Castle Shannon spur going to return path (1-62)
-        # Must loop: current → 100 → ... → 77 → 101 → ... → 150 → 28 → destination
+
+        # From Poplar/Castle Shannon spur to return path
         if 78 <= start_block <= 100 and end_block <= 62:
-            path = list(range(start_block, 101))  # To end of spur
-            path.extend(range(100, 76, -1))  # 100→77
-            path.extend([101] + list(range(102, 151)))  # 77→101→150
+            path = list(range(start_block, 101))
+            path.extend(range(100, 76, -1))
+            path.extend([101] + list(range(102, 151)))
             if end_block >= 28:
                 path.extend([28] + list(range(29, end_block + 1)))
             else:
                 path.extend([28] + list(range(29, 63)) + list(range(1, end_block + 1)))
             return path
-        # From main loop (101-150) to return path (1-62) via switch at 150→28
-        if 101 <= start_block <= 150 and end_block <= 62:
-            path = list(range(start_block, 151))  # To block 150
-            if end_block >= 28:
-                path.extend([28] + list(range(29, end_block + 1)))
-            else:
-                path.extend([28] + list(range(29, 63)) + list(range(1, end_block + 1)))
+
+        # From main loop (101-150) to first section (63-77) - FULL LOOP, NO YARD
+        if 101 <= start_block <= 150 and 63 <= end_block <= 77:
+            path = list(range(start_block, 151))  # To 150
+            path.extend([28])  # Switch at 150→28
+            path.extend(range(29, 63))  # Down to 62
+            path.extend(range(63, end_block + 1))  # 63→destination
+            logger.info(
+                "PATH",
+                f"Main loop to first section: {start_block}→{end_block} via 150→28→63",
+                {"path_length": len(path), "path": path},
+            )
             return path
+
+        # From main loop (101-150) to return path (28-62)
+        if 101 <= start_block <= 150 and 28 <= end_block <= 62:
+            path = list(range(start_block, 151))
+            path.extend([28] + list(range(29, end_block + 1)))
+            return path
+
+        # From main loop to wrap section (1-27)
+        if 101 <= start_block <= 150 and 1 <= end_block <= 27:
+            path = list(range(start_block, 151))
+            path.extend([28] + list(range(29, 63)) + list(range(1, end_block + 1)))
+            return path
+
         # 150 → 28 (crossing switch 28)
         if start_block == 150 and end_block <= 62:
             if end_block >= 28:
                 return [150, 28] + list(range(29, end_block + 1))
             else:
                 return [150, 28] + list(range(29, 63)) + list(range(1, end_block + 1))
-        # From return path (1-27) going to main sections via yard
-        if 1 <= start_block <= 27 and end_block >= 63:
-            # Must go through yard: down to 0, then up from 63
-            path = list(range(start_block, 0, -1)) + [0]
-            path.extend(range(63, end_block + 1))
+
+        # From return path to main sections (requires going through 63, not Yard!)
+        if 1 <= start_block <= 62 and end_block >= 63:
+            # Go sequential to 63, then continue
+            path = list(range(start_block, 64))  # Up to 63
+            path.extend(range(64, end_block + 1))  # Continue to destination
             return path
+
         # 9-13 → 1-2 (via switch at 13→1)
         if 9 <= start_block <= 13 and end_block <= 2:
-            return (
-                list(range(start_block, 14)) + [1, 2]
-                if end_block == 2
-                else list(range(start_block, 14)) + [1]
-            )
-        # Both in same sequential section
-        # Blocks 63-77 (before switch)
+            return list(range(start_block, 14)) + ([1, 2] if end_block == 2 else [1])
+
+        # Both in same sequential section - blocks 63-77
         if 63 <= start_block <= 77 and 63 <= end_block <= 77:
             return list(range(start_block, end_block + 1))
+
         # Both in main loop (101-150)
         if 101 <= start_block <= 150 and 101 <= end_block <= 150:
             return list(range(start_block, end_block + 1))
+
         # Both in return path (28-62)
         if 28 <= start_block <= 62 and 28 <= end_block <= 62:
             if start_block < end_block:
                 return list(range(start_block, end_block + 1))
             else:
                 return list(range(start_block, end_block - 1, -1))
+
         # Both in wrap section (1-27)
         if 1 <= start_block <= 27 and 1 <= end_block <= 27:
             if start_block < end_block:
                 return list(range(start_block, end_block + 1))
             else:
                 return list(range(start_block, end_block - 1, -1))
-        # Default sequential (fallback)
-        if start_block < end_block:
-            return list(range(start_block, end_block + 1))
-        else:
-            return list(range(start_block, end_block - 1, -1))
+
+        # If we reach here, path is not handled - THROW EXCEPTION
+        logger.error(
+            "PATH",
+            f"UNHANDLED PATH: {start_block} → {end_block}",
+            {"start": start_block, "end": end_block},
+        )
+        raise ValueError(
+            f"Cannot calculate path from {start_block} to {end_block} on Green Line - unhandled case!"
+        )
 
     def _calculate_green_line_station_to_station_path(self, start_block, end_block):
         """Calculate path between two blocks on Green Line using track topology.
