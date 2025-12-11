@@ -1,0 +1,86 @@
+{
+    "changes": [
+        {
+            "date": "2025-12-09",
+            "file": "Track_and_Train/Track_Model/TrackControl.py",
+            "method": "_load_schedule_file",
+            "description": "Added the `_load_schedule_file` method to allow users to load, validate, and parse a schedule file into the active schedule. This method uses `filedialog.askopenfilename` to open a file dialog, validates the selected CSV file using `validate_schedule_csv`, and parses the file into `self.active_schedule`. It also initializes `self.schedule_index` and sets `self.schedule_loaded` to `True`.",
+            "code": [
+                "def _load_schedule_file(self):",
+                "    \"\"\"",
+                "    Opens a file dialog to load a schedule CSV file, validates it, and parses it into the active schedule.",
+                "    \"\"\"",
+                "    # Open file dialog to select a CSV file",
+                "    file_path = filedialog.askopenfilename(",
+                "        title=\"Select Schedule File\",",
+                "        filetypes=[(\"CSV Files\", \"*.csv\")]",
+                "    )",
+                "    if not file_path:",
+                "        return  # User canceled the file dialog",
+                "    if not self.validate_schedule_csv(file_path):",
+                "        return  # Validation failed, errors are logged",
+                "    import csv",
+                "    self.active_schedule = []",
+                "    with open(file_path, newline=\"\") as csvfile:",
+                "        reader = csv.DictReader(csvfile)",
+                "        for row in reader:",
+                "            self.active_schedule.append(row)",
+                "    self.schedule_index = 0",
+                "    self.schedule_loaded = True",
+                "    logger = get_logger()",
+                "    logger.info(\"SCHEDULE\", \"Schedule successfully loaded.\", {\"file_path\": file_path})"
+            ]
+        },
+        {
+            "date": "2025-12-09",
+            "file": "Track_and_Train/Track_Model/TrackControl.py",
+            "method": "_build_automatic_ui",
+            "description": "Added a \"📋 LOAD SCHEDULE\" button to the `_build_automatic_ui` method. This button is created using `ttk.Button` and is configured to call the `_load_schedule_file` method when clicked. The button is added to the UI layout to enable users to load a schedule file directly from the interface.",
+            "code": [
+                "self.load_schedule_btn = tk.Button(",
+                "    frame, text=\"📋 LOAD SCHEDULE\", command=self._load_schedule_file",
+                ")",
+                "self.load_schedule_btn.pack(side=\"left\", padx=5)"
+            ]
+        },
+        {
+            "date": "2025-12-09",
+            "file": "Track_and_Train/Track_Model/TrackControl.py",
+            "method": "dispatch_train_from_schedule",
+            "code": [
+                "def dispatch_train_from_schedule(self, schedule_entry):",
+                "    \"\"\"",
+                "    Dispatches a train based on a schedule entry.",
+                "    \"\"\"",
+                "    # Extract schedule details",
+                "    train_id = schedule_entry[\"train_id\"]",
+                "    line = schedule_entry[\"line\"]",
+                "    destination = schedule_entry[\"destination\"]",
+                "    dispatch_time = schedule_entry[\"dispatch_time\"]",
+                "    arrival_time = schedule_entry[\"arrival_time\"]",
+                "    if train_id in self.active_trains:",
+                "        train = self.active_trains[train_id]",
+                "        if train[\"state\"] == \"Arrived\":",
+                "            train.update({",
+                "                \"line\": line,",
+                "                \"destination\": destination,",
+                "                \"dispatch_time\": dispatch_time,",
+                "                \"arrival_time\": arrival_time,",
+                "                \"state\": \"Dispatching\"",
+                "            })",
+                "            logger = get_logger()",
+                "            logger.info(\"DISPATCH\", f\"Train {train_id} updated for next leg.\", {\"train_id\": train_id})",
+                "    else:",
+                "        self.active_trains[train_id] = {",
+                "            \"line\": line,",
+                "            \"destination\": destination,",
+                "            \"dispatch_time\": dispatch_time,",
+                "            \"arrival_time\": arrival_time,",
+                "            \"state\": \"Dispatching\"",
+                "        }",
+                "        logger = get_logger()",
+                "        logger.info(\"DISPATCH\", f\"Train {train_id} dispatched from Yard.\", {\"train_id\": train_id})"
+            ]
+        }
+    ]
+}

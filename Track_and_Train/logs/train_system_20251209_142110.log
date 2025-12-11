@@ -1,0 +1,1063 @@
+================================================================================
+Train Track Control System - Log Started
+Session: 20251209_142110
+================================================================================
+
+[2025-12-09 14:21:10.808] [DEBUG] [ROUTE_PATH] Route to Pioneer (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon', 'Dormont', 'Glenbury', 'Overbrook', 'Inglewood', 'Central', 'South Bank', 'Central', 'Inglewood', 'Overbrook'], blocks=[65, 73, 77, 88, 96, 105, 114, 123, 132, 141, 31, 39, 48, 57]
+[2025-12-09 14:21:10.811] [DEBUG] [ROUTE_PATH] Route to Edgebrook (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon', 'Dormont', 'Glenbury', 'Overbrook', 'Inglewood', 'Central', 'South Bank', 'Central', 'Inglewood', 'Overbrook'], blocks=[65, 73, 77, 88, 96, 105, 114, 123, 132, 141, 31, 39, 48, 57]
+[2025-12-09 14:21:10.813] [DEBUG] [ROUTE_PATH] Route to Whited (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon', 'Dormont', 'Glenbury', 'Overbrook', 'Inglewood', 'Central', 'South Bank', 'Central', 'Inglewood', 'Overbrook'], blocks=[65, 73, 77, 88, 96, 105, 114, 123, 132, 141, 31, 39, 48, 57]
+[2025-12-09 14:21:10.815] [DEBUG] [ROUTE_PATH] Route to South Bank (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon', 'Dormont', 'Glenbury', 'Overbrook', 'Inglewood', 'Central', 'South Bank'], blocks=[65, 73, 77, 88, 96, 105, 114, 123, 132, 141, 31]
+[2025-12-09 14:21:10.816] [DEBUG] [ROUTE_PATH] Route to Central (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon'], blocks=[65, 73, 77, 88, 96]
+[2025-12-09 14:21:10.818] [DEBUG] [ROUTE_PATH] Route to Inglewood (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon'], blocks=[65, 73, 77, 88, 96]
+[2025-12-09 14:21:10.819] [DEBUG] [ROUTE_PATH] Route to Overbrook (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon'], blocks=[65, 73, 77, 88, 96]
+[2025-12-09 14:21:10.820] [DEBUG] [ROUTE_PATH] Route to Glenbury (Green Line): stations=['Glenbury'], blocks=[65]
+[2025-12-09 14:21:10.822] [DEBUG] [ROUTE_PATH] Route to Dormont (Green Line): stations=['Glenbury', 'Dormont'], blocks=[65, 73]
+[2025-12-09 14:21:10.824] [DEBUG] [ROUTE_PATH] Route to Mt. Lebanon (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon'], blocks=[65, 73, 77]
+[2025-12-09 14:21:10.826] [DEBUG] [ROUTE_PATH] Route to Poplar (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar'], blocks=[65, 73, 77, 88]
+[2025-12-09 14:21:10.828] [DEBUG] [ROUTE_PATH] Route to Castle Shannon (Green Line): stations=['Glenbury', 'Dormont', 'Mt. Lebanon', 'Poplar', 'Castle Shannon'], blocks=[65, 73, 77, 88, 96]
+[2025-12-09 14:21:10.829] [DEBUG] [ROUTE_PATH] Route to Shadyside (Red Line): stations=['Shadyside'], blocks=[7]
+[2025-12-09 14:21:10.831] [DEBUG] [ROUTE_PATH] Route to Herron Ave (Red Line): stations=['Shadyside', 'Herron Ave'], blocks=[7, 16]
+[2025-12-09 14:21:10.832] [DEBUG] [ROUTE_PATH] Route to Swissville (Red Line): stations=['Shadyside', 'Herron Ave', 'Swissville'], blocks=[7, 16, 21]
+[2025-12-09 14:21:10.834] [DEBUG] [ROUTE_PATH] Route to Penn Station (Red Line): stations=['Shadyside', 'Herron Ave', 'Swissville', 'Penn Station'], blocks=[7, 16, 21, 25]
+[2025-12-09 14:21:10.836] [DEBUG] [ROUTE_PATH] Route to Steel Plaza (Red Line): stations=['Shadyside', 'Herron Ave', 'Swissville', 'Penn Station', 'Steel Plaza'], blocks=[7, 16, 21, 25, 35]
+[2025-12-09 14:21:10.838] [DEBUG] [ROUTE_PATH] Route to First Ave (Red Line): stations=['Shadyside', 'Herron Ave', 'Swissville', 'Penn Station', 'Steel Plaza', 'First Ave'], blocks=[7, 16, 21, 25, 35, 45]
+[2025-12-09 14:21:10.841] [DEBUG] [ROUTE_PATH] Route to Station Square (Red Line): stations=['Shadyside', 'Herron Ave', 'Swissville', 'Penn Station', 'Steel Plaza', 'First Ave', 'Station Square'], blocks=[7, 16, 21, 25, 35, 45, 48]
+[2025-12-09 14:21:10.843] [DEBUG] [ROUTE_PATH] Route to South Hills (Red Line): stations=['Shadyside', 'Herron Ave', 'Swissville', 'Penn Station', 'Steel Plaza', 'First Ave', 'Station Square', 'South Hills'], blocks=[7, 16, 21, 25, 35, 45, 48, 60]
+[2025-12-09 14:21:11.340] [INFO ] [GATE      ] Green line block 19 crossing gate: Down → Up
+[2025-12-09 14:21:11.344] [INFO ] [GATE      ] Green line block 108 crossing gate: Down → Up
+[2025-12-09 14:21:11.348] [INFO ] [GATE      ] Red line block 11 crossing gate: Down → Up
+[2025-12-09 14:21:11.351] [INFO ] [GATE      ] Red line block 47 crossing gate: Down → Up
+[2025-12-09 14:21:51.138] [DEBUG] [NETWORK   ] Red Line loading branch points from static JSON
+[2025-12-09 14:21:51.142] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 16 -> [1, 15]
+[2025-12-09 14:21:51.144] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 27 -> [28, 76]
+[2025-12-09 14:21:51.146] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 33 -> [32, 72]
+[2025-12-09 14:21:51.149] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 38 -> [39, 71]
+[2025-12-09 14:21:51.152] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 44 -> [43, 67]
+[2025-12-09 14:21:51.154] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 52 -> [53, 66]
+[2025-12-09 14:21:51.157] [INFO ] [NETWORK   ] Red Line branch points loaded: 7 total
+[2025-12-09 14:23:01.722] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+[2025-12-09 14:23:01.726] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+[2025-12-09 14:23:01.730] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+[2025-12-09 14:23:01.732] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+[2025-12-09 14:23:01.735] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+[2025-12-09 14:23:01.737] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:23:26.473] [INFO ] [ROUTE     ] Train 1 route to Mt. Lebanon: [65, 73, 77], first station block: 65
+[2025-12-09 14:23:26.483] [INFO ] [TRAIN     ] Manual dispatch: Train 1 to Mt. Lebanon on Green Line, arrival 14:30
+[2025-12-09 14:23:26.556] [INFO ] [AUTHORITY ] Train 1 INITIAL DISPATCH: speed=12.47 mph, authority=468 yds
+[2025-12-09 14:23:26.586] [INFO ] [TRAIN     ] Train 1 dispatched: 12.5 mph to reach Mt. Lebanon by 14:30
+[2025-12-09 14:23:26.590] [DEBUG] [LIGHT     ] Green line block 0 light: Super Green → Red
+[2025-12-09 14:23:26.619] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=468 yds
+[2025-12-09 14:23:26.938] [INFO ] [SWITCH    ] Green line block 63 switch changed to position 64
+[2025-12-09 14:23:26.942] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=468.00 yds
+[2025-12-09 14:23:39.318] [INFO ] [TRAIN_MODEL] Position preserved on new authority: 468 yds (yards_in_block: 0.00)
+[2025-12-09 14:23:39.532] [INFO ] [TRAIN     ] Train 1 created successfully
+[2025-12-09 14:23:39.705] [DEBUG] [TRAIN_MODEL] Power=18828W, Speed=0.56mph, Authority=468yds
+[2025-12-09 14:23:40.527] [DEBUG] [TRAIN_MODEL] Power=18828W, Speed=1.12mph, Authority=468yds
+[2025-12-09 14:23:40.678] [DEBUG] [POSITION  ] Train 1 position tracking initialized
+[2025-12-09 14:23:40.683] [DEBUG] [POSITION  ] Train 1 Block 0: pos=0.41yds, delta=0.41yds, block_traveled=0.41yds
+[2025-12-09 14:23:40.734] [DEBUG] [TRAIN_MODEL] Power=17718W, Speed=1.68mph, Authority=467yds
+[2025-12-09 14:23:40.857] [DEBUG] [TRAIN_MODEL] Power=17718W, Speed=2.24mph, Authority=467yds
+[2025-12-09 14:23:41.067] [DEBUG] [TRAIN_MODEL] Power=17718W, Speed=2.72mph, Authority=466yds
+[2025-12-09 14:23:41.179] [DEBUG] [TRAIN_MODEL] Power=17718W, Speed=3.12mph, Authority=465yds
+[2025-12-09 14:23:41.379] [DEBUG] [TRAIN_MODEL] Power=15024W, Speed=3.41mph, Authority=464yds
+[2025-12-09 14:23:41.650] [DEBUG] [TRAIN_MODEL] Power=15024W, Speed=3.68mph, Authority=463yds
+[2025-12-09 14:23:41.869] [DEBUG] [TRAIN_MODEL] Power=15024W, Speed=3.93mph, Authority=463yds
+[2025-12-09 14:23:41.888] [DEBUG] [POSITION  ] Train 1 Block 0: pos=2.79yds, delta=2.38yds, block_traveled=2.79yds
+[2025-12-09 14:23:42.072] [DEBUG] [TRAIN_MODEL] Power=14110W, Speed=4.15mph, Authority=461yds
+[2025-12-09 14:23:42.203] [DEBUG] [TRAIN_MODEL] Power=14110W, Speed=4.36mph, Authority=460yds
+[2025-12-09 14:23:42.502] [DEBUG] [TRAIN_MODEL] Power=14110W, Speed=4.56mph, Authority=459yds
+[2025-12-09 14:23:42.582] [DEBUG] [TRAIN_MODEL] Power=14110W, Speed=4.75mph, Authority=458yds
+[2025-12-09 14:23:42.747] [DEBUG] [TRAIN_MODEL] Power=13152W, Speed=4.92mph, Authority=457yds
+[2025-12-09 14:23:43.029] [DEBUG] [TRAIN_MODEL] Power=13152W, Speed=5.08mph, Authority=456yds
+[2025-12-09 14:23:43.048] [DEBUG] [POSITION  ] Train 1 Block 0: pos=9.85yds, delta=7.05yds, block_traveled=9.85yds
+[2025-12-09 14:23:43.192] [DEBUG] [TRAIN_MODEL] Power=13152W, Speed=5.24mph, Authority=454yds
+[2025-12-09 14:23:43.270] [DEBUG] [TRAIN_MODEL] Power=13152W, Speed=5.39mph, Authority=453yds
+[2025-12-09 14:23:43.490] [DEBUG] [TRAIN_MODEL] Power=12424W, Speed=5.54mph, Authority=452yds
+[2025-12-09 14:23:43.731] [DEBUG] [TRAIN_MODEL] Power=12424W, Speed=5.67mph, Authority=450yds
+[2025-12-09 14:23:43.858] [DEBUG] [TRAIN_MODEL] Power=12424W, Speed=5.81mph, Authority=449yds
+[2025-12-09 14:23:44.172] [DEBUG] [TRAIN_MODEL] Power=12045W, Speed=5.93mph, Authority=447yds
+[2025-12-09 14:23:44.286] [DEBUG] [POSITION  ] Train 1 Block 0: pos=19.05yds, delta=9.20yds, block_traveled=19.05yds
+[2025-12-09 14:23:44.654] [DEBUG] [TRAIN_MODEL] Power=12045W, Speed=6.06mph, Authority=446yds
+[2025-12-09 14:23:44.764] [DEBUG] [TRAIN_MODEL] Power=12045W, Speed=6.18mph, Authority=445yds
+[2025-12-09 14:23:44.986] [DEBUG] [TRAIN_MODEL] Power=12045W, Speed=6.30mph, Authority=443yds
+[2025-12-09 14:23:45.256] [DEBUG] [TRAIN_MODEL] Power=11615W, Speed=6.41mph, Authority=441yds
+[2025-12-09 14:23:45.440] [DEBUG] [TRAIN_MODEL] Power=11615W, Speed=6.52mph, Authority=440yds
+[2025-12-09 14:23:45.550] [DEBUG] [TRAIN_MODEL] Power=11615W, Speed=6.63mph, Authority=438yds
+[2025-12-09 14:23:45.574] [DEBUG] [POSITION  ] Train 1 Block 0: pos=25.03yds, delta=5.98yds, block_traveled=25.03yds
+[2025-12-09 14:23:45.855] [DEBUG] [TRAIN_MODEL] Power=11314W, Speed=6.74mph, Authority=437yds
+[2025-12-09 14:23:46.015] [DEBUG] [TRAIN_MODEL] Power=11314W, Speed=6.84mph, Authority=435yds
+[2025-12-09 14:23:46.148] [DEBUG] [TRAIN_MODEL] Power=11314W, Speed=6.94mph, Authority=433yds
+[2025-12-09 14:23:46.295] [DEBUG] [TRAIN_MODEL] Power=11314W, Speed=7.04mph, Authority=431yds
+    [Previous message repeated 72 times]
+[2025-12-09 14:23:46.736] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 72 times]
+[2025-12-09 14:23:46.745] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 72 times]
+[2025-12-09 14:23:46.754] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 72 times]
+[2025-12-09 14:23:46.761] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 72 times]
+[2025-12-09 14:23:46.768] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 72 times]
+[2025-12-09 14:23:46.776] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:23:46.874] [DEBUG] [TRAIN_MODEL] Power=10941W, Speed=7.14mph, Authority=430yds
+[2025-12-09 14:23:46.898] [DEBUG] [POSITION  ] Train 1 Block 0: pos=36.55yds, delta=11.52yds, block_traveled=36.55yds
+[2025-12-09 14:23:47.034] [DEBUG] [TRAIN_MODEL] Power=10941W, Speed=7.23mph, Authority=428yds
+[2025-12-09 14:23:47.147] [DEBUG] [TRAIN_MODEL] Power=10941W, Speed=7.32mph, Authority=426yds
+    [Previous message repeated 56 times]
+[2025-12-09 14:23:47.254] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=468 yds
+[2025-12-09 14:23:47.333] [DEBUG] [TRAIN_MODEL] Power=10941W, Speed=7.41mph, Authority=424yds
+[2025-12-09 14:23:47.547] [DEBUG] [TRAIN_MODEL] Power=10584W, Speed=7.50mph, Authority=423yds
+    [Previous message repeated 28 times]
+[2025-12-09 14:23:47.621] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=468.00 yds
+[2025-12-09 14:23:47.803] [DEBUG] [TRAIN_MODEL] Power=10584W, Speed=7.59mph, Authority=421yds
+[2025-12-09 14:23:47.926] [DEBUG] [TRAIN_MODEL] Power=10584W, Speed=7.67mph, Authority=419yds
+[2025-12-09 14:23:48.074] [DEBUG] [TRAIN_MODEL] Power=10584W, Speed=7.76mph, Authority=417yds
+[2025-12-09 14:23:48.227] [DEBUG] [POSITION  ] Train 1 Block 0: pos=45.50yds, delta=8.95yds, block_traveled=45.50yds
+[2025-12-09 14:23:48.345] [DEBUG] [TRAIN_MODEL] Power=10584W, Speed=7.84mph, Authority=415yds
+[2025-12-09 14:23:48.607] [DEBUG] [TRAIN_MODEL] Power=10175W, Speed=7.92mph, Authority=413yds
+[2025-12-09 14:23:48.728] [DEBUG] [TRAIN_MODEL] Power=10175W, Speed=8.00mph, Authority=411yds
+[2025-12-09 14:23:48.809] [DEBUG] [TRAIN_MODEL] Power=10175W, Speed=8.08mph, Authority=409yds
+[2025-12-09 14:23:48.925] [DEBUG] [TRAIN_MODEL] Power=10175W, Speed=8.15mph, Authority=407yds
+[2025-12-09 14:23:49.345] [DEBUG] [TRAIN_MODEL] Power=9865W, Speed=8.23mph, Authority=405yds
+[2025-12-09 14:23:49.456] [DEBUG] [TRAIN_MODEL] Power=9865W, Speed=8.30mph, Authority=403yds
+[2025-12-09 14:23:49.498] [DEBUG] [POSITION  ] Train 1 Block 0: pos=60.90yds, delta=15.40yds, block_traveled=60.90yds
+[2025-12-09 14:23:49.566] [DEBUG] [TRAIN_MODEL] Power=9865W, Speed=8.37mph, Authority=401yds
+[2025-12-09 14:23:49.878] [DEBUG] [TRAIN_MODEL] Power=9865W, Speed=8.45mph, Authority=399yds
+[2025-12-09 14:23:50.129] [DEBUG] [TRAIN_MODEL] Power=9575W, Speed=8.52mph, Authority=397yds
+[2025-12-09 14:23:50.211] [DEBUG] [TRAIN_MODEL] Power=9575W, Speed=8.58mph, Authority=395yds
+[2025-12-09 14:23:50.292] [DEBUG] [TRAIN_MODEL] Power=9575W, Speed=8.65mph, Authority=393yds
+[2025-12-09 14:23:50.660] [DEBUG] [TRAIN_MODEL] Power=9382W, Speed=8.72mph, Authority=391yds
+[2025-12-09 14:23:50.677] [DEBUG] [POSITION  ] Train 1 Block 0: pos=75.35yds, delta=14.45yds, block_traveled=75.35yds
+[2025-12-09 14:23:50.840] [DEBUG] [TRAIN_MODEL] Power=9382W, Speed=8.78mph, Authority=388yds
+[2025-12-09 14:23:50.920] [DEBUG] [TRAIN_MODEL] Power=9382W, Speed=8.85mph, Authority=386yds
+[2025-12-09 14:23:51.080] [DEBUG] [TRAIN_MODEL] Power=9382W, Speed=8.91mph, Authority=384yds
+[2025-12-09 14:23:51.531] [DEBUG] [TRAIN_MODEL] Power=9128W, Speed=8.98mph, Authority=382yds
+[2025-12-09 14:23:51.616] [DEBUG] [TRAIN_MODEL] Power=9128W, Speed=9.04mph, Authority=380yds
+[2025-12-09 14:23:51.718] [DEBUG] [TRAIN_MODEL] Power=9128W, Speed=9.10mph, Authority=377yds
+[2025-12-09 14:23:51.739] [DEBUG] [POSITION  ] Train 1 Block 0: pos=83.97yds, delta=8.62yds, block_traveled=83.97yds
+[2025-12-09 14:23:52.099] [DEBUG] [TRAIN_MODEL] Power=8954W, Speed=9.16mph, Authority=375yds
+[2025-12-09 14:23:52.224] [DEBUG] [TRAIN_MODEL] Power=8954W, Speed=9.22mph, Authority=373yds
+[2025-12-09 14:23:52.313] [DEBUG] [TRAIN_MODEL] Power=8954W, Speed=9.28mph, Authority=371yds
+[2025-12-09 14:23:52.585] [DEBUG] [TRAIN_MODEL] Power=8954W, Speed=9.34mph, Authority=368yds
+[2025-12-09 14:23:52.770] [DEBUG] [TRAIN_MODEL] Power=8703W, Speed=9.40mph, Authority=366yds
+[2025-12-09 14:23:52.939] [DEBUG] [TRAIN_MODEL] Power=8703W, Speed=9.45mph, Authority=364yds
+[2025-12-09 14:23:52.960] [DEBUG] [POSITION  ] Train 1 Block 0: pos=99.64yds, delta=15.67yds, block_traveled=99.64yds
+[2025-12-09 14:23:53.055] [DEBUG] [TRAIN_MODEL] Power=8703W, Speed=9.51mph, Authority=361yds
+[2025-12-09 14:23:53.392] [DEBUG] [TRAIN_MODEL] Power=8539W, Speed=9.57mph, Authority=359yds
+[2025-12-09 14:23:53.540] [DEBUG] [TRAIN_MODEL] Power=8539W, Speed=9.62mph, Authority=357yds
+[2025-12-09 14:23:53.734] [DEBUG] [TRAIN_MODEL] Power=8539W, Speed=9.67mph, Authority=354yds
+[2025-12-09 14:23:53.880] [DEBUG] [TRAIN_MODEL] Power=8539W, Speed=9.73mph, Authority=352yds
+    [Previous message repeated 9 times]
+[2025-12-09 14:23:54.018] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 9 times]
+[2025-12-09 14:23:54.026] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 9 times]
+[2025-12-09 14:23:54.033] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 9 times]
+[2025-12-09 14:23:54.040] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 9 times]
+[2025-12-09 14:23:54.046] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 9 times]
+[2025-12-09 14:23:54.053] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:23:54.075] [DEBUG] [POSITION  ] Train 1 Block 0: pos=116.01yds, delta=16.37yds, block_traveled=116.01yds
+[2025-12-09 14:23:54.129] [DEBUG] [TRAIN_MODEL] Power=8305W, Speed=9.78mph, Authority=350yds
+[2025-12-09 14:23:54.261] [DEBUG] [TRAIN_MODEL] Power=8305W, Speed=9.83mph, Authority=347yds
+[2025-12-09 14:23:54.346] [DEBUG] [TRAIN_MODEL] Power=8305W, Speed=9.88mph, Authority=345yds
+    [Previous message repeated 19 times]
+[2025-12-09 14:23:54.544] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=468 yds
+[2025-12-09 14:23:54.661] [DEBUG] [TRAIN_MODEL] Power=8153W, Speed=9.93mph, Authority=342yds
+    [Previous message repeated 9 times]
+[2025-12-09 14:23:54.716] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=468.00 yds
+[2025-12-09 14:23:54.791] [DEBUG] [TRAIN_MODEL] Power=8153W, Speed=9.98mph, Authority=340yds
+[2025-12-09 14:23:54.925] [DEBUG] [TRAIN_MODEL] Power=8153W, Speed=10.03mph, Authority=337yds
+[2025-12-09 14:23:55.026] [DEBUG] [TRAIN_MODEL] Power=8153W, Speed=10.08mph, Authority=335yds
+[2025-12-09 14:23:55.225] [DEBUG] [POSITION  ] Train 1 Block 0: pos=125.65yds, delta=9.64yds, block_traveled=125.65yds
+[2025-12-09 14:23:55.367] [DEBUG] [TRAIN_MODEL] Power=7936W, Speed=10.13mph, Authority=333yds
+[2025-12-09 14:23:55.522] [DEBUG] [TRAIN_MODEL] Power=7936W, Speed=10.18mph, Authority=330yds
+[2025-12-09 14:23:55.609] [DEBUG] [TRAIN_MODEL] Power=7936W, Speed=10.23mph, Authority=328yds
+[2025-12-09 14:23:55.708] [DEBUG] [TRAIN_MODEL] Power=7936W, Speed=10.28mph, Authority=325yds
+[2025-12-09 14:23:56.015] [DEBUG] [TRAIN_MODEL] Power=7720W, Speed=10.32mph, Authority=322yds
+[2025-12-09 14:23:56.163] [DEBUG] [TRAIN_MODEL] Power=7720W, Speed=10.37mph, Authority=320yds
+[2025-12-09 14:23:56.253] [DEBUG] [TRAIN_MODEL] Power=7720W, Speed=10.41mph, Authority=317yds
+[2025-12-09 14:23:56.299] [DEBUG] [POSITION  ] Train 1 Block 0: pos=145.51yds, delta=19.86yds, block_traveled=145.51yds
+[2025-12-09 14:23:56.420] [DEBUG] [TRAIN_MODEL] Power=7720W, Speed=10.46mph, Authority=315yds
+[2025-12-09 14:23:56.774] [DEBUG] [TRAIN_MODEL] Power=7515W, Speed=10.50mph, Authority=312yds
+[2025-12-09 14:23:56.864] [DEBUG] [TRAIN_MODEL] Power=7515W, Speed=10.55mph, Authority=310yds
+[2025-12-09 14:23:57.126] [DEBUG] [TRAIN_MODEL] Power=7515W, Speed=10.59mph, Authority=307yds
+[2025-12-09 14:23:57.376] [DEBUG] [POSITION  ] Train 1 Block 0: pos=160.88yds, delta=15.37yds, block_traveled=160.88yds
+[2025-12-09 14:23:57.428] [DEBUG] [TRAIN_MODEL] Power=7378W, Speed=10.63mph, Authority=305yds
+[2025-12-09 14:23:57.517] [DEBUG] [TRAIN_MODEL] Power=7378W, Speed=10.68mph, Authority=302yds
+[2025-12-09 14:23:57.612] [DEBUG] [TRAIN_MODEL] Power=7378W, Speed=10.72mph, Authority=299yds
+[2025-12-09 14:23:57.972] [DEBUG] [TRAIN_MODEL] Power=7240W, Speed=10.76mph, Authority=297yds
+[2025-12-09 14:23:58.146] [DEBUG] [TRAIN_MODEL] Power=7240W, Speed=10.80mph, Authority=294yds
+[2025-12-09 14:23:58.229] [DEBUG] [TRAIN_MODEL] Power=7240W, Speed=10.84mph, Authority=291yds
+[2025-12-09 14:23:58.457] [DEBUG] [POSITION  ] Train 1 Block 0: pos=171.34yds, delta=10.46yds, block_traveled=171.34yds
+[2025-12-09 14:23:58.530] [DEBUG] [TRAIN_MODEL] Power=7240W, Speed=10.88mph, Authority=289yds
+[2025-12-09 14:23:58.726] [DEBUG] [TRAIN_MODEL] Power=7052W, Speed=10.92mph, Authority=286yds
+[2025-12-09 14:23:58.855] [DEBUG] [TRAIN_MODEL] Power=7052W, Speed=10.96mph, Authority=283yds
+[2025-12-09 14:23:58.946] [DEBUG] [TRAIN_MODEL] Power=7052W, Speed=11.00mph, Authority=281yds
+[2025-12-09 14:23:59.196] [DEBUG] [TRAIN_MODEL] Power=7052W, Speed=11.04mph, Authority=278yds
+[2025-12-09 14:23:59.418] [DEBUG] [TRAIN_MODEL] Power=6864W, Speed=11.08mph, Authority=275yds
+[2025-12-09 14:23:59.496] [DEBUG] [TRAIN_MODEL] Power=6864W, Speed=11.12mph, Authority=273yds
+[2025-12-09 14:23:59.546] [DEBUG] [POSITION  ] Train 1 Block 0: pos=190.02yds, delta=18.69yds, block_traveled=190.02yds
+[2025-12-09 14:23:59.743] [DEBUG] [TRAIN_MODEL] Power=6864W, Speed=11.15mph, Authority=270yds
+[2025-12-09 14:23:59.924] [DEBUG] [TRAIN_MODEL] Power=6731W, Speed=11.19mph, Authority=267yds
+[2025-12-09 14:24:00.170] [DEBUG] [TRAIN_MODEL] Power=6731W, Speed=11.23mph, Authority=264yds
+[2025-12-09 14:24:00.292] [DEBUG] [TRAIN_MODEL] Power=6731W, Speed=11.26mph, Authority=262yds
+[2025-12-09 14:24:00.445] [DEBUG] [TRAIN_MODEL] Power=6731W, Speed=11.30mph, Authority=259yds
+[2025-12-09 14:24:00.670] [DEBUG] [POSITION  ] Train 1 Block 0: pos=209.17yds, delta=19.15yds, block_traveled=209.17yds
+[2025-12-09 14:24:00.682] [INFO ] [POSITION  ] Train 1 Block 0: ADVANCING to next block (traveled 209.17/200.00 yds)
+[2025-12-09 14:24:00.693] [DEBUG] [POSITION  ] Train 1 Block 0: motion state = Moving
+[2025-12-09 14:24:00.701] [DEBUG] [ROUTING   ] Green Line routing: current=0, previous=None
+[2025-12-09 14:24:00.708] [DEBUG] [ROUTING   ] Block 0 is in switch_routes
+[2025-12-09 14:24:00.715] [DEBUG] [ROUTING   ] Block 0 routes through switch 63, target=64
+[2025-12-09 14:24:00.723] [DEBUG] [ROUTING   ] Switch target adjusted to 63
+[2025-12-09 14:24:00.730] [INFO ] [ROUTING   ] Using switch target: 0 → 63
+[2025-12-09 14:24:00.737] [INFO ] [ROUTING   ] Green Line final routing decision: 0 → 63
+[2025-12-09 14:24:00.744] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 0 → 63
+[2025-12-09 14:24:00.825] [DEBUG] [TRAIN_MODEL] Power=6550W, Speed=11.34mph, Authority=256yds
+[2025-12-09 14:24:00.905] [DEBUG] [TRAIN_MODEL] Power=6550W, Speed=11.37mph, Authority=253yds
+[2025-12-09 14:24:00.953] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 0 → 63
+[2025-12-09 14:24:00.961] [DEBUG] [LIGHT     ] Green line block 0 light: Red → Super Green
+[2025-12-09 14:24:00.969] [DEBUG] [LIGHT     ] Green line block 58 light: Super Green → Green
+[2025-12-09 14:24:00.978] [DEBUG] [LIGHT     ] Green line block 62 light: Super Green → Red
+    [Previous message repeated 18 times]
+[2025-12-09 14:24:01.030] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=468 yds
+[2025-12-09 14:24:01.094] [DEBUG] [TRAIN_MODEL] Power=6550W, Speed=11.41mph, Authority=250yds
+[2025-12-09 14:24:01.292] [DEBUG] [TRAIN_MODEL] Power=6426W, Speed=11.44mph, Authority=248yds
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:01.321] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:01.330] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:01.338] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:01.345] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:01.354] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:01.363] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:24:01.374] [DEBUG] [LIGHT     ] Green line block 58 traffic light: Super Green → Green
+[2025-12-09 14:24:01.382] [DEBUG] [LIGHT     ] Green line block 62 traffic light: Super Green → Red
+    [Previous message repeated 9 times]
+[2025-12-09 14:24:01.413] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=468.00 yds
+[2025-12-09 14:24:01.533] [DEBUG] [TRAIN_MODEL] Power=6426W, Speed=11.48mph, Authority=245yds
+[2025-12-09 14:24:01.621] [DEBUG] [TRAIN_MODEL] Power=6426W, Speed=11.51mph, Authority=242yds
+[2025-12-09 14:24:01.962] [DEBUG] [POSITION  ] Train 1 Block 63: pos=220.31yds, delta=11.14yds, block_traveled=20.31yds
+[2025-12-09 14:24:02.014] [DEBUG] [TRAIN_MODEL] Power=6306W, Speed=11.54mph, Authority=239yds
+[2025-12-09 14:24:02.139] [DEBUG] [TRAIN_MODEL] Power=6306W, Speed=11.58mph, Authority=236yds
+[2025-12-09 14:24:02.268] [DEBUG] [TRAIN_MODEL] Power=6306W, Speed=11.61mph, Authority=234yds
+[2025-12-09 14:24:02.366] [DEBUG] [TRAIN_MODEL] Power=6306W, Speed=11.64mph, Authority=231yds
+[2025-12-09 14:24:02.690] [DEBUG] [TRAIN_MODEL] Power=6135W, Speed=11.68mph, Authority=228yds
+[2025-12-09 14:24:02.802] [DEBUG] [TRAIN_MODEL] Power=6135W, Speed=11.71mph, Authority=225yds
+[2025-12-09 14:24:02.928] [DEBUG] [TRAIN_MODEL] Power=6135W, Speed=11.74mph, Authority=222yds
+[2025-12-09 14:24:03.094] [DEBUG] [POSITION  ] Train 1 Block 63: pos=240.11yds, delta=19.81yds, block_traveled=40.11yds
+[2025-12-09 14:24:03.202] [DEBUG] [TRAIN_MODEL] Power=6135W, Speed=11.77mph, Authority=219yds
+[2025-12-09 14:24:03.447] [DEBUG] [TRAIN_MODEL] Power=5966W, Speed=11.80mph, Authority=216yds
+[2025-12-09 14:24:03.552] [DEBUG] [TRAIN_MODEL] Power=5966W, Speed=11.83mph, Authority=213yds
+[2025-12-09 14:24:03.811] [DEBUG] [TRAIN_MODEL] Power=5966W, Speed=11.86mph, Authority=211yds
+[2025-12-09 14:24:04.020] [DEBUG] [TRAIN_MODEL] Power=5847W, Speed=11.90mph, Authority=208yds
+[2025-12-09 14:24:04.131] [DEBUG] [TRAIN_MODEL] Power=5847W, Speed=11.93mph, Authority=205yds
+[2025-12-09 14:24:04.222] [DEBUG] [POSITION  ] Train 1 Block 63: pos=260.31yds, delta=20.20yds, block_traveled=60.31yds
+[2025-12-09 14:24:04.291] [DEBUG] [TRAIN_MODEL] Power=5847W, Speed=11.96mph, Authority=202yds
+[2025-12-09 14:24:04.565] [DEBUG] [TRAIN_MODEL] Power=5847W, Speed=11.99mph, Authority=199yds
+[2025-12-09 14:24:04.772] [DEBUG] [TRAIN_MODEL] Power=5683W, Speed=12.01mph, Authority=196yds
+[2025-12-09 14:24:04.865] [DEBUG] [TRAIN_MODEL] Power=5683W, Speed=12.04mph, Authority=193yds
+[2025-12-09 14:24:04.998] [DEBUG] [TRAIN_MODEL] Power=5683W, Speed=12.07mph, Authority=190yds
+[2025-12-09 14:24:05.262] [DEBUG] [TRAIN_MODEL] Power=5683W, Speed=12.10mph, Authority=187yds
+[2025-12-09 14:24:05.404] [DEBUG] [POSITION  ] Train 1 Block 63: pos=280.87yds, delta=20.56yds, block_traveled=80.87yds
+[2025-12-09 14:24:05.467] [DEBUG] [TRAIN_MODEL] Power=5523W, Speed=12.13mph, Authority=184yds
+[2025-12-09 14:24:05.572] [DEBUG] [TRAIN_MODEL] Power=5523W, Speed=12.16mph, Authority=181yds
+[2025-12-09 14:24:05.731] [DEBUG] [TRAIN_MODEL] Power=5523W, Speed=12.18mph, Authority=178yds
+[2025-12-09 14:24:06.139] [DEBUG] [TRAIN_MODEL] Power=5407W, Speed=12.21mph, Authority=175yds
+[2025-12-09 14:24:06.233] [DEBUG] [TRAIN_MODEL] Power=5407W, Speed=12.24mph, Authority=172yds
+[2025-12-09 14:24:06.382] [DEBUG] [TRAIN_MODEL] Power=5407W, Speed=12.27mph, Authority=169yds
+[2025-12-09 14:24:06.454] [DEBUG] [POSITION  ] Train 1 Block 63: pos=289.78yds, delta=8.91yds, block_traveled=89.78yds
+[2025-12-09 14:24:06.533] [DEBUG] [TRAIN_MODEL] Power=5407W, Speed=12.29mph, Authority=166yds
+[2025-12-09 14:24:06.786] [DEBUG] [TRAIN_MODEL] Power=5250W, Speed=12.32mph, Authority=163yds
+[2025-12-09 14:24:06.879] [DEBUG] [TRAIN_MODEL] Power=5250W, Speed=12.35mph, Authority=160yds
+[2025-12-09 14:24:07.020] [DEBUG] [TRAIN_MODEL] Power=5250W, Speed=12.37mph, Authority=157yds
+[2025-12-09 14:24:07.287] [DEBUG] [TRAIN_MODEL] Power=5250W, Speed=12.40mph, Authority=154yds
+[2025-12-09 14:24:07.470] [DEBUG] [TRAIN_MODEL] Power=5097W, Speed=12.42mph, Authority=151yds
+[2025-12-09 14:24:07.557] [DEBUG] [TRAIN_MODEL] Power=5097W, Speed=12.45mph, Authority=148yds
+    [Previous message repeated 18 times]
+[2025-12-09 14:24:07.633] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=468 yds
+[2025-12-09 14:24:07.653] [DEBUG] [POSITION  ] Train 1 Block 63: pos=313.85yds, delta=24.06yds, block_traveled=113.85yds
+[2025-12-09 14:24:07.665] [INFO ] [POSITION  ] Train 1 Block 63: ADVANCING to next block (traveled 113.85/109.36 yds)
+[2025-12-09 14:24:07.676] [DEBUG] [POSITION  ] Train 1 Block 63: motion state = Moving
+[2025-12-09 14:24:07.685] [DEBUG] [ROUTING   ] Green Line routing: current=63, previous=0
+[2025-12-09 14:24:07.694] [DEBUG] [ROUTING   ] Block 63 NOT in switch_routes, using motion logic
+[2025-12-09 14:24:07.705] [WARN ] [ROUTING   ] DEFAULT CASE: 63 → 64 (previous=0)
+[2025-12-09 14:24:07.714] [INFO ] [ROUTING   ] Green Line final routing decision: 63 → 64
+[2025-12-09 14:24:07.723] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 63 → 64
+[2025-12-09 14:24:07.876] [DEBUG] [TRAIN_MODEL] Power=5097W, Speed=12.47mph, Authority=145yds
+[2025-12-09 14:24:07.927] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 63 → 64
+[2025-12-09 14:24:07.940] [DEBUG] [LIGHT     ] Green line block 58 light: Green → Super Green
+[2025-12-09 14:24:07.950] [DEBUG] [LIGHT     ] Green line block 62 light: Red → Yellow
+    [Previous message repeated 9 times]
+[2025-12-09 14:24:08.119] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 9 times]
+[2025-12-09 14:24:08.129] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 9 times]
+[2025-12-09 14:24:08.139] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 9 times]
+[2025-12-09 14:24:08.149] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 9 times]
+[2025-12-09 14:24:08.159] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 9 times]
+[2025-12-09 14:24:08.168] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:24:08.183] [DEBUG] [LIGHT     ] Green line block 58 traffic light: Green → Super Green
+[2025-12-09 14:24:08.193] [DEBUG] [LIGHT     ] Green line block 62 traffic light: Red → Yellow
+    [Previous message repeated 9 times]
+[2025-12-09 14:24:08.204] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=468.00 yds
+[2025-12-09 14:24:09.021] [DEBUG] [POSITION  ] Train 1 Block 64: pos=335.17yds, delta=21.32yds, block_traveled=25.81yds
+[2025-12-09 14:24:10.208] [DEBUG] [POSITION  ] Train 1 Block 64: pos=347.36yds, delta=12.20yds, block_traveled=38.00yds
+[2025-12-09 14:24:11.334] [DEBUG] [POSITION  ] Train 1 Block 64: pos=368.71yds, delta=21.34yds, block_traveled=59.34yds
+[2025-12-09 14:24:12.377] [DEBUG] [POSITION  ] Train 1 Block 64: pos=390.05yds, delta=21.34yds, block_traveled=80.69yds
+[2025-12-09 14:24:13.547] [DEBUG] [POSITION  ] Train 1 Block 64: pos=408.34yds, delta=18.29yds, block_traveled=98.98yds
+[2025-12-09 14:24:14.652] [DEBUG] [POSITION  ] Train 1 Block 64: pos=420.54yds, delta=12.20yds, block_traveled=111.17yds
+[2025-12-09 14:24:14.667] [INFO ] [POSITION  ] Train 1 Block 64: ADVANCING to next block (traveled 111.17/109.36 yds)
+[2025-12-09 14:24:14.679] [DEBUG] [POSITION  ] Train 1 Block 64: motion state = Moving
+[2025-12-09 14:24:14.691] [DEBUG] [ROUTING   ] Green Line routing: current=64, previous=63
+[2025-12-09 14:24:14.703] [DEBUG] [ROUTING   ] Block 64 NOT in switch_routes, using motion logic
+[2025-12-09 14:24:14.714] [DEBUG] [ROUTING   ] Motion forward: 64 → 65
+[2025-12-09 14:24:14.725] [INFO ] [ROUTING   ] Green Line final routing decision: 64 → 65
+[2025-12-09 14:24:14.736] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 64 → 65
+[2025-12-09 14:24:14.757] [DEBUG] [BEACON    ] Train 1 beacon updated at block 65
+[2025-12-09 14:24:14.900] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 64 → 65
+[2025-12-09 14:24:14.911] [INFO ] [TRAIN     ] Train 1 arrived at Glenbury
+[2025-12-09 14:24:15.312] [INFO ] [TRAIN     ] Train 1 DWELLING at Glenbury for 10s
+[2025-12-09 14:24:15.420] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-09 14:24:15.979] [DEBUG] [POSITION  ] Train 1 Block 65: pos=441.88yds, delta=21.34yds, block_traveled=23.16yds
+[2025-12-09 14:24:16.023] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=11.13mph, Authority=0yds
+[2025-12-09 14:24:16.223] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=9.79mph, Authority=0yds
+[2025-12-09 14:24:16.311] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=8.44mph, Authority=0yds
+[2025-12-09 14:24:16.465] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=7.10mph, Authority=0yds
+[2025-12-09 14:24:16.856] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=5.76mph, Authority=0yds
+[2025-12-09 14:24:16.956] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=4.41mph, Authority=0yds
+[2025-12-09 14:24:17.054] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=3.07mph, Authority=0yds
+[2025-12-09 14:24:17.155] [DEBUG] [POSITION  ] Train 1 Block 65: pos=459.94yds, delta=18.06yds, block_traveled=41.21yds
+[2025-12-09 14:24:17.269] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=1.73mph, Authority=0yds
+[2025-12-09 14:24:17.600] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=0.38mph, Authority=0yds
+[2025-12-09 14:24:18.224] [DEBUG] [POSITION  ] Train 1 Block 65: pos=463.69yds, delta=3.75yds, block_traveled=44.97yds
+[2025-12-09 14:24:19.292] [DEBUG] [POSITION  ] Train 1 Block 65: pos=463.69yds, delta=0.00yds, block_traveled=44.97yds
+[2025-12-09 14:24:24.979] [INFO ] [TRAIN     ] Train 1 RESUMING after dwell: speed=12.47 mph, authority=1202 yds
+[2025-12-09 14:24:25.021] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=1202 yds
+[2025-12-09 14:24:25.475] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=1202.00 yds
+[2025-12-09 14:24:25.661] [INFO ] [TRAIN_MODEL] Position preserved on new authority: 1202 yds (yards_in_block: 44.97)
+[2025-12-09 14:24:26.202] [DEBUG] [TRAIN_MODEL] Power=19334W, Speed=0.56mph, Authority=1157yds
+[2025-12-09 14:24:26.414] [DEBUG] [TRAIN_MODEL] Power=19334W, Speed=1.12mph, Authority=1157yds
+[2025-12-09 14:24:26.506] [DEBUG] [TRAIN_MODEL] Power=19334W, Speed=1.68mph, Authority=1156yds
+[2025-12-09 14:24:26.649] [DEBUG] [TRAIN_MODEL] Power=19334W, Speed=2.24mph, Authority=1156yds
+[2025-12-09 14:24:26.800] [DEBUG] [POSITION  ] Train 1 Block 65: POSITION RESET DETECTED - syncing previous position
+[2025-12-09 14:24:26.817] [DEBUG] [POSITION  ] Train 1 Block 65: pos=46.33yds, delta=0.00yds, block_traveled=44.97yds
+[2025-12-09 14:24:26.911] [DEBUG] [TRAIN_MODEL] Power=16333W, Speed=2.68mph, Authority=1155yds
+[2025-12-09 14:24:27.116] [DEBUG] [TRAIN_MODEL] Power=16333W, Speed=3.06mph, Authority=1154yds
+[2025-12-09 14:24:27.236] [DEBUG] [TRAIN_MODEL] Power=16333W, Speed=3.38mph, Authority=1153yds
+    [Previous message repeated 30 times]
+[2025-12-09 14:24:27.403] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 30 times]
+[2025-12-09 14:24:27.418] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 30 times]
+[2025-12-09 14:24:27.430] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 30 times]
+[2025-12-09 14:24:27.442] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 30 times]
+[2025-12-09 14:24:27.454] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 30 times]
+[2025-12-09 14:24:27.466] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:24:27.524] [DEBUG] [TRAIN_MODEL] Power=14893W, Speed=3.65mph, Authority=1153yds
+[2025-12-09 14:24:27.781] [DEBUG] [TRAIN_MODEL] Power=14893W, Speed=3.90mph, Authority=1152yds
+[2025-12-09 14:24:27.878] [DEBUG] [TRAIN_MODEL] Power=14893W, Speed=4.14mph, Authority=1151yds
+[2025-12-09 14:24:27.967] [DEBUG] [POSITION  ] Train 1 Block 65: pos=48.56yds, delta=2.23yds, block_traveled=47.20yds
+[2025-12-09 14:24:28.092] [DEBUG] [TRAIN_MODEL] Power=14045W, Speed=4.34mph, Authority=1150yds
+[2025-12-09 14:24:28.286] [DEBUG] [TRAIN_MODEL] Power=14045W, Speed=4.54mph, Authority=1148yds
+[2025-12-09 14:24:28.369] [DEBUG] [TRAIN_MODEL] Power=14045W, Speed=4.73mph, Authority=1147yds
+[2025-12-09 14:24:28.570] [DEBUG] [TRAIN_MODEL] Power=14045W, Speed=4.91mph, Authority=1146yds
+[2025-12-09 14:24:28.828] [DEBUG] [TRAIN_MODEL] Power=13144W, Speed=5.08mph, Authority=1145yds
+[2025-12-09 14:24:29.066] [DEBUG] [TRAIN_MODEL] Power=13144W, Speed=5.24mph, Authority=1144yds
+[2025-12-09 14:24:29.160] [DEBUG] [TRAIN_MODEL] Power=13144W, Speed=5.39mph, Authority=1142yds
+[2025-12-09 14:24:29.186] [DEBUG] [POSITION  ] Train 1 Block 65: pos=55.95yds, delta=7.39yds, block_traveled=54.58yds
+[2025-12-09 14:24:29.659] [DEBUG] [TRAIN_MODEL] Power=12698W, Speed=5.53mph, Authority=1141yds
+[2025-12-09 14:24:29.760] [DEBUG] [TRAIN_MODEL] Power=12698W, Speed=5.67mph, Authority=1139yds
+[2025-12-09 14:24:29.879] [DEBUG] [TRAIN_MODEL] Power=12698W, Speed=5.81mph, Authority=1138yds
+[2025-12-09 14:24:29.972] [DEBUG] [TRAIN_MODEL] Power=12698W, Speed=5.94mph, Authority=1137yds
+[2025-12-09 14:24:30.335] [DEBUG] [TRAIN_MODEL] Power=12107W, Speed=6.07mph, Authority=1135yds
+[2025-12-09 14:24:30.361] [DEBUG] [POSITION  ] Train 1 Block 65: pos=65.40yds, delta=9.45yds, block_traveled=64.03yds
+[2025-12-09 14:24:30.463] [DEBUG] [TRAIN_MODEL] Power=12107W, Speed=6.19mph, Authority=1134yds
+[2025-12-09 14:24:30.600] [DEBUG] [TRAIN_MODEL] Power=12107W, Speed=6.31mph, Authority=1132yds
+[2025-12-09 14:24:30.974] [DEBUG] [TRAIN_MODEL] Power=11761W, Speed=6.43mph, Authority=1130yds
+[2025-12-09 14:24:31.112] [DEBUG] [TRAIN_MODEL] Power=11761W, Speed=6.54mph, Authority=1129yds
+[2025-12-09 14:24:31.205] [DEBUG] [TRAIN_MODEL] Power=11761W, Speed=6.65mph, Authority=1127yds
+[2025-12-09 14:24:31.357] [DEBUG] [TRAIN_MODEL] Power=11761W, Speed=6.76mph, Authority=1126yds
+[2025-12-09 14:24:31.483] [DEBUG] [POSITION  ] Train 1 Block 65: pos=71.51yds, delta=6.11yds, block_traveled=70.14yds
+[2025-12-09 14:24:31.768] [DEBUG] [TRAIN_MODEL] Power=11292W, Speed=6.86mph, Authority=1124yds
+[2025-12-09 14:24:31.858] [DEBUG] [TRAIN_MODEL] Power=11292W, Speed=6.96mph, Authority=1122yds
+[2025-12-09 14:24:32.013] [DEBUG] [TRAIN_MODEL] Power=11292W, Speed=7.06mph, Authority=1121yds
+[2025-12-09 14:24:32.350] [DEBUG] [TRAIN_MODEL] Power=11020W, Speed=7.15mph, Authority=1119yds
+[2025-12-09 14:24:32.455] [DEBUG] [TRAIN_MODEL] Power=11020W, Speed=7.25mph, Authority=1117yds
+[2025-12-09 14:24:32.549] [DEBUG] [TRAIN_MODEL] Power=11020W, Speed=7.34mph, Authority=1115yds
+[2025-12-09 14:24:32.613] [DEBUG] [POSITION  ] Train 1 Block 65: pos=83.24yds, delta=11.73yds, block_traveled=81.87yds
+[2025-12-09 14:24:32.871] [DEBUG] [TRAIN_MODEL] Power=11020W, Speed=7.43mph, Authority=1113yds
+    [Previous message repeated 22 times]
+[2025-12-09 14:24:33.045] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=1202 yds
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:33.103] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=1202.00 yds
+[2025-12-09 14:24:33.193] [DEBUG] [TRAIN_MODEL] Power=10640W, Speed=7.52mph, Authority=1112yds
+[2025-12-09 14:24:33.287] [DEBUG] [TRAIN_MODEL] Power=10640W, Speed=7.61mph, Authority=1110yds
+[2025-12-09 14:24:33.383] [DEBUG] [TRAIN_MODEL] Power=10640W, Speed=7.69mph, Authority=1108yds
+[2025-12-09 14:24:33.519] [DEBUG] [TRAIN_MODEL] Power=10640W, Speed=7.78mph, Authority=1106yds
+[2025-12-09 14:24:33.669] [DEBUG] [POSITION  ] Train 1 Block 65: pos=96.10yds, delta=12.86yds, block_traveled=94.73yds
+[2025-12-09 14:24:33.771] [DEBUG] [TRAIN_MODEL] Power=10272W, Speed=7.86mph, Authority=1104yds
+[2025-12-09 14:24:33.856] [DEBUG] [TRAIN_MODEL] Power=10272W, Speed=7.94mph, Authority=1102yds
+[2025-12-09 14:24:34.124] [DEBUG] [TRAIN_MODEL] Power=10272W, Speed=8.02mph, Authority=1100yds
+[2025-12-09 14:24:34.323] [DEBUG] [TRAIN_MODEL] Power=10046W, Speed=8.09mph, Authority=1098yds
+[2025-12-09 14:24:34.459] [DEBUG] [TRAIN_MODEL] Power=10046W, Speed=8.17mph, Authority=1096yds
+[2025-12-09 14:24:34.552] [DEBUG] [TRAIN_MODEL] Power=10046W, Speed=8.25mph, Authority=1094yds
+[2025-12-09 14:24:34.820] [DEBUG] [TRAIN_MODEL] Power=10046W, Speed=8.32mph, Authority=1092yds
+[2025-12-09 14:24:34.843] [DEBUG] [POSITION  ] Train 1 Block 65: pos=101.92yds, delta=5.82yds, block_traveled=100.55yds
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:34.990] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:35.020] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:35.045] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:35.059] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:35.072] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:35.094] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:24:35.210] [DEBUG] [TRAIN_MODEL] Power=9744W, Speed=8.39mph, Authority=1090yds
+[2025-12-09 14:24:35.302] [DEBUG] [TRAIN_MODEL] Power=9744W, Speed=8.46mph, Authority=1088yds
+[2025-12-09 14:24:35.422] [DEBUG] [TRAIN_MODEL] Power=9744W, Speed=8.53mph, Authority=1086yds
+[2025-12-09 14:24:35.773] [DEBUG] [TRAIN_MODEL] Power=9546W, Speed=8.60mph, Authority=1084yds
+[2025-12-09 14:24:35.929] [DEBUG] [TRAIN_MODEL] Power=9546W, Speed=8.67mph, Authority=1082yds
+[2025-12-09 14:24:35.956] [DEBUG] [POSITION  ] Train 1 Block 65: pos=118.25yds, delta=16.33yds, block_traveled=116.89yds
+[2025-12-09 14:24:36.050] [DEBUG] [TRAIN_MODEL] Power=9546W, Speed=8.74mph, Authority=1079yds
+[2025-12-09 14:24:36.262] [DEBUG] [TRAIN_MODEL] Power=9358W, Speed=8.80mph, Authority=1077yds
+[2025-12-09 14:24:36.583] [DEBUG] [TRAIN_MODEL] Power=9358W, Speed=8.87mph, Authority=1075yds
+[2025-12-09 14:24:36.779] [DEBUG] [TRAIN_MODEL] Power=9358W, Speed=8.93mph, Authority=1073yds
+[2025-12-09 14:24:36.992] [DEBUG] [TRAIN_MODEL] Power=9188W, Speed=9.00mph, Authority=1071yds
+[2025-12-09 14:24:37.054] [DEBUG] [POSITION  ] Train 1 Block 65: pos=131.21yds, delta=12.96yds, block_traveled=129.84yds
+[2025-12-09 14:24:37.277] [DEBUG] [TRAIN_MODEL] Power=9188W, Speed=9.06mph, Authority=1069yds
+[2025-12-09 14:24:37.403] [DEBUG] [TRAIN_MODEL] Power=9188W, Speed=9.12mph, Authority=1066yds
+[2025-12-09 14:24:37.569] [DEBUG] [TRAIN_MODEL] Power=9011W, Speed=9.18mph, Authority=1064yds
+[2025-12-09 14:24:37.855] [DEBUG] [TRAIN_MODEL] Power=9011W, Speed=9.24mph, Authority=1062yds
+[2025-12-09 14:24:37.958] [DEBUG] [TRAIN_MODEL] Power=9011W, Speed=9.30mph, Authority=1060yds
+[2025-12-09 14:24:38.093] [DEBUG] [TRAIN_MODEL] Power=9011W, Speed=9.36mph, Authority=1057yds
+[2025-12-09 14:24:38.215] [DEBUG] [POSITION  ] Train 1 Block 65: pos=137.90yds, delta=6.69yds, block_traveled=136.53yds
+[2025-12-09 14:24:38.296] [DEBUG] [TRAIN_MODEL] Power=8756W, Speed=9.42mph, Authority=1055yds
+[2025-12-09 14:24:38.567] [DEBUG] [TRAIN_MODEL] Power=8756W, Speed=9.47mph, Authority=1053yds
+[2025-12-09 14:24:38.659] [DEBUG] [TRAIN_MODEL] Power=8756W, Speed=9.53mph, Authority=1050yds
+[2025-12-09 14:24:38.875] [DEBUG] [TRAIN_MODEL] Power=8592W, Speed=9.59mph, Authority=1048yds
+[2025-12-09 14:24:39.173] [DEBUG] [TRAIN_MODEL] Power=8592W, Speed=9.64mph, Authority=1046yds
+[2025-12-09 14:24:39.262] [DEBUG] [TRAIN_MODEL] Power=8592W, Speed=9.70mph, Authority=1043yds
+[2025-12-09 14:24:39.318] [DEBUG] [POSITION  ] Train 1 Block 65: pos=154.01yds, delta=16.11yds, block_traveled=152.64yds
+[2025-12-09 14:24:39.401] [DEBUG] [TRAIN_MODEL] Power=8592W, Speed=9.75mph, Authority=1041yds
+[2025-12-09 14:24:39.656] [DEBUG] [TRAIN_MODEL] Power=8362W, Speed=9.80mph, Authority=1038yds
+[2025-12-09 14:24:39.970] [DEBUG] [TRAIN_MODEL] Power=8362W, Speed=9.85mph, Authority=1036yds
+[2025-12-09 14:24:40.063] [DEBUG] [TRAIN_MODEL] Power=8362W, Speed=9.91mph, Authority=1034yds
+    [Previous message repeated 19 times]
+[2025-12-09 14:24:40.154] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=1202 yds
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:40.323] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=1202.00 yds
+[2025-12-09 14:24:40.372] [DEBUG] [TRAIN_MODEL] Power=8220W, Speed=9.96mph, Authority=1031yds
+[2025-12-09 14:24:40.462] [DEBUG] [TRAIN_MODEL] Power=8220W, Speed=10.01mph, Authority=1029yds
+[2025-12-09 14:24:40.487] [DEBUG] [POSITION  ] Train 1 Block 65: pos=168.34yds, delta=14.34yds, block_traveled=166.98yds
+[2025-12-09 14:24:40.636] [DEBUG] [TRAIN_MODEL] Power=8220W, Speed=10.06mph, Authority=1026yds
+[2025-12-09 14:24:40.733] [DEBUG] [TRAIN_MODEL] Power=8220W, Speed=10.11mph, Authority=1024yds
+[2025-12-09 14:24:41.017] [DEBUG] [TRAIN_MODEL] Power=7993W, Speed=10.16mph, Authority=1021yds
+[2025-12-09 14:24:41.301] [DEBUG] [TRAIN_MODEL] Power=7993W, Speed=10.20mph, Authority=1019yds
+[2025-12-09 14:24:41.395] [DEBUG] [TRAIN_MODEL] Power=7993W, Speed=10.25mph, Authority=1016yds
+[2025-12-09 14:24:41.576] [DEBUG] [POSITION  ] Train 1 Block 65: pos=185.64yds, delta=17.29yds, block_traveled=184.27yds
+[2025-12-09 14:24:41.632] [DEBUG] [TRAIN_MODEL] Power=7846W, Speed=10.30mph, Authority=1014yds
+[2025-12-09 14:24:41.955] [DEBUG] [TRAIN_MODEL] Power=7846W, Speed=10.35mph, Authority=1011yds
+[2025-12-09 14:24:42.055] [DEBUG] [TRAIN_MODEL] Power=7846W, Speed=10.39mph, Authority=1009yds
+[2025-12-09 14:24:42.311] [DEBUG] [TRAIN_MODEL] Power=7706W, Speed=10.44mph, Authority=1006yds
+[2025-12-09 14:24:42.548] [DEBUG] [TRAIN_MODEL] Power=7706W, Speed=10.48mph, Authority=1004yds
+[2025-12-09 14:24:42.708] [DEBUG] [TRAIN_MODEL] Power=7706W, Speed=10.53mph, Authority=1001yds
+[2025-12-09 14:24:42.871] [DEBUG] [POSITION  ] Train 1 Block 65: pos=193.22yds, delta=7.59yds, block_traveled=191.86yds
+    [Previous message repeated 11 times]
+[2025-12-09 14:24:43.062] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 11 times]
+[2025-12-09 14:24:43.079] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 11 times]
+[2025-12-09 14:24:43.094] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 11 times]
+[2025-12-09 14:24:43.110] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 11 times]
+[2025-12-09 14:24:43.125] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 11 times]
+[2025-12-09 14:24:43.143] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:24:43.211] [DEBUG] [TRAIN_MODEL] Power=7580W, Speed=10.57mph, Authority=999yds
+[2025-12-09 14:24:43.345] [DEBUG] [TRAIN_MODEL] Power=7580W, Speed=10.62mph, Authority=996yds
+[2025-12-09 14:24:43.464] [DEBUG] [TRAIN_MODEL] Power=7580W, Speed=10.66mph, Authority=993yds
+[2025-12-09 14:24:43.568] [DEBUG] [TRAIN_MODEL] Power=7580W, Speed=10.70mph, Authority=991yds
+[2025-12-09 14:24:43.792] [DEBUG] [TRAIN_MODEL] Power=7381W, Speed=10.75mph, Authority=988yds
+[2025-12-09 14:24:43.955] [DEBUG] [TRAIN_MODEL] Power=7381W, Speed=10.79mph, Authority=985yds
+[2025-12-09 14:24:43.983] [DEBUG] [POSITION  ] Train 1 Block 65: pos=211.31yds, delta=18.09yds, block_traveled=209.95yds
+[2025-12-09 14:24:44.087] [DEBUG] [TRAIN_MODEL] Power=7381W, Speed=10.83mph, Authority=983yds
+[2025-12-09 14:24:44.240] [DEBUG] [TRAIN_MODEL] Power=7381W, Speed=10.87mph, Authority=980yds
+[2025-12-09 14:24:44.488] [DEBUG] [TRAIN_MODEL] Power=7180W, Speed=10.91mph, Authority=977yds
+[2025-12-09 14:24:44.745] [DEBUG] [TRAIN_MODEL] Power=7180W, Speed=10.95mph, Authority=975yds
+[2025-12-09 14:24:44.881] [DEBUG] [TRAIN_MODEL] Power=7180W, Speed=10.99mph, Authority=972yds
+[2025-12-09 14:24:45.053] [DEBUG] [POSITION  ] Train 1 Block 65: pos=229.91yds, delta=18.60yds, block_traveled=228.54yds
+[2025-12-09 14:24:45.073] [INFO ] [POSITION  ] Train 1 Block 65: ADVANCING to next block (traveled 228.54/218.72 yds)
+[2025-12-09 14:24:45.089] [DEBUG] [POSITION  ] Train 1 Block 65: motion state = Moving
+[2025-12-09 14:24:45.104] [DEBUG] [ROUTING   ] Green Line routing: current=65, previous=64
+[2025-12-09 14:24:45.120] [DEBUG] [ROUTING   ] Block 65 NOT in switch_routes, using motion logic
+[2025-12-09 14:24:45.136] [DEBUG] [ROUTING   ] Motion forward: 65 → 66
+[2025-12-09 14:24:45.151] [INFO ] [ROUTING   ] Green Line final routing decision: 65 → 66
+[2025-12-09 14:24:45.167] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 65 → 66
+[2025-12-09 14:24:45.277] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 65 → 66
+[2025-12-09 14:24:45.294] [DEBUG] [LIGHT     ] Green line block 62 light: Yellow → Green
+[2025-12-09 14:24:45.372] [DEBUG] [TRAIN_MODEL] Power=7046W, Speed=11.03mph, Authority=969yds
+[2025-12-09 14:24:45.472] [DEBUG] [TRAIN_MODEL] Power=7046W, Speed=11.07mph, Authority=967yds
+[2025-12-09 14:24:45.573] [DEBUG] [TRAIN_MODEL] Power=7046W, Speed=11.11mph, Authority=964yds
+[2025-12-09 14:24:45.720] [DEBUG] [LIGHT     ] Green line block 62 traffic light: Yellow → Green
+[2025-12-09 14:24:45.849] [DEBUG] [TRAIN_MODEL] Power=6917W, Speed=11.15mph, Authority=961yds
+[2025-12-09 14:24:45.956] [DEBUG] [TRAIN_MODEL] Power=6917W, Speed=11.19mph, Authority=959yds
+[2025-12-09 14:24:46.073] [DEBUG] [TRAIN_MODEL] Power=6917W, Speed=11.22mph, Authority=956yds
+    [Previous message repeated 16 times]
+[2025-12-09 14:24:46.152] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=1202 yds
+[2025-12-09 14:24:46.218] [DEBUG] [TRAIN_MODEL] Power=6917W, Speed=11.26mph, Authority=953yds
+    [Previous message repeated 8 times]
+[2025-12-09 14:24:46.434] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=1202.00 yds
+[2025-12-09 14:24:46.454] [DEBUG] [POSITION  ] Train 1 Block 66: pos=248.98yds, delta=19.07yds, block_traveled=28.90yds
+[2025-12-09 14:24:46.556] [DEBUG] [TRAIN_MODEL] Power=6730W, Speed=11.30mph, Authority=950yds
+[2025-12-09 14:24:46.777] [DEBUG] [TRAIN_MODEL] Power=6730W, Speed=11.33mph, Authority=947yds
+[2025-12-09 14:24:46.911] [DEBUG] [TRAIN_MODEL] Power=6730W, Speed=11.37mph, Authority=945yds
+[2025-12-09 14:24:47.103] [DEBUG] [TRAIN_MODEL] Power=6603W, Speed=11.41mph, Authority=942yds
+[2025-12-09 14:24:47.363] [DEBUG] [TRAIN_MODEL] Power=6603W, Speed=11.44mph, Authority=939yds
+[2025-12-09 14:24:47.457] [DEBUG] [TRAIN_MODEL] Power=6603W, Speed=11.48mph, Authority=936yds
+[2025-12-09 14:24:47.551] [DEBUG] [POSITION  ] Train 1 Block 66: pos=257.30yds, delta=8.31yds, block_traveled=37.21yds
+[2025-12-09 14:24:47.727] [DEBUG] [TRAIN_MODEL] Power=6474W, Speed=11.51mph, Authority=934yds
+[2025-12-09 14:24:47.870] [DEBUG] [TRAIN_MODEL] Power=6474W, Speed=11.55mph, Authority=931yds
+[2025-12-09 14:24:47.977] [DEBUG] [TRAIN_MODEL] Power=6474W, Speed=11.58mph, Authority=928yds
+[2025-12-09 14:24:48.138] [DEBUG] [TRAIN_MODEL] Power=6474W, Speed=11.61mph, Authority=925yds
+[2025-12-09 14:24:48.329] [DEBUG] [TRAIN_MODEL] Power=6294W, Speed=11.65mph, Authority=922yds
+[2025-12-09 14:24:48.608] [DEBUG] [TRAIN_MODEL] Power=6294W, Speed=11.68mph, Authority=919yds
+[2025-12-09 14:24:48.712] [DEBUG] [TRAIN_MODEL] Power=6294W, Speed=11.71mph, Authority=916yds
+[2025-12-09 14:24:48.743] [DEBUG] [POSITION  ] Train 1 Block 66: pos=276.99yds, delta=19.70yds, block_traveled=56.90yds
+    [Previous message repeated 8 times]
+[2025-12-09 14:24:48.923] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 8 times]
+[2025-12-09 14:24:48.942] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 8 times]
+[2025-12-09 14:24:48.960] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 8 times]
+[2025-12-09 14:24:48.981] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 8 times]
+[2025-12-09 14:24:48.999] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 8 times]
+[2025-12-09 14:24:49.017] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:24:49.084] [DEBUG] [TRAIN_MODEL] Power=6170W, Speed=11.75mph, Authority=914yds
+[2025-12-09 14:24:49.225] [DEBUG] [TRAIN_MODEL] Power=6170W, Speed=11.78mph, Authority=911yds
+[2025-12-09 14:24:49.331] [DEBUG] [TRAIN_MODEL] Power=6170W, Speed=11.81mph, Authority=908yds
+[2025-12-09 14:24:49.471] [DEBUG] [TRAIN_MODEL] Power=6170W, Speed=11.84mph, Authority=905yds
+[2025-12-09 14:24:49.652] [DEBUG] [TRAIN_MODEL] Power=5999W, Speed=11.87mph, Authority=902yds
+[2025-12-09 14:24:49.927] [DEBUG] [TRAIN_MODEL] Power=5999W, Speed=11.90mph, Authority=899yds
+[2025-12-09 14:24:49.960] [DEBUG] [POSITION  ] Train 1 Block 66: pos=297.09yds, delta=20.10yds, block_traveled=77.00yds
+[2025-12-09 14:24:50.074] [DEBUG] [TRAIN_MODEL] Power=5999W, Speed=11.93mph, Authority=896yds
+[2025-12-09 14:24:50.329] [DEBUG] [TRAIN_MODEL] Power=5877W, Speed=11.96mph, Authority=893yds
+[2025-12-09 14:24:50.486] [DEBUG] [TRAIN_MODEL] Power=5877W, Speed=11.99mph, Authority=890yds
+[2025-12-09 14:24:50.575] [DEBUG] [TRAIN_MODEL] Power=5877W, Speed=12.02mph, Authority=887yds
+[2025-12-09 14:24:50.837] [DEBUG] [TRAIN_MODEL] Power=5877W, Speed=12.05mph, Authority=884yds
+[2025-12-09 14:24:51.058] [DEBUG] [TRAIN_MODEL] Power=5712W, Speed=12.08mph, Authority=881yds
+[2025-12-09 14:24:51.088] [DEBUG] [POSITION  ] Train 1 Block 66: pos=317.56yds, delta=20.47yds, block_traveled=97.47yds
+[2025-12-09 14:24:51.198] [DEBUG] [TRAIN_MODEL] Power=5712W, Speed=12.11mph, Authority=879yds
+[2025-12-09 14:24:51.343] [DEBUG] [TRAIN_MODEL] Power=5712W, Speed=12.14mph, Authority=876yds
+[2025-12-09 14:24:51.721] [DEBUG] [TRAIN_MODEL] Power=5592W, Speed=12.17mph, Authority=873yds
+[2025-12-09 14:24:51.821] [DEBUG] [TRAIN_MODEL] Power=5592W, Speed=12.20mph, Authority=870yds
+[2025-12-09 14:24:51.918] [DEBUG] [TRAIN_MODEL] Power=5592W, Speed=12.23mph, Authority=867yds
+[2025-12-09 14:24:52.185] [DEBUG] [TRAIN_MODEL] Power=5592W, Speed=12.25mph, Authority=864yds
+[2025-12-09 14:24:52.338] [DEBUG] [POSITION  ] Train 1 Block 66: pos=326.44yds, delta=8.88yds, block_traveled=106.35yds
+[2025-12-09 14:24:52.482] [DEBUG] [TRAIN_MODEL] Power=5432W, Speed=12.28mph, Authority=861yds
+[2025-12-09 14:24:52.577] [DEBUG] [TRAIN_MODEL] Power=5432W, Speed=12.31mph, Authority=858yds
+[2025-12-09 14:24:52.677] [DEBUG] [TRAIN_MODEL] Power=5432W, Speed=12.34mph, Authority=855yds
+[2025-12-09 14:24:53.092] [DEBUG] [TRAIN_MODEL] Power=5315W, Speed=12.36mph, Authority=852yds
+[2025-12-09 14:24:53.232] [DEBUG] [TRAIN_MODEL] Power=5315W, Speed=12.39mph, Authority=849yds
+[2025-12-09 14:24:53.448] [DEBUG] [TRAIN_MODEL] Power=5315W, Speed=12.41mph, Authority=846yds
+[2025-12-09 14:24:53.477] [DEBUG] [POSITION  ] Train 1 Block 66: pos=347.41yds, delta=20.97yds, block_traveled=127.32yds
+    [Previous message repeated 21 times]
+[2025-12-09 14:24:53.568] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=1202 yds
+    [Previous message repeated 10 times]
+[2025-12-09 14:24:53.685] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=1202.00 yds
+[2025-12-09 14:24:53.762] [DEBUG] [TRAIN_MODEL] Power=5198W, Speed=12.44mph, Authority=842yds
+[2025-12-09 14:24:53.851] [DEBUG] [TRAIN_MODEL] Power=5198W, Speed=12.47mph, Authority=839yds
+[2025-12-09 14:24:54.156] [DEBUG] [TRAIN_MODEL] Power=5198W, Speed=12.49mph, Authority=836yds
+[2025-12-09 14:24:54.597] [DEBUG] [POSITION  ] Train 1 Block 66: pos=365.63yds, delta=18.23yds, block_traveled=145.55yds
+[2025-12-09 14:24:55.727] [DEBUG] [POSITION  ] Train 1 Block 66: pos=387.01yds, delta=21.37yds, block_traveled=166.92yds
+[2025-12-09 14:24:56.942] [DEBUG] [POSITION  ] Train 1 Block 66: pos=411.43yds, delta=24.43yds, block_traveled=191.34yds
+[2025-12-09 14:24:58.039] [DEBUG] [POSITION  ] Train 1 Block 66: pos=420.59yds, delta=9.16yds, block_traveled=200.50yds
+[2025-12-09 14:24:59.087] [DEBUG] [POSITION  ] Train 1 Block 66: pos=438.91yds, delta=18.32yds, block_traveled=218.82yds
+[2025-12-09 14:24:59.107] [INFO ] [POSITION  ] Train 1 Block 66: ADVANCING to next block (traveled 218.82/218.72 yds)
+[2025-12-09 14:24:59.126] [DEBUG] [POSITION  ] Train 1 Block 66: motion state = Moving
+[2025-12-09 14:24:59.144] [DEBUG] [ROUTING   ] Green Line routing: current=66, previous=65
+[2025-12-09 14:24:59.163] [DEBUG] [ROUTING   ] Block 66 NOT in switch_routes, using motion logic
+[2025-12-09 14:24:59.182] [DEBUG] [ROUTING   ] Motion forward: 66 → 67
+[2025-12-09 14:24:59.202] [INFO ] [ROUTING   ] Green Line final routing decision: 66 → 67
+[2025-12-09 14:24:59.220] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 66 → 67
+[2025-12-09 14:24:59.379] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 66 → 67
+    [Previous message repeated 15 times]
+[2025-12-09 14:24:59.523] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 15 times]
+[2025-12-09 14:24:59.544] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 15 times]
+[2025-12-09 14:24:59.562] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 15 times]
+[2025-12-09 14:24:59.580] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 15 times]
+[2025-12-09 14:24:59.599] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 15 times]
+[2025-12-09 14:24:59.619] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:25:00.356] [DEBUG] [POSITION  ] Train 1 Block 67: pos=457.23yds, delta=18.32yds, block_traveled=18.42yds
+[2025-12-09 14:25:01.511] [DEBUG] [POSITION  ] Train 1 Block 67: pos=478.61yds, delta=21.37yds, block_traveled=39.79yds
+[2025-12-09 14:25:02.630] [DEBUG] [POSITION  ] Train 1 Block 67: pos=487.77yds, delta=9.16yds, block_traveled=48.95yds
+[2025-12-09 14:25:03.767] [DEBUG] [POSITION  ] Train 1 Block 67: pos=509.14yds, delta=21.37yds, block_traveled=70.33yds
+[2025-12-09 14:25:04.923] [DEBUG] [POSITION  ] Train 1 Block 67: pos=530.51yds, delta=21.37yds, block_traveled=91.70yds
+[2025-12-09 14:25:06.099] [DEBUG] [POSITION  ] Train 1 Block 67: pos=551.88yds, delta=21.37yds, block_traveled=113.07yds
+[2025-12-09 14:25:06.120] [INFO ] [POSITION  ] Train 1 Block 67: ADVANCING to next block (traveled 113.07/109.36 yds)
+[2025-12-09 14:25:06.142] [DEBUG] [POSITION  ] Train 1 Block 67: motion state = Moving
+[2025-12-09 14:25:06.160] [DEBUG] [ROUTING   ] Green Line routing: current=67, previous=66
+[2025-12-09 14:25:06.180] [DEBUG] [ROUTING   ] Block 67 NOT in switch_routes, using motion logic
+[2025-12-09 14:25:06.199] [DEBUG] [ROUTING   ] Motion forward: 67 → 68
+[2025-12-09 14:25:06.217] [INFO ] [ROUTING   ] Green Line final routing decision: 67 → 68
+[2025-12-09 14:25:06.237] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 67 → 68
+[2025-12-09 14:25:06.334] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 67 → 68
+[2025-12-09 14:25:06.357] [DEBUG] [LIGHT     ] Green line block 62 light: Green → Super Green
+[2025-12-09 14:25:06.702] [DEBUG] [LIGHT     ] Green line block 62 traffic light: Green → Super Green
+[2025-12-09 14:25:07.398] [DEBUG] [POSITION  ] Train 1 Block 68: pos=570.20yds, delta=18.32yds, block_traveled=22.03yds
+[2025-12-09 14:25:08.592] [DEBUG] [POSITION  ] Train 1 Block 68: pos=591.58yds, delta=21.37yds, block_traveled=43.41yds
+[2025-12-09 14:25:09.652] [DEBUG] [POSITION  ] Train 1 Block 68: pos=600.74yds, delta=9.16yds, block_traveled=52.57yds
+[2025-12-09 14:25:10.888] [DEBUG] [POSITION  ] Train 1 Block 68: pos=622.11yds, delta=21.37yds, block_traveled=73.94yds
+[2025-12-09 14:25:11.990] [DEBUG] [POSITION  ] Train 1 Block 68: pos=640.43yds, delta=18.32yds, block_traveled=92.26yds
+[2025-12-09 14:25:13.134] [DEBUG] [POSITION  ] Train 1 Block 68: pos=649.59yds, delta=9.16yds, block_traveled=101.42yds
+[2025-12-09 14:25:14.227] [DEBUG] [POSITION  ] Train 1 Block 68: pos=667.91yds, delta=18.32yds, block_traveled=119.74yds
+[2025-12-09 14:25:14.251] [INFO ] [POSITION  ] Train 1 Block 68: ADVANCING to next block (traveled 119.74/109.36 yds)
+[2025-12-09 14:25:14.290] [DEBUG] [POSITION  ] Train 1 Block 68: motion state = Moving
+[2025-12-09 14:25:14.310] [DEBUG] [ROUTING   ] Green Line routing: current=68, previous=67
+[2025-12-09 14:25:14.330] [DEBUG] [ROUTING   ] Block 68 NOT in switch_routes, using motion logic
+[2025-12-09 14:25:14.348] [DEBUG] [ROUTING   ] Motion forward: 68 → 69
+[2025-12-09 14:25:14.368] [INFO ] [ROUTING   ] Green Line final routing decision: 68 → 69
+[2025-12-09 14:25:14.391] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 68 → 69
+[2025-12-09 14:25:14.483] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 68 → 69
+    [Previous message repeated 61 times]
+[2025-12-09 14:25:14.533] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=1202 yds
+    [Previous message repeated 31 times]
+[2025-12-09 14:25:14.683] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=1202.00 yds
+[2025-12-09 14:25:15.550] [DEBUG] [POSITION  ] Train 1 Block 69: pos=689.28yds, delta=21.37yds, block_traveled=31.75yds
+[2025-12-09 14:25:16.692] [DEBUG] [POSITION  ] Train 1 Block 69: pos=710.66yds, delta=21.37yds, block_traveled=53.12yds
+[2025-12-09 14:25:17.969] [DEBUG] [POSITION  ] Train 1 Block 69: pos=728.97yds, delta=18.32yds, block_traveled=71.44yds
+[2025-12-09 14:25:19.034] [DEBUG] [POSITION  ] Train 1 Block 69: pos=738.13yds, delta=9.16yds, block_traveled=80.60yds
+[2025-12-09 14:25:20.109] [DEBUG] [POSITION  ] Train 1 Block 69: pos=759.51yds, delta=21.37yds, block_traveled=101.97yds
+[2025-12-09 14:25:21.185] [DEBUG] [POSITION  ] Train 1 Block 69: pos=777.83yds, delta=18.32yds, block_traveled=120.29yds
+[2025-12-09 14:25:21.208] [INFO ] [POSITION  ] Train 1 Block 69: ADVANCING to next block (traveled 120.29/109.36 yds)
+[2025-12-09 14:25:21.248] [DEBUG] [POSITION  ] Train 1 Block 69: motion state = Moving
+[2025-12-09 14:25:21.269] [DEBUG] [ROUTING   ] Green Line routing: current=69, previous=68
+[2025-12-09 14:25:21.290] [DEBUG] [ROUTING   ] Block 69 NOT in switch_routes, using motion logic
+[2025-12-09 14:25:21.307] [DEBUG] [ROUTING   ] Motion forward: 69 → 70
+[2025-12-09 14:25:21.330] [INFO ] [ROUTING   ] Green Line final routing decision: 69 → 70
+[2025-12-09 14:25:21.351] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 69 → 70
+[2025-12-09 14:25:21.502] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 69 → 70
+    [Previous message repeated 33 times]
+[2025-12-09 14:25:21.738] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 33 times]
+[2025-12-09 14:25:21.759] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 33 times]
+[2025-12-09 14:25:21.787] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 33 times]
+[2025-12-09 14:25:21.810] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 33 times]
+[2025-12-09 14:25:21.833] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 33 times]
+[2025-12-09 14:25:21.854] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:25:22.517] [DEBUG] [POSITION  ] Train 1 Block 70: pos=799.20yds, delta=21.37yds, block_traveled=32.31yds
+[2025-12-09 14:25:23.601] [DEBUG] [POSITION  ] Train 1 Block 70: pos=811.41yds, delta=12.21yds, block_traveled=44.52yds
+[2025-12-09 14:25:24.697] [DEBUG] [POSITION  ] Train 1 Block 70: pos=826.68yds, delta=15.27yds, block_traveled=59.79yds
+[2025-12-09 14:25:25.742] [DEBUG] [POSITION  ] Train 1 Block 70: pos=845.00yds, delta=18.32yds, block_traveled=78.11yds
+[2025-12-09 14:25:26.876] [DEBUG] [POSITION  ] Train 1 Block 70: pos=857.21yds, delta=12.21yds, block_traveled=90.32yds
+[2025-12-09 14:25:28.051] [DEBUG] [POSITION  ] Train 1 Block 70: pos=878.59yds, delta=21.37yds, block_traveled=111.69yds
+[2025-12-09 14:25:28.077] [INFO ] [POSITION  ] Train 1 Block 70: ADVANCING to next block (traveled 111.69/109.36 yds)
+[2025-12-09 14:25:28.121] [DEBUG] [POSITION  ] Train 1 Block 70: motion state = Moving
+[2025-12-09 14:25:28.142] [DEBUG] [ROUTING   ] Green Line routing: current=70, previous=69
+[2025-12-09 14:25:28.161] [DEBUG] [ROUTING   ] Block 70 NOT in switch_routes, using motion logic
+[2025-12-09 14:25:28.184] [DEBUG] [ROUTING   ] Motion forward: 70 → 71
+[2025-12-09 14:25:28.204] [INFO ] [ROUTING   ] Green Line final routing decision: 70 → 71
+[2025-12-09 14:25:28.223] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 70 → 71
+[2025-12-09 14:25:28.324] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 70 → 71
+[2025-12-09 14:25:29.331] [DEBUG] [POSITION  ] Train 1 Block 71: pos=899.96yds, delta=21.37yds, block_traveled=23.70yds
+[2025-12-09 14:25:30.401] [DEBUG] [POSITION  ] Train 1 Block 71: pos=921.33yds, delta=21.37yds, block_traveled=45.08yds
+[2025-12-09 14:25:31.525] [DEBUG] [POSITION  ] Train 1 Block 71: pos=933.54yds, delta=12.21yds, block_traveled=57.29yds
+[2025-12-09 14:25:32.639] [DEBUG] [POSITION  ] Train 1 Block 71: pos=954.92yds, delta=21.37yds, block_traveled=78.66yds
+[2025-12-09 14:25:33.707] [DEBUG] [POSITION  ] Train 1 Block 71: pos=973.24yds, delta=18.32yds, block_traveled=96.98yds
+[2025-12-09 14:25:34.766] [DEBUG] [POSITION  ] Train 1 Block 71: pos=985.45yds, delta=12.21yds, block_traveled=109.20yds
+[2025-12-09 14:25:35.877] [DEBUG] [POSITION  ] Train 1 Block 71: pos=1003.77yds, delta=18.32yds, block_traveled=127.52yds
+[2025-12-09 14:25:35.900] [INFO ] [POSITION  ] Train 1 Block 71: ADVANCING to next block (traveled 127.52/109.36 yds)
+[2025-12-09 14:25:35.921] [DEBUG] [POSITION  ] Train 1 Block 71: motion state = Moving
+[2025-12-09 14:25:35.940] [DEBUG] [ROUTING   ] Green Line routing: current=71, previous=70
+[2025-12-09 14:25:35.962] [DEBUG] [ROUTING   ] Block 71 NOT in switch_routes, using motion logic
+[2025-12-09 14:25:35.982] [DEBUG] [ROUTING   ] Motion forward: 71 → 72
+[2025-12-09 14:25:36.000] [INFO ] [ROUTING   ] Green Line final routing decision: 71 → 72
+[2025-12-09 14:25:36.020] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 71 → 72
+[2025-12-09 14:25:36.112] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 71 → 72
+    [Previous message repeated 63 times]
+[2025-12-09 14:25:36.161] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=1202 yds
+    [Previous message repeated 32 times]
+[2025-12-09 14:25:36.353] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=1202.00 yds
+[2025-12-09 14:25:37.248] [DEBUG] [POSITION  ] Train 1 Block 72: pos=1028.20yds, delta=24.43yds, block_traveled=42.58yds
+[2025-12-09 14:25:38.360] [DEBUG] [POSITION  ] Train 1 Block 72: pos=1049.57yds, delta=21.37yds, block_traveled=63.95yds
+[2025-12-09 14:25:39.502] [DEBUG] [POSITION  ] Train 1 Block 72: pos=1070.94yds, delta=21.37yds, block_traveled=85.33yds
+[2025-12-09 14:25:40.638] [DEBUG] [POSITION  ] Train 1 Block 72: pos=1083.16yds, delta=12.21yds, block_traveled=97.54yds
+[2025-12-09 14:25:41.727] [DEBUG] [POSITION  ] Train 1 Block 72: pos=1104.53yds, delta=21.37yds, block_traveled=118.91yds
+[2025-12-09 14:25:41.752] [INFO ] [POSITION  ] Train 1 Block 72: ADVANCING to next block (traveled 118.91/109.36 yds)
+[2025-12-09 14:25:41.776] [DEBUG] [POSITION  ] Train 1 Block 72: motion state = Moving
+[2025-12-09 14:25:41.796] [DEBUG] [ROUTING   ] Green Line routing: current=72, previous=71
+[2025-12-09 14:25:41.817] [DEBUG] [ROUTING   ] Block 72 NOT in switch_routes, using motion logic
+[2025-12-09 14:25:41.837] [DEBUG] [ROUTING   ] Motion forward: 72 → 73
+[2025-12-09 14:25:41.857] [INFO ] [ROUTING   ] Green Line final routing decision: 72 → 73
+[2025-12-09 14:25:41.876] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 72 → 73
+[2025-12-09 14:25:41.911] [DEBUG] [BEACON    ] Train 1 beacon updated at block 73
+[2025-12-09 14:25:42.083] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 72 → 73
+[2025-12-09 14:25:42.106] [INFO ] [TRAIN     ] Train 1 arrived at Dormont
+    [Previous message repeated 30 times]
+[2025-12-09 14:25:42.280] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 30 times]
+[2025-12-09 14:25:42.307] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 30 times]
+[2025-12-09 14:25:42.332] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 30 times]
+[2025-12-09 14:25:42.355] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 30 times]
+[2025-12-09 14:25:42.378] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 30 times]
+[2025-12-09 14:25:42.402] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:25:42.500] [INFO ] [TRAIN     ] Train 1 DWELLING at Dormont for 10s
+    [Previous message repeated 16 times]
+[2025-12-09 14:25:42.988] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-09 14:25:43.092] [DEBUG] [POSITION  ] Train 1 Block 73: pos=1122.85yds, delta=18.32yds, block_traveled=27.87yds
+[2025-12-09 14:25:43.670] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=11.15mph, Authority=0yds
+[2025-12-09 14:25:43.894] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=9.80mph, Authority=0yds
+[2025-12-09 14:25:44.007] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=8.46mph, Authority=0yds
+[2025-12-09 14:25:44.219] [DEBUG] [POSITION  ] Train 1 Block 73: pos=1134.73yds, delta=11.88yds, block_traveled=39.76yds
+[2025-12-09 14:25:44.361] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=7.12mph, Authority=0yds
+[2025-12-09 14:25:44.595] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=5.77mph, Authority=0yds
+[2025-12-09 14:25:44.695] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=4.43mph, Authority=0yds
+[2025-12-09 14:25:44.848] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=3.09mph, Authority=0yds
+[2025-12-09 14:25:45.225] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=1.75mph, Authority=0yds
+[2025-12-09 14:25:45.327] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=0.40mph, Authority=0yds
+[2025-12-09 14:25:45.362] [DEBUG] [POSITION  ] Train 1 Block 73: pos=1144.19yds, delta=9.45yds, block_traveled=49.21yds
+[2025-12-09 14:25:46.410] [DEBUG] [POSITION  ] Train 1 Block 73: pos=1144.71yds, delta=0.52yds, block_traveled=49.74yds
+[2025-12-09 14:25:47.484] [DEBUG] [POSITION  ] Train 1 Block 73: pos=1144.71yds, delta=0.00yds, block_traveled=49.74yds
+[2025-12-09 14:25:52.248] [INFO ] [TRAIN     ] Train 1 RESUMING after dwell: speed=12.47 mph, authority=765 yds
+[2025-12-09 14:25:52.300] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=765 yds
+[2025-12-09 14:25:52.646] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=765.00 yds
+[2025-12-09 14:25:52.705] [INFO ] [TRAIN_MODEL] Position preserved on new authority: 765 yds (yards_in_block: 49.74)
+[2025-12-09 14:25:53.156] [DEBUG] [TRAIN_MODEL] Power=19334W, Speed=0.56mph, Authority=715yds
+[2025-12-09 14:25:53.364] [DEBUG] [TRAIN_MODEL] Power=19334W, Speed=1.12mph, Authority=715yds
+[2025-12-09 14:25:53.465] [DEBUG] [TRAIN_MODEL] Power=19334W, Speed=1.68mph, Authority=714yds
+[2025-12-09 14:25:53.694] [DEBUG] [TRAIN_MODEL] Power=17199W, Speed=2.24mph, Authority=714yds
+[2025-12-09 14:25:53.913] [DEBUG] [TRAIN_MODEL] Power=17199W, Speed=2.71mph, Authority=713yds
+[2025-12-09 14:25:54.062] [DEBUG] [POSITION  ] Train 1 Block 73: POSITION RESET DETECTED - syncing previous position
+[2025-12-09 14:25:54.085] [DEBUG] [POSITION  ] Train 1 Block 73: pos=51.76yds, delta=0.00yds, block_traveled=49.74yds
+[2025-12-09 14:25:54.173] [DEBUG] [TRAIN_MODEL] Power=17199W, Speed=3.10mph, Authority=712yds
+[2025-12-09 14:25:54.289] [DEBUG] [TRAIN_MODEL] Power=17199W, Speed=3.44mph, Authority=712yds
+[2025-12-09 14:25:54.629] [DEBUG] [TRAIN_MODEL] Power=14909W, Speed=3.70mph, Authority=711yds
+[2025-12-09 14:25:54.786] [DEBUG] [TRAIN_MODEL] Power=14909W, Speed=3.95mph, Authority=710yds
+[2025-12-09 14:25:54.889] [DEBUG] [TRAIN_MODEL] Power=14909W, Speed=4.18mph, Authority=709yds
+[2025-12-09 14:25:55.011] [DEBUG] [TRAIN_MODEL] Power=14909W, Speed=4.40mph, Authority=708yds
+[2025-12-09 14:25:55.203] [DEBUG] [POSITION  ] Train 1 Block 73: pos=54.27yds, delta=2.50yds, block_traveled=52.24yds
+[2025-12-09 14:25:55.300] [DEBUG] [TRAIN_MODEL] Power=13759W, Speed=4.59mph, Authority=707yds
+[2025-12-09 14:25:55.600] [DEBUG] [TRAIN_MODEL] Power=13759W, Speed=4.77mph, Authority=705yds
+[2025-12-09 14:25:55.695] [DEBUG] [TRAIN_MODEL] Power=13759W, Speed=4.95mph, Authority=704yds
+[2025-12-09 14:25:55.947] [DEBUG] [TRAIN_MODEL] Power=13185W, Speed=5.11mph, Authority=703yds
+[2025-12-09 14:25:56.225] [DEBUG] [TRAIN_MODEL] Power=13185W, Speed=5.27mph, Authority=702yds
+[2025-12-09 14:25:56.335] [DEBUG] [TRAIN_MODEL] Power=13185W, Speed=5.42mph, Authority=700yds
+[2025-12-09 14:25:56.388] [DEBUG] [POSITION  ] Train 1 Block 73: pos=60.83yds, delta=6.56yds, block_traveled=58.80yds
+[2025-12-09 14:25:56.680] [DEBUG] [TRAIN_MODEL] Power=12727W, Speed=5.57mph, Authority=699yds
+[2025-12-09 14:25:56.788] [DEBUG] [TRAIN_MODEL] Power=12727W, Speed=5.71mph, Authority=698yds
+[2025-12-09 14:25:56.905] [DEBUG] [TRAIN_MODEL] Power=12727W, Speed=5.84mph, Authority=696yds
+[2025-12-09 14:25:57.190] [DEBUG] [TRAIN_MODEL] Power=12727W, Speed=5.98mph, Authority=695yds
+    [Previous message repeated 23 times]
+[2025-12-09 14:25:57.335] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 23 times]
+[2025-12-09 14:25:57.365] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 23 times]
+[2025-12-09 14:25:57.390] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 23 times]
+[2025-12-09 14:25:57.414] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 23 times]
+[2025-12-09 14:25:57.437] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 23 times]
+[2025-12-09 14:25:57.461] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:25:57.531] [DEBUG] [POSITION  ] Train 1 Block 73: pos=70.34yds, delta=9.51yds, block_traveled=68.31yds
+[2025-12-09 14:25:57.600] [DEBUG] [TRAIN_MODEL] Power=12149W, Speed=6.10mph, Authority=693yds
+[2025-12-09 14:25:57.695] [DEBUG] [TRAIN_MODEL] Power=12149W, Speed=6.22mph, Authority=692yds
+[2025-12-09 14:25:57.826] [DEBUG] [TRAIN_MODEL] Power=12149W, Speed=6.34mph, Authority=690yds
+[2025-12-09 14:25:58.139] [DEBUG] [TRAIN_MODEL] Power=11796W, Speed=6.46mph, Authority=689yds
+[2025-12-09 14:25:58.339] [DEBUG] [TRAIN_MODEL] Power=11796W, Speed=6.57mph, Authority=687yds
+[2025-12-09 14:25:58.441] [DEBUG] [TRAIN_MODEL] Power=11796W, Speed=6.68mph, Authority=685yds
+[2025-12-09 14:25:58.678] [DEBUG] [TRAIN_MODEL] Power=11491W, Speed=6.78mph, Authority=684yds
+[2025-12-09 14:25:58.714] [DEBUG] [POSITION  ] Train 1 Block 73: pos=76.48yds, delta=6.14yds, block_traveled=74.45yds
+[2025-12-09 14:25:58.827] [DEBUG] [TRAIN_MODEL] Power=11491W, Speed=6.89mph, Authority=682yds
+[2025-12-09 14:25:59.063] [DEBUG] [TRAIN_MODEL] Power=11491W, Speed=6.99mph, Authority=680yds
+[2025-12-09 14:25:59.148] [DEBUG] [TRAIN_MODEL] Power=11491W, Speed=7.09mph, Authority=679yds
+[2025-12-09 14:25:59.369] [DEBUG] [TRAIN_MODEL] Power=11060W, Speed=7.19mph, Authority=677yds
+[2025-12-09 14:25:59.697] [DEBUG] [TRAIN_MODEL] Power=11060W, Speed=7.28mph, Authority=675yds
+[2025-12-09 14:25:59.803] [DEBUG] [TRAIN_MODEL] Power=11060W, Speed=7.37mph, Authority=673yds
+[2025-12-09 14:25:59.842] [DEBUG] [POSITION  ] Train 1 Block 73: pos=88.26yds, delta=11.78yds, block_traveled=86.23yds
+[2025-12-09 14:26:00.053] [DEBUG] [TRAIN_MODEL] Power=10812W, Speed=7.46mph, Authority=671yds
+[2025-12-09 14:26:00.166] [DEBUG] [TRAIN_MODEL] Power=10812W, Speed=7.55mph, Authority=669yds
+    [Previous message repeated 10 times]
+[2025-12-09 14:26:00.244] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=765.00 yds
+    [Previous message repeated 21 times]
+[2025-12-09 14:26:00.322] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=765 yds
+[2025-12-09 14:26:00.406] [DEBUG] [TRAIN_MODEL] Power=10812W, Speed=7.64mph, Authority=668yds
+[2025-12-09 14:26:00.507] [DEBUG] [TRAIN_MODEL] Power=10812W, Speed=7.73mph, Authority=666yds
+[2025-12-09 14:26:00.741] [DEBUG] [TRAIN_MODEL] Power=10434W, Speed=7.81mph, Authority=664yds
+[2025-12-09 14:26:00.969] [DEBUG] [POSITION  ] Train 1 Block 73: pos=101.17yds, delta=12.92yds, block_traveled=99.14yds
+[2025-12-09 14:26:01.093] [DEBUG] [TRAIN_MODEL] Power=10434W, Speed=7.89mph, Authority=662yds
+[2025-12-09 14:26:01.196] [DEBUG] [TRAIN_MODEL] Power=10434W, Speed=7.97mph, Authority=660yds
+[2025-12-09 14:26:01.363] [DEBUG] [TRAIN_MODEL] Power=10217W, Speed=8.05mph, Authority=658yds
+[2025-12-09 14:26:01.560] [DEBUG] [TRAIN_MODEL] Power=10217W, Speed=8.13mph, Authority=656yds
+[2025-12-09 14:26:01.678] [DEBUG] [TRAIN_MODEL] Power=10217W, Speed=8.20mph, Authority=654yds
+[2025-12-09 14:26:01.960] [DEBUG] [TRAIN_MODEL] Power=10217W, Speed=8.28mph, Authority=652yds
+[2025-12-09 14:26:02.181] [DEBUG] [POSITION  ] Train 1 Block 73: pos=113.03yds, delta=11.86yds, block_traveled=111.01yds
+[2025-12-09 14:26:02.210] [INFO ] [POSITION  ] Train 1 Block 73: ADVANCING to next block (traveled 111.01/109.36 yds)
+[2025-12-09 14:26:02.239] [DEBUG] [POSITION  ] Train 1 Block 73: motion state = Moving
+[2025-12-09 14:26:02.262] [DEBUG] [ROUTING   ] Green Line routing: current=73, previous=72
+[2025-12-09 14:26:02.284] [DEBUG] [ROUTING   ] Block 73 NOT in switch_routes, using motion logic
+[2025-12-09 14:26:02.310] [DEBUG] [ROUTING   ] Motion forward: 73 → 74
+[2025-12-09 14:26:02.334] [INFO ] [ROUTING   ] Green Line final routing decision: 73 → 74
+[2025-12-09 14:26:02.358] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 73 → 74
+[2025-12-09 14:26:02.461] [DEBUG] [TRAIN_MODEL] Power=9911W, Speed=8.35mph, Authority=650yds
+[2025-12-09 14:26:02.565] [DEBUG] [TRAIN_MODEL] Power=9911W, Speed=8.43mph, Authority=648yds
+[2025-12-09 14:26:02.624] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 73 → 74
+[2025-12-09 14:26:02.730] [DEBUG] [TRAIN_MODEL] Power=9911W, Speed=8.50mph, Authority=646yds
+[2025-12-09 14:26:02.941] [DEBUG] [TRAIN_MODEL] Power=9742W, Speed=8.57mph, Authority=644yds
+[2025-12-09 14:26:03.080] [DEBUG] [TRAIN_MODEL] Power=9742W, Speed=8.64mph, Authority=642yds
+[2025-12-09 14:26:03.185] [DEBUG] [TRAIN_MODEL] Power=9742W, Speed=8.71mph, Authority=639yds
+[2025-12-09 14:26:03.288] [DEBUG] [TRAIN_MODEL] Power=9742W, Speed=8.78mph, Authority=637yds
+    [Previous message repeated 8 times]
+[2025-12-09 14:26:03.480] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 8 times]
+[2025-12-09 14:26:03.506] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 8 times]
+[2025-12-09 14:26:03.530] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 8 times]
+[2025-12-09 14:26:03.556] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 8 times]
+[2025-12-09 14:26:03.582] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 8 times]
+[2025-12-09 14:26:03.611] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:26:03.641] [DEBUG] [POSITION  ] Train 1 Block 74: pos=127.69yds, delta=14.66yds, block_traveled=16.30yds
+[2025-12-09 14:26:03.712] [DEBUG] [TRAIN_MODEL] Power=9434W, Speed=8.84mph, Authority=635yds
+[2025-12-09 14:26:03.869] [DEBUG] [TRAIN_MODEL] Power=9434W, Speed=8.91mph, Authority=633yds
+[2025-12-09 14:26:03.973] [DEBUG] [TRAIN_MODEL] Power=9434W, Speed=8.97mph, Authority=631yds
+[2025-12-09 14:26:04.217] [DEBUG] [TRAIN_MODEL] Power=9256W, Speed=9.03mph, Authority=629yds
+[2025-12-09 14:26:04.564] [DEBUG] [TRAIN_MODEL] Power=9256W, Speed=9.10mph, Authority=626yds
+[2025-12-09 14:26:04.663] [DEBUG] [TRAIN_MODEL] Power=9256W, Speed=9.16mph, Authority=624yds
+[2025-12-09 14:26:04.815] [DEBUG] [POSITION  ] Train 1 Block 74: pos=136.43yds, delta=8.74yds, block_traveled=25.04yds
+[2025-12-09 14:26:05.009] [DEBUG] [TRAIN_MODEL] Power=9087W, Speed=9.22mph, Authority=622yds
+[2025-12-09 14:26:05.322] [DEBUG] [TRAIN_MODEL] Power=9087W, Speed=9.28mph, Authority=620yds
+[2025-12-09 14:26:05.423] [DEBUG] [TRAIN_MODEL] Power=9087W, Speed=9.34mph, Authority=617yds
+[2025-12-09 14:26:05.602] [DEBUG] [TRAIN_MODEL] Power=8932W, Speed=9.40mph, Authority=615yds
+[2025-12-09 14:26:05.749] [DEBUG] [TRAIN_MODEL] Power=8932W, Speed=9.46mph, Authority=613yds
+[2025-12-09 14:26:05.921] [DEBUG] [POSITION  ] Train 1 Block 74: pos=147.70yds, delta=11.27yds, block_traveled=36.31yds
+[2025-12-09 14:26:06.056] [DEBUG] [TRAIN_MODEL] Power=8932W, Speed=9.52mph, Authority=610yds
+[2025-12-09 14:26:06.155] [DEBUG] [TRAIN_MODEL] Power=8932W, Speed=9.57mph, Authority=608yds
+[2025-12-09 14:26:06.411] [DEBUG] [TRAIN_MODEL] Power=8692W, Speed=9.63mph, Authority=606yds
+[2025-12-09 14:26:06.718] [DEBUG] [TRAIN_MODEL] Power=8692W, Speed=9.68mph, Authority=603yds
+[2025-12-09 14:26:06.818] [DEBUG] [TRAIN_MODEL] Power=8692W, Speed=9.74mph, Authority=601yds
+    [Previous message repeated 9 times]
+[2025-12-09 14:26:06.987] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=765.00 yds
+    [Previous message repeated 17 times]
+[2025-12-09 14:26:07.050] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=765 yds
+[2025-12-09 14:26:07.086] [DEBUG] [POSITION  ] Train 1 Block 74: pos=164.08yds, delta=16.38yds, block_traveled=52.69yds
+[2025-12-09 14:26:07.193] [DEBUG] [TRAIN_MODEL] Power=8533W, Speed=9.79mph, Authority=599yds
+[2025-12-09 14:26:07.305] [DEBUG] [TRAIN_MODEL] Power=8533W, Speed=9.85mph, Authority=596yds
+[2025-12-09 14:26:07.414] [DEBUG] [TRAIN_MODEL] Power=8533W, Speed=9.90mph, Authority=594yds
+[2025-12-09 14:26:07.572] [DEBUG] [TRAIN_MODEL] Power=8533W, Speed=9.95mph, Authority=591yds
+[2025-12-09 14:26:07.820] [DEBUG] [TRAIN_MODEL] Power=8308W, Speed=10.00mph, Authority=589yds
+[2025-12-09 14:26:08.075] [DEBUG] [TRAIN_MODEL] Power=8308W, Speed=10.05mph, Authority=586yds
+[2025-12-09 14:26:08.185] [DEBUG] [POSITION  ] Train 1 Block 74: pos=173.73yds, delta=9.65yds, block_traveled=62.34yds
+[2025-12-09 14:26:08.275] [DEBUG] [TRAIN_MODEL] Power=8308W, Speed=10.10mph, Authority=584yds
+[2025-12-09 14:26:08.571] [DEBUG] [TRAIN_MODEL] Power=8166W, Speed=10.15mph, Authority=581yds
+[2025-12-09 14:26:08.784] [DEBUG] [TRAIN_MODEL] Power=8166W, Speed=10.20mph, Authority=579yds
+[2025-12-09 14:26:08.894] [DEBUG] [TRAIN_MODEL] Power=8166W, Speed=10.25mph, Authority=576yds
+[2025-12-09 14:26:09.124] [DEBUG] [TRAIN_MODEL] Power=8015W, Speed=10.30mph, Authority=574yds
+[2025-12-09 14:26:09.298] [DEBUG] [TRAIN_MODEL] Power=8015W, Speed=10.35mph, Authority=571yds
+[2025-12-09 14:26:09.336] [DEBUG] [POSITION  ] Train 1 Block 74: pos=188.59yds, delta=14.85yds, block_traveled=77.20yds
+[2025-12-09 14:26:09.449] [DEBUG] [TRAIN_MODEL] Power=8015W, Speed=10.39mph, Authority=569yds
+[2025-12-09 14:26:09.748] [DEBUG] [TRAIN_MODEL] Power=8015W, Speed=10.44mph, Authority=566yds
+[2025-12-09 14:26:10.033] [DEBUG] [TRAIN_MODEL] Power=7813W, Speed=10.49mph, Authority=564yds
+[2025-12-09 14:26:10.139] [DEBUG] [TRAIN_MODEL] Power=7813W, Speed=10.53mph, Authority=561yds
+[2025-12-09 14:26:10.250] [DEBUG] [TRAIN_MODEL] Power=7813W, Speed=10.58mph, Authority=559yds
+[2025-12-09 14:26:10.466] [DEBUG] [POSITION  ] Train 1 Block 74: pos=198.73yds, delta=10.14yds, block_traveled=87.34yds
+[2025-12-09 14:26:10.711] [DEBUG] [TRAIN_MODEL] Power=7674W, Speed=10.62mph, Authority=556yds
+[2025-12-09 14:26:10.818] [DEBUG] [TRAIN_MODEL] Power=7674W, Speed=10.67mph, Authority=553yds
+[2025-12-09 14:26:10.932] [DEBUG] [TRAIN_MODEL] Power=7674W, Speed=10.71mph, Authority=551yds
+    [Previous message repeated 10 times]
+[2025-12-09 14:26:11.254] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 10 times]
+[2025-12-09 14:26:11.281] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 10 times]
+[2025-12-09 14:26:11.310] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 10 times]
+[2025-12-09 14:26:11.338] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 10 times]
+[2025-12-09 14:26:11.366] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 10 times]
+[2025-12-09 14:26:11.392] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:26:11.458] [DEBUG] [TRAIN_MODEL] Power=7532W, Speed=10.75mph, Authority=548yds
+[2025-12-09 14:26:11.624] [DEBUG] [TRAIN_MODEL] Power=7532W, Speed=10.80mph, Authority=545yds
+[2025-12-09 14:26:11.726] [DEBUG] [TRAIN_MODEL] Power=7532W, Speed=10.84mph, Authority=543yds
+[2025-12-09 14:26:11.763] [DEBUG] [POSITION  ] Train 1 Block 74: pos=214.27yds, delta=15.55yds, block_traveled=102.88yds
+[2025-12-09 14:26:11.879] [DEBUG] [TRAIN_MODEL] Power=7532W, Speed=10.88mph, Authority=540yds
+[2025-12-09 14:26:12.152] [DEBUG] [TRAIN_MODEL] Power=7337W, Speed=10.92mph, Authority=537yds
+[2025-12-09 14:26:12.261] [DEBUG] [TRAIN_MODEL] Power=7337W, Speed=10.96mph, Authority=535yds
+[2025-12-09 14:26:12.421] [DEBUG] [TRAIN_MODEL] Power=7337W, Speed=11.01mph, Authority=532yds
+[2025-12-09 14:26:12.790] [DEBUG] [TRAIN_MODEL] Power=7203W, Speed=11.05mph, Authority=529yds
+[2025-12-09 14:26:12.936] [DEBUG] [TRAIN_MODEL] Power=7203W, Speed=11.09mph, Authority=527yds
+[2025-12-09 14:26:12.976] [DEBUG] [POSITION  ] Train 1 Block 74: pos=235.59yds, delta=21.32yds, block_traveled=124.20yds
+[2025-12-09 14:26:13.006] [INFO ] [POSITION  ] Train 1 Block 74: ADVANCING to next block (traveled 124.20/109.36 yds)
+[2025-12-09 14:26:13.054] [DEBUG] [POSITION  ] Train 1 Block 74: motion state = Moving
+[2025-12-09 14:26:13.080] [DEBUG] [ROUTING   ] Green Line routing: current=74, previous=73
+[2025-12-09 14:26:13.106] [DEBUG] [ROUTING   ] Block 74 NOT in switch_routes, using motion logic
+[2025-12-09 14:26:13.136] [DEBUG] [ROUTING   ] Motion forward: 74 → 75
+[2025-12-09 14:26:13.164] [INFO ] [ROUTING   ] Green Line final routing decision: 74 → 75
+[2025-12-09 14:26:13.190] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 74 → 75
+[2025-12-09 14:26:13.308] [DEBUG] [TRAIN_MODEL] Power=7203W, Speed=11.13mph, Authority=524yds
+[2025-12-09 14:26:13.365] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 74 → 75
+    [Previous message repeated 15 times]
+[2025-12-09 14:26:13.420] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=765 yds
+[2025-12-09 14:26:13.575] [DEBUG] [TRAIN_MODEL] Power=7080W, Speed=11.16mph, Authority=521yds
+    [Previous message repeated 8 times]
+[2025-12-09 14:26:13.645] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=765.00 yds
+[2025-12-09 14:26:13.743] [DEBUG] [TRAIN_MODEL] Power=7080W, Speed=11.20mph, Authority=519yds
+[2025-12-09 14:26:13.869] [DEBUG] [TRAIN_MODEL] Power=7080W, Speed=11.24mph, Authority=516yds
+[2025-12-09 14:26:14.020] [DEBUG] [TRAIN_MODEL] Power=7080W, Speed=11.28mph, Authority=513yds
+[2025-12-09 14:26:14.180] [DEBUG] [TRAIN_MODEL] Power=6884W, Speed=11.32mph, Authority=510yds
+[2025-12-09 14:26:14.324] [DEBUG] [POSITION  ] Train 1 Block 75: pos=254.76yds, delta=19.17yds, block_traveled=34.01yds
+[2025-12-09 14:26:14.426] [DEBUG] [TRAIN_MODEL] Power=6884W, Speed=11.36mph, Authority=507yds
+[2025-12-09 14:26:14.534] [DEBUG] [TRAIN_MODEL] Power=6884W, Speed=11.39mph, Authority=505yds
+[2025-12-09 14:26:14.695] [DEBUG] [TRAIN_MODEL] Power=6884W, Speed=11.43mph, Authority=502yds
+[2025-12-09 14:26:14.977] [DEBUG] [TRAIN_MODEL] Power=6696W, Speed=11.47mph, Authority=499yds
+[2025-12-09 14:26:15.088] [DEBUG] [TRAIN_MODEL] Power=6696W, Speed=11.50mph, Authority=496yds
+[2025-12-09 14:26:15.202] [DEBUG] [TRAIN_MODEL] Power=6696W, Speed=11.54mph, Authority=493yds
+[2025-12-09 14:26:15.579] [DEBUG] [POSITION  ] Train 1 Block 75: pos=271.55yds, delta=16.79yds, block_traveled=50.80yds
+[2025-12-09 14:26:15.662] [DEBUG] [TRAIN_MODEL] Power=6569W, Speed=11.57mph, Authority=491yds
+[2025-12-09 14:26:15.834] [DEBUG] [TRAIN_MODEL] Power=6569W, Speed=11.61mph, Authority=488yds
+[2025-12-09 14:26:15.945] [DEBUG] [TRAIN_MODEL] Power=6569W, Speed=11.64mph, Authority=485yds
+[2025-12-09 14:26:16.178] [DEBUG] [TRAIN_MODEL] Power=6437W, Speed=11.67mph, Authority=482yds
+[2025-12-09 14:26:16.372] [DEBUG] [TRAIN_MODEL] Power=6437W, Speed=11.71mph, Authority=479yds
+[2025-12-09 14:26:16.478] [DEBUG] [TRAIN_MODEL] Power=6437W, Speed=11.74mph, Authority=476yds
+[2025-12-09 14:26:16.788] [DEBUG] [TRAIN_MODEL] Power=6437W, Speed=11.78mph, Authority=473yds
+[2025-12-09 14:26:16.828] [DEBUG] [POSITION  ] Train 1 Block 75: pos=282.92yds, delta=11.37yds, block_traveled=62.17yds
+[2025-12-09 14:26:17.095] [DEBUG] [TRAIN_MODEL] Power=6264W, Speed=11.81mph, Authority=471yds
+[2025-12-09 14:26:17.209] [DEBUG] [TRAIN_MODEL] Power=6264W, Speed=11.84mph, Authority=468yds
+[2025-12-09 14:26:17.364] [DEBUG] [TRAIN_MODEL] Power=6264W, Speed=11.87mph, Authority=465yds
+    [Previous message repeated 8 times]
+[2025-12-09 14:26:17.649] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 8 times]
+[2025-12-09 14:26:17.681] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 8 times]
+[2025-12-09 14:26:17.711] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 8 times]
+[2025-12-09 14:26:17.738] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 8 times]
+[2025-12-09 14:26:17.770] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 8 times]
+[2025-12-09 14:26:17.798] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:26:17.898] [DEBUG] [TRAIN_MODEL] Power=6137W, Speed=11.90mph, Authority=462yds
+[2025-12-09 14:26:18.008] [DEBUG] [TRAIN_MODEL] Power=6137W, Speed=11.94mph, Authority=459yds
+[2025-12-09 14:26:18.048] [DEBUG] [POSITION  ] Train 1 Block 75: pos=300.21yds, delta=17.29yds, block_traveled=79.46yds
+[2025-12-09 14:26:18.145] [DEBUG] [TRAIN_MODEL] Power=6137W, Speed=11.97mph, Authority=456yds
+[2025-12-09 14:26:18.326] [DEBUG] [TRAIN_MODEL] Power=6137W, Speed=12.00mph, Authority=453yds
+[2025-12-09 14:26:18.547] [DEBUG] [TRAIN_MODEL] Power=5968W, Speed=12.03mph, Authority=450yds
+[2025-12-09 14:26:18.694] [DEBUG] [TRAIN_MODEL] Power=5968W, Speed=12.06mph, Authority=447yds
+[2025-12-09 14:26:18.814] [DEBUG] [TRAIN_MODEL] Power=5968W, Speed=12.09mph, Authority=444yds
+[2025-12-09 14:26:19.179] [DEBUG] [POSITION  ] Train 1 Block 75: pos=320.74yds, delta=20.53yds, block_traveled=99.99yds
+[2025-12-09 14:26:19.283] [DEBUG] [TRAIN_MODEL] Power=5844W, Speed=12.12mph, Authority=441yds
+[2025-12-09 14:26:19.391] [DEBUG] [TRAIN_MODEL] Power=5844W, Speed=12.15mph, Authority=438yds
+[2025-12-09 14:26:19.568] [DEBUG] [TRAIN_MODEL] Power=5844W, Speed=12.18mph, Authority=435yds
+[2025-12-09 14:26:19.994] [DEBUG] [TRAIN_MODEL] Power=5722W, Speed=12.21mph, Authority=432yds
+[2025-12-09 14:26:20.097] [DEBUG] [TRAIN_MODEL] Power=5722W, Speed=12.24mph, Authority=429yds
+[2025-12-09 14:26:20.211] [DEBUG] [TRAIN_MODEL] Power=5722W, Speed=12.27mph, Authority=426yds
+[2025-12-09 14:26:20.321] [DEBUG] [POSITION  ] Train 1 Block 75: pos=329.65yds, delta=8.91yds, block_traveled=108.90yds
+[2025-12-09 14:26:20.475] [DEBUG] [TRAIN_MODEL] Power=5599W, Speed=12.29mph, Authority=423yds
+[2025-12-09 14:26:20.819] [DEBUG] [TRAIN_MODEL] Power=5599W, Speed=12.32mph, Authority=420yds
+[2025-12-09 14:26:20.934] [DEBUG] [TRAIN_MODEL] Power=5599W, Speed=12.35mph, Authority=417yds
+    [Previous message repeated 20 times]
+[2025-12-09 14:26:21.034] [INFO ] [TRAIN     ] Train 1 commands written: speed=12.47 mph, authority=765 yds
+[2025-12-09 14:26:21.182] [DEBUG] [TRAIN_MODEL] Power=5478W, Speed=12.38mph, Authority=414yds
+    [Previous message repeated 10 times]
+[2025-12-09 14:26:21.261] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=12.47 mph, authority=765.00 yds
+[2025-12-09 14:26:21.405] [DEBUG] [TRAIN_MODEL] Power=5478W, Speed=12.40mph, Authority=411yds
+[2025-12-09 14:26:21.445] [DEBUG] [POSITION  ] Train 1 Block 75: pos=350.68yds, delta=21.03yds, block_traveled=129.93yds
+[2025-12-09 14:26:21.476] [INFO ] [POSITION  ] Train 1 Block 75: ADVANCING to next block (traveled 129.93/109.36 yds)
+[2025-12-09 14:26:21.526] [DEBUG] [POSITION  ] Train 1 Block 75: motion state = Moving
+[2025-12-09 14:26:21.557] [DEBUG] [ROUTING   ] Green Line routing: current=75, previous=74
+[2025-12-09 14:26:21.589] [DEBUG] [ROUTING   ] Block 75 NOT in switch_routes, using motion logic
+[2025-12-09 14:26:21.619] [DEBUG] [ROUTING   ] Motion forward: 75 → 76
+[2025-12-09 14:26:21.648] [INFO ] [ROUTING   ] Green Line final routing decision: 75 → 76
+[2025-12-09 14:26:21.679] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 75 → 76
+[2025-12-09 14:26:21.811] [DEBUG] [TRAIN_MODEL] Power=5478W, Speed=12.43mph, Authority=408yds
+[2025-12-09 14:26:21.879] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 75 → 76
+[2025-12-09 14:26:21.908] [DEBUG] [LIGHT     ] Green line block 76 light: Super Green → Red
+[2025-12-09 14:26:22.090] [DEBUG] [TRAIN_MODEL] Power=5358W, Speed=12.46mph, Authority=405yds
+[2025-12-09 14:26:22.171] [DEBUG] [LIGHT     ] Green line block 76 traffic light: Super Green → Red
+[2025-12-09 14:26:22.334] [DEBUG] [TRAIN_MODEL] Power=5358W, Speed=12.48mph, Authority=402yds
+[2025-12-09 14:26:22.469] [DEBUG] [TRAIN_MODEL] Power=5358W, Speed=12.51mph, Authority=399yds
+[2025-12-09 14:26:22.643] [DEBUG] [TRAIN_MODEL] Power=5358W, Speed=12.54mph, Authority=396yds
+[2025-12-09 14:26:22.829] [DEBUG] [POSITION  ] Train 1 Block 76: pos=368.97yds, delta=18.29yds, block_traveled=38.86yds
+[2025-12-09 14:26:24.015] [DEBUG] [POSITION  ] Train 1 Block 76: pos=381.23yds, delta=12.26yds, block_traveled=51.12yds
+[2025-12-09 14:26:25.121] [DEBUG] [POSITION  ] Train 1 Block 76: pos=399.61yds, delta=18.38yds, block_traveled=69.50yds
+[2025-12-09 14:26:26.215] [DEBUG] [POSITION  ] Train 1 Block 76: pos=421.06yds, delta=21.45yds, block_traveled=90.95yds
+[2025-12-09 14:26:27.329] [DEBUG] [POSITION  ] Train 1 Block 76: pos=433.32yds, delta=12.26yds, block_traveled=103.21yds
+[2025-12-09 14:26:28.411] [DEBUG] [POSITION  ] Train 1 Block 76: pos=454.77yds, delta=21.45yds, block_traveled=124.66yds
+[2025-12-09 14:26:28.443] [INFO ] [POSITION  ] Train 1 Block 76: ADVANCING to next block (traveled 124.66/109.36 yds)
+[2025-12-09 14:26:28.471] [DEBUG] [POSITION  ] Train 1 Block 76: motion state = Moving
+[2025-12-09 14:26:28.499] [DEBUG] [ROUTING   ] Green Line routing: current=76, previous=75
+[2025-12-09 14:26:28.528] [DEBUG] [ROUTING   ] Block 76 NOT in switch_routes, using motion logic
+[2025-12-09 14:26:28.556] [DEBUG] [ROUTING   ] Motion forward: 76 → 77
+[2025-12-09 14:26:28.583] [INFO ] [ROUTING   ] Green Line final routing decision: 76 → 77
+[2025-12-09 14:26:28.614] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 76 → 77
+[2025-12-09 14:26:28.653] [DEBUG] [BEACON    ] Train 1 beacon updated at block 77
+[2025-12-09 14:26:28.783] [INFO ] [TRAIN     ] Train 1 BLOCK TRANSITION: 76 → 77
+[2025-12-09 14:26:28.813] [INFO ] [TRAIN     ] Train 1 arrived at Mt. Lebanon
+    [Previous message repeated 15 times]
+[2025-12-09 14:26:29.136] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 15 times]
+[2025-12-09 14:26:29.165] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 15 times]
+[2025-12-09 14:26:29.195] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 15 times]
+[2025-12-09 14:26:29.223] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 15 times]
+[2025-12-09 14:26:29.256] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 15 times]
+[2025-12-09 14:26:29.285] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-09 14:26:29.399] [INFO ] [TRAIN     ] Train 1 DWELLING at Mt. Lebanon for 10s
+[2025-12-09 14:26:29.980] [DEBUG] [POSITION  ] Train 1 Block 77: pos=463.96yds, delta=9.19yds, block_traveled=24.49yds
+    [Previous message repeated 15 times]
+[2025-12-09 14:26:30.062] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-09 14:26:30.676] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=11.19mph, Authority=0yds
+[2025-12-09 14:26:30.782] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=9.85mph, Authority=0yds
+[2025-12-09 14:26:31.085] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=8.51mph, Authority=0yds
+[2025-12-09 14:26:31.161] [DEBUG] [POSITION  ] Train 1 Block 77: pos=485.41yds, delta=21.45yds, block_traveled=45.94yds
+[2025-12-09 14:26:31.400] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=7.16mph, Authority=0yds
+[2025-12-09 14:26:31.533] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=5.82mph, Authority=0yds
+[2025-12-09 14:26:31.691] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=4.48mph, Authority=0yds
+[2025-12-09 14:26:32.036] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=3.13mph, Authority=0yds
+[2025-12-09 14:26:32.165] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=1.79mph, Authority=0yds
+[2025-12-09 14:26:32.237] [DEBUG] [POSITION  ] Train 1 Block 77: pos=497.67yds, delta=12.26yds, block_traveled=58.19yds
+[2025-12-09 14:26:32.332] [DEBUG] [TRAIN_MODEL] Power=0W, Speed=0.45mph, Authority=0yds
+[2025-12-09 14:26:33.370] [DEBUG] [POSITION  ] Train 1 Block 77: pos=498.21yds, delta=0.55yds, block_traveled=58.74yds
+[2025-12-09 14:26:34.622] [DEBUG] [POSITION  ] Train 1 Block 77: pos=498.21yds, delta=0.00yds, block_traveled=58.74yds
+
+================================================================================
+Log Session Ended: 2025-12-09T14:42:49.067382
+================================================================================
