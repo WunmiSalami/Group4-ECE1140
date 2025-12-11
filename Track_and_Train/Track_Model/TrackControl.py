@@ -2383,116 +2383,173 @@ class TrackControl:
     def _calculate_complete_block_path(self, start_block, end_block, line):
         """
         Calculate complete block-by-block path between two blocks.
-        Handles yard-to-station and station-to-station paths dynamically.
+        Uses the existing station route logic and fills in blocks between stations.
         """
-        # Handle yard-to-station paths dynamically
-        if start_block == 0:
-            if line == "Green":
-                # Green Line: Yard exits at block 63
-                if end_block >= 63 and end_block <= 150:
-                    # Direct path: 0 → 63 → 64 → ... → end_block
-                    return [0] + list(range(63, end_block + 1))
-                else:
-                    # Loop path: 0 → 63 → ... → 150 → 28 → ... → end_block
-                    path = [0] + list(range(63, 151))  # 0 to 150
-                    if end_block >= 28:
-                        # End block in range 28-62
-                        path.extend(range(28, end_block + 1))
-                    else:
-                        # End block in range 1-27 (wraps around)
-                        path.extend(range(28, 63))  # 28 to 62
-                        path.extend(range(1, end_block + 1))  # 1 to end_block
-                    return path
-            elif line == "Red":
-                # Red Line: Yard exits at block 9
-                # Direct path: 0 → 9 → 10 → ... → end_block
-                return [0] + list(range(9, end_block + 1))
+        # Get the station route (we already have the logic for this!)
+        # First, find which stations these blocks belong to
+        config = self.infrastructure[line]
+        stations = config["stations"]
 
-        # For Green Line station-to-station paths, use topology knowledge
-        if line == "Green" and start_block != 0:
-            return self._calculate_green_line_station_to_station_path(
-                start_block, end_block
-            )
-
-        # For Red Line or simple sequential paths
-        if line == "Red":
-            path = [start_block]
-            current = start_block
-            while current != end_block:
-                if current < end_block:
-                    current += 1
-                else:
-                    current -= 1  # FIXED: was current += 1 in both branches
-                path.append(current)
-                if len(path) > 200:
+        # Find destination station for end_block
+        destination_station = None
+        for station_name, station_blocks in stations.items():
+            if isinstance(station_blocks, list):
+                if end_block in station_blocks:
+                    destination_station = station_name
                     break
-            return path
+            else:
+                if end_block == station_blocks:
+                    destination_station = station_name
+                    break
 
-        # Fallback for unknown cases
+        if not destination_station:
+            # Fallback: direct path
+            return list(range(start_block, end_block + 1))
+
+        # Get station route using our existing logic
+        station_route = self._get_stations_on_path_to_destination(
+            line, destination_station, list(stations.keys()), stations
+        )
+
+        if not station_route:
+            return [start_block, end_block]
+
+        # Now fill in ALL blocks between each station in the route
+        complete_path = []
+
+        if line == "Red":
+            # Red Line: simple sequential
+            if start_block == 0:
+                complete_path = [0]
+                for i in range(len(station_route) - 1):
+                    start_station_block = 9 if i == 0 else station_route[i]
+                    end_station_block = station_route[i + 1]
+                    complete_path.extend(
+                        range(start_station_block, end_station_block + 1)
+                    )
+            else:
+                complete_path = list(range(start_block, end_block + 1))
+            return complete_path
+
+        elif line == "Green":
+            # Green Line: use station route to determine path
+            if start_block == 0:
+                complete_path = [0]
+
+                # Add blocks from yard exit (63) to first station
+                complete_path.extend(range(63, station_route[0] + 1))
+
+                # Fill in blocks between consecutive stations
+                for i in range(len(station_route) - 1):
+                    current_station = station_route[i]
+                    next_station = station_route[i + 1]
+
+                    # Determine how to connect these stations
+                    path_segment = self._fill_blocks_between_stations(
+                        current_station, next_station
+                    )
+                    # Skip first block (already in path)
+                    complete_path.extend(path_segment[1:])
+
+                return complete_path
+
+            else:
+                # Station-to-station: similar logic
+                return self._calculate_green_line_station_to_station_path(
+                    start_block, end_block
+                )
+
         return [start_block, end_block]
 
-    def _calculate_green_line_station_to_station_path(self, start_block, end_block):
-        """Calculate path between two blocks on Green Line using track topology.
-        Handles non-sequential transitions like 150→28 via switch.
+    def _fill_blocks_between_stations(self, start_block, end_block):
         """
-        # Green Line topology:
-        # Direct section: 63-150 (continuous)
-        # Loop section: 28-62 then 1-2 (with switch at 150→28 and wrapping)
-
-        # Special case: crossing switch 28 (block 150 to block 28)
+        Fill in all blocks between two blocks on Green Line.
+        Handles switches and special topology.
+        Works for both station blocks and arbitrary blocks.
+        """
+        # Special transitions via switches
+        # 77 → 101+ (main loop via switch)
+        if start_block == 77 and end_block >= 101:
+            return [77, 101] + list(range(102, end_block + 1))
+        # 77 → 78-100 (Poplar/Castle Shannon spur)
+        if start_block == 77 and 78 <= end_block <= 100:
+            return list(range(77, end_block + 1))
+        # Coming FROM Poplar/Castle Shannon spur (78-100) going to main loop (101+)
+        # Must loop back: current → 100 → 99 → ... → 85 → 84 → ... → 77 → 101 → destination
+        if 78 <= start_block <= 100 and end_block >= 101:
+            path = list(range(start_block, 101))  # Go to end of spur (block 100)
+            path.extend(range(100, 76, -1))  # Count down 100→99→...→77
+            path.extend([101])  # Switch at 77 to main loop (77→101)
+            path.extend(range(102, end_block + 1))  # Continue to destination
+            return path
+        # Coming FROM Poplar/Castle Shannon spur going to return path (1-62)
+        # Must loop: current → 100 → ... → 77 → 101 → ... → 150 → 28 → destination
+        if 78 <= start_block <= 100 and end_block <= 62:
+            path = list(range(start_block, 101))  # To end of spur
+            path.extend(range(100, 76, -1))  # 100→77
+            path.extend([101] + list(range(102, 151)))  # 77→101→150
+            if end_block >= 28:
+                path.extend([28] + list(range(29, end_block + 1)))
+            else:
+                path.extend([28] + list(range(29, 63)) + list(range(1, end_block + 1)))
+            return path
+        # From main loop (101-150) to return path (1-62) via switch at 150→28
+        if 101 <= start_block <= 150 and end_block <= 62:
+            path = list(range(start_block, 151))  # To block 150
+            if end_block >= 28:
+                path.extend([28] + list(range(29, end_block + 1)))
+            else:
+                path.extend([28] + list(range(29, 63)) + list(range(1, end_block + 1)))
+            return path
+        # 150 → 28 (crossing switch 28)
         if start_block == 150 and end_block <= 62:
-            # Path goes through switch: 150 → 28 → 29 → ... → end_block
             if end_block >= 28:
                 return [150, 28] + list(range(29, end_block + 1))
             else:
-                # Wraps around: 150 → 28 → ... → 62 → 1 → ... → end_block
                 return [150, 28] + list(range(29, 63)) + list(range(1, end_block + 1))
-
-        # Both blocks in direct section (63-150)
-        if (
-            start_block >= 63
-            and end_block >= 63
-            and start_block <= 150
-            and end_block <= 150
-        ):
+        # From return path (1-27) going to main sections via yard
+        if 1 <= start_block <= 27 and end_block >= 63:
+            # Must go through yard: down to 0, then up from 63
+            path = list(range(start_block, 0, -1)) + [0]
+            path.extend(range(63, end_block + 1))
+            return path
+        # 9-13 → 1-2 (via switch at 13→1)
+        if 9 <= start_block <= 13 and end_block <= 2:
+            return (
+                list(range(start_block, 14)) + [1, 2]
+                if end_block == 2
+                else list(range(start_block, 14)) + [1]
+            )
+        # Both in same sequential section
+        # Blocks 63-77 (before switch)
+        if 63 <= start_block <= 77 and 63 <= end_block <= 77:
+            return list(range(start_block, end_block + 1))
+        # Both in main loop (101-150)
+        if 101 <= start_block <= 150 and 101 <= end_block <= 150:
+            return list(range(start_block, end_block + 1))
+        # Both in return path (28-62)
+        if 28 <= start_block <= 62 and 28 <= end_block <= 62:
             if start_block < end_block:
                 return list(range(start_block, end_block + 1))
             else:
                 return list(range(start_block, end_block - 1, -1))
-
-        # Both blocks in loop section (28-62 or 1-2)
-        if start_block <= 62 and end_block <= 62:
+        # Both in wrap section (1-27)
+        if 1 <= start_block <= 27 and 1 <= end_block <= 27:
             if start_block < end_block:
                 return list(range(start_block, end_block + 1))
             else:
                 return list(range(start_block, end_block - 1, -1))
+        # Default sequential (fallback)
+        if start_block < end_block:
+            return list(range(start_block, end_block + 1))
+        else:
+            return list(range(start_block, end_block - 1, -1))
 
-        # Start in loop, end in direct: need to go through yard
-        if start_block <= 62 and end_block >= 63:
-            # This shouldn't happen in normal operation
-            # Trains don't reverse from loop to direct path
-            return [start_block, end_block]  # Fallback
-
-        # Start in direct, end in loop: continue forward through 150→28
-        if start_block >= 63 and start_block <= 150 and end_block <= 62:
-            if end_block >= 28:
-                # Destination is in 28-62 range
-                return (
-                    list(range(start_block, 151))
-                    + [28]
-                    + list(range(29, end_block + 1))
-                )
-            else:
-                # Destination is in 1-2 range (wraps around)
-                return (
-                    list(range(start_block, 151))
-                    + [28]
-                    + list(range(29, 63))
-                    + list(range(1, end_block + 1))
-                )
-
-        # Fallback for unexpected cases
-        return [start_block, end_block]
+    def _calculate_green_line_station_to_station_path(self, start_block, end_block):
+        """Calculate path between two blocks on Green Line using track topology.
+        Handles all transitions using _fill_blocks_between_stations.
+        """
+        return self._fill_blocks_between_stations(start_block, end_block)
 
     def _set_switches_for_route(
         self, track_data, current_block, route, line, line_prefix
@@ -2553,9 +2610,9 @@ class TrackControl:
                     # 63: 0=straight to 64, 1=branch from Yard
                     elif switch_block == 63:
                         switch_position = 0 if prev_block == 62 else 1
-                    # 77: 0=straight to 76, 1=branch to 101
+                    # 77: 0=to Poplar/Castle Shannon (78), 1=to main loop (101)
                     elif switch_block == 77:
-                        switch_position = 0 if next_block == 76 else 1
+                        switch_position = 0 if next_block == 78 else 1
                     # 85: 0=straight to 86, 1=branch to 100
                     elif switch_block == 85:
                         switch_position = 0 if next_block == 86 else 1

@@ -177,97 +177,131 @@ class LineNetwork:
             self.logger.error("NETWORK", f"Error updating train model data: {e}")
 
     def write_to_train_model_json(self, commanded_speeds, commanded_authorities):
+        import json
+        import os
+        import time
+
         json_path = TRAIN_MODEL_JSON
-        with open(json_path, "r") as f:
-            train_model_data = json.load(f)
-
         logger = get_logger()
-        trains = []
-        for i in range(len(commanded_speeds)):
-            train_key = f"{self.line_name[0]}_train_{i + 1}"
-            if train_key in train_model_data:
-                motion = train_model_data[train_key]["motion"]["current motion"]
-                pos = train_model_data[train_key]["motion"].get("position_yds", 0)
-                trains.append({"train_id": i + 1, "motion": motion})
+        max_retries = 3
+        retry_delay = 0.05  # 50ms
 
-                old_pos = self.train_positions.get(i + 1, 0)
-                self.train_positions[i + 1] = pos
+        for attempt in range(max_retries):
+            try:
+                # Read with retry on corruption
+                try:
+                    with open(json_path, "r") as f:
+                        train_model_data = json.load(f)
+                except json.JSONDecodeError as e:
+                    if attempt < max_retries - 1:
+                        logger.warning(
+                            "NETWORK",
+                            f"JSON decode error on attempt {attempt + 1}, retrying: {e}",
+                            {"attempt": attempt + 1, "error": str(e)},
+                        )
+                        time.sleep(retry_delay)
+                        continue
+                    else:
+                        logger.error(
+                            "NETWORK",
+                            f"Failed to read JSON after {max_retries} attempts: {e}",
+                            {"error": str(e)},
+                        )
+                        return
 
-                # Commented out - high-frequency position logging
-                # if pos != old_pos:
-                #     logger.debug(
-                #         "POSITION",
-                #         f"Train {i + 1} position updated: {old_pos:.2f} → {pos:.2f} yds (delta: {pos - old_pos:.2f} yds)",
-                #         {
-                #             "train_id": i + 1,
-                #             "line": self.line_name,
-                #             "old_position_yds": old_pos,
-                #             "new_position_yds": pos,
-                #             "delta_yds": pos - old_pos,
-                #             "motion": motion,
-                #         },
-                #     )
+                # Process data (your existing logic)
+                trains = []
+                for i in range(len(commanded_speeds)):
+                    train_key = f"{self.line_name[0]}_train_{i + 1}"
+                    if train_key in train_model_data:
+                        motion = train_model_data[train_key]["motion"]["current motion"]
+                        pos = train_model_data[train_key]["motion"].get(
+                            "position_yds", 0
+                        )
+                        trains.append({"train_id": i + 1, "motion": motion})
 
-                train_model_data[train_key]["block"]["commanded speed"] = (
-                    commanded_speeds[i]
-                )
-                train_model_data[train_key]["block"]["commanded authority"] = (
-                    commanded_authorities[i]
-                )
+                        old_pos = self.train_positions.get(i + 1, 0)
+                        self.train_positions[i + 1] = pos
 
-                # Write yards_into_current_block for Train Model to use on authority change
-                if not hasattr(self, "yards_into_current_block"):
-                    self.yards_into_current_block = {}
-                yards_in_block = self.yards_into_current_block.get(i + 1, 0)
-                train_model_data[train_key]["motion"][
-                    "yards_into_current_block"
-                ] = yards_in_block
+                        train_model_data[train_key]["block"]["commanded speed"] = (
+                            commanded_speeds[i]
+                        )
+                        train_model_data[train_key]["block"]["commanded authority"] = (
+                            commanded_authorities[i]
+                        )
 
-                logger.info(
-                    "TRAIN",
-                    f"Train {i + 1} commands written to JSON: speed={commanded_speeds[i]:.2f} mph, authority={commanded_authorities[i]:.2f} yds",
-                    {
-                        "train_id": i + 1,
-                        "line": self.line_name,
-                        "commanded_speed": commanded_speeds[i],
-                        "commanded_authority": commanded_authorities[i],
-                        "train_key": train_key,
-                    },
-                )
+                        if not hasattr(self, "yards_into_current_block"):
+                            self.yards_into_current_block = {}
+                        yards_in_block = self.yards_into_current_block.get(i + 1, 0)
+                        train_model_data[train_key]["motion"][
+                            "yards_into_current_block"
+                        ] = yards_in_block
 
-        if self.block_manager:
-            # Don't wipe - update existing trains or add new ones
-            existing_train_ids = {
-                train["train_id"]: idx
-                for idx, train in enumerate(self.block_manager.trains)
-            }
+                        logger.info(
+                            "TRAIN",
+                            f"Train {i + 1} commands written to JSON: speed={commanded_speeds[i]:.2f} mph, authority={commanded_authorities[i]:.2f} yds",
+                            {
+                                "train_id": i + 1,
+                                "line": self.line_name,
+                                "commanded_speed": commanded_speeds[i],
+                                "commanded_authority": commanded_authorities[i],
+                                "train_key": train_key,
+                            },
+                        )
 
-            for t in trains:
-                train_id = t["train_id"]
+                # Update block manager
+                if self.block_manager:
+                    existing_train_ids = {
+                        train["train_id"]: idx
+                        for idx, train in enumerate(self.block_manager.trains)
+                    }
 
-                if train_id in existing_train_ids:
-                    # Update existing train's motion state
-                    idx = existing_train_ids[train_id]
-                    self.block_manager.trains[idx]["start"] = (
-                        True if t["motion"].lower() == "moving" else False
-                    )
+                    for t in trains:
+                        train_id = t["train_id"]
+                        if train_id in existing_train_ids:
+                            idx = existing_train_ids[train_id]
+                            self.block_manager.trains[idx]["start"] = (
+                                True if t["motion"].lower() == "moving" else False
+                            )
+                        else:
+                            self.block_manager.trains.append(
+                                {
+                                    "train_id": train_id,
+                                    "line": self.line_name,
+                                    "start": (
+                                        True
+                                        if t["motion"].lower() == "moving"
+                                        else False
+                                    ),
+                                }
+                            )
+
+                if self.line_name == "Green":
+                    self.green_line_trains = trains
                 else:
-                    # Add new train
-                    self.block_manager.trains.append(
-                        {
-                            "train_id": train_id,
-                            "line": self.line_name,
-                            "start": True if t["motion"].lower() == "moving" else False,
-                        }
+                    self.red_line_trains = trains
+
+                # Write with atomic operation
+                temp_path = json_path + ".tmp"
+                with open(temp_path, "w") as f:
+                    json.dump(train_model_data, f, indent=4)
+                os.replace(temp_path, json_path)
+                break  # Success
+
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(
+                        "NETWORK",
+                        f"Error on attempt {attempt + 1}, retrying: {e}",
+                        {"attempt": attempt + 1, "error": str(e)},
                     )
-
-        if self.line_name == "Green":
-            self.green_line_trains = trains
-        else:
-            self.red_line_trains = trains
-
-        with open(json_path, "w") as f:
-            json.dump(train_model_data, f, indent=4)
+                    time.sleep(retry_delay)
+                else:
+                    logger.error(
+                        "NETWORK",
+                        f"Error updating train model data after {max_retries} attempts: {e}",
+                        {"error": str(e)},
+                    )
 
     def write_to_block_manager(self, data: dict):
         """Parse raw JSON data and write to block manager."""
