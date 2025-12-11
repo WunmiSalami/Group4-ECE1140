@@ -411,52 +411,45 @@ class TrackControl:
 
         # For main loop stations [105, 114, 123, 132, 141]
         if start_block in [105, 114, 123, 132, 141]:
-            # Need to continue to 150, then decide direction
-            # Destination blocks 31, 39, 48, 57 (return path going down)
-            # Destination blocks 22, 9, 2 (Whited, Edgebrook, Pioneer - going up after 28)
-
             if end_block in [31, 39, 48, 57]:
-                # Going down after 150→28
-                # Path: current → 150 → 28 → down to destination
-                # Build path manually: start_block → 141 → 150 → 28 → ... → end_block
+                # ...existing code for return path...
                 route = []
-
-                # Add blocks from start to 150
                 for block in [105, 114, 123, 132, 141, 150]:
                     if block >= start_block:
                         route.append(block)
-
-                # Add 28, then count down to destination
                 route.append(28)
                 for block in range(27, end_block - 1, -1):
                     route.append(block)
                 route.append(end_block)
-
                 return route
-
             elif end_block in [22, 9, 2]:
-                # Going up after 150→28 (Whited, Edgebrook, Pioneer)
-                # Path: current → 150 → 28 → 27 → ... → end_block
+                # ...existing code for up after 150->28...
                 route = []
-
-                # Add blocks from start to 150
                 for block in [105, 114, 123, 132, 141, 150]:
                     if block >= start_block:
                         route.append(block)
-
-                # Add 28, then count down to destination
                 route.append(28)
                 for block in range(27, end_block - 1, -1):
                     route.append(block)
                 route.append(end_block)
-
                 return route
-
             else:
-                # Destination is Glenbury/Dormont/Mt.Lebanon/Poplar/Castle Shannon
-                # Need to go 150 → 28 → ... → 63 (Yard) → then to destination
-                # Just use full route from Yard
-                return full_route
+                # Destination is Glenbury/Dormont/Mt.Lebanon (63-77)
+                # Need to go: current → 141 → 150 → 28 → 29 → ... → 62 → 63 → destination
+                route = []
+                for block in [105, 114, 123, 132, 141, 150]:
+                    if block >= start_block:
+                        route.append(block)
+                route.append(28)
+                route.extend(range(29, 63))  # 28 → 62
+                route.extend(range(63, end_block + 1))  # 63 → destination
+                logger = get_logger()
+                logger.info(
+                    "ROUTING",
+                    f"Main loop to first section: {start_station} ({start_block}) → {end_station} ({end_block})",
+                    {"route": route},
+                )
+                return route
 
         # For return path stations [31, 39, 48, 57]
         if start_block in [31, 39, 48, 57]:
@@ -1274,18 +1267,29 @@ class TrackControl:
         if train and line and dest:
             train_id = int(train.split()[-1])
 
-            # Get route from Yard to destination
+            # Get route from CURRENT LOCATION to destination
             config = self.infrastructure[line]
             stations = config["stations"]
 
-            # Starting from Yard (block 0)
-            start_station = "Yard"
+            # Determine starting station - use current station if train exists
+            if train_id in self.active_trains:
+                start_station = self.active_trains[train_id].get(
+                    "current_station", "Yard"
+                )
+            else:
+                start_station = "Yard"  # New train starts at Yard
 
             # Look up route
             route_key = (line, start_station, dest)
             route = self.route_lookup_via_station.get(route_key, [])
 
             if not route:
+                logger = get_logger()
+                logger.error(
+                    "ROUTE",
+                    f"No route found from {start_station} to {dest}",
+                    {"start_station": start_station, "destination": dest, "line": line},
+                )
                 return  # Invalid route
 
             # Log the route for debugging
@@ -1736,13 +1740,6 @@ class TrackControl:
 
             # Convert meters to yards and add to yard distance
             authority += authority_meters * 1.09361
-            # Add buffer ONLY if not final destination, otherwise reduce buffer
-            if train_info.get("current_leg_index", 0) < len(route) - 1:
-                # Not final destination - add reduced buffer for safety
-                authority += 25.0
-            else:
-                # Final destination - reduce buffer to prevent overshoot
-                authority += 10.0  # Smaller buffer, just enough for stopping
         else:
             # No fallback - log error if static data unavailable
             logger = get_logger()
