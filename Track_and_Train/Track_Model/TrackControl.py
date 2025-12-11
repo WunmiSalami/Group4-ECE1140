@@ -127,8 +127,17 @@ class TrackControl:
                     if other_info.get("current_block") == check_block:
                         other_train_present = True
 
-                        # Stop this train
+                        # Stop this train - SAVE original commands first!
                         if not train_info.get("separation_stopped", False):
+                            # Save original commands before zeroing
+                            train_info["saved_commanded_speed"] = train_info.get(
+                                "commanded_speed", 0
+                            )
+                            train_info["saved_commanded_authority"] = train_info.get(
+                                "commanded_authority", 0
+                            )
+
+                            # Zero commands
                             train_info["commanded_speed"] = 0
                             train_info["commanded_authority"] = 0
                             train_info["separation_stopped"] = True
@@ -142,6 +151,10 @@ class TrackControl:
                                     "current_block": current_block,
                                     "blocked_by_block": check_block,
                                     "blocks_ahead": check_block - current_block,
+                                    "saved_speed": train_info["saved_commanded_speed"],
+                                    "saved_authority": train_info[
+                                        "saved_commanded_authority"
+                                    ],
                                 },
                             )
                         return True
@@ -157,56 +170,22 @@ class TrackControl:
         if train_info.get("separation_stopped", False):
             train_info["separation_stopped"] = False
 
-            # Restore speed and recalculate authority based on state
-            state = train_info.get("state")
+            # RESTORE saved commands
+            saved_speed = train_info.get("saved_commanded_speed", 0)
+            saved_authority = train_info.get("saved_commanded_authority", 0)
 
-            if state == "En Route":
-                # Restore scheduled speed
-                scheduled_speed = train_info.get("scheduled_speed", 30)
-                train_info["commanded_speed"] = scheduled_speed
-
-                # Recalculate authority to next station
-                current_leg_index = train_info.get("current_leg_index", 0)
-                route = train_info.get("route", [])
-
-                if route and current_leg_index < len(route):
-                    next_station_block = route[current_leg_index]
-                    complete_path = self._calculate_complete_block_path(
-                        current_block, next_station_block, line
-                    )
-
-                    # Calculate authority
-                    static_data = self._read_static_data()
-                    if static_data and complete_path:
-                        authority_meters = 0.0
-                        line_data = static_data.get("static_data", {}).get(line, [])
-
-                        try:
-                            idx = complete_path.index(current_block)
-                        except ValueError:
-                            idx = 0
-
-                        for block_num in complete_path[idx:]:
-                            for block_info in line_data:
-                                if int(block_info.get("Block Number", -1)) == block_num:
-                                    authority_meters += float(
-                                        block_info.get("Block Length (m)", 0)
-                                    )
-                                    break
-
-                        authority = int(authority_meters * 1.09361)
-                        train_info["commanded_authority"] = authority
-                    else:
-                        train_info["commanded_authority"] = 500  # Fallback
+            if saved_speed > 0:
+                train_info["commanded_speed"] = saved_speed
+                train_info["commanded_authority"] = saved_authority
 
                 logger.info(
                     "SEPARATION",
-                    f"Train {train_id} RESUMING: path clear, speed={scheduled_speed:.2f} mph, authority={train_info.get('commanded_authority', 0):.0f} yds",
+                    f"Train {train_id} RESUMING: path clear, restored speed={saved_speed:.2f} mph, authority={saved_authority:.0f} yds",
                     {
                         "train_id": train_id,
                         "current_block": current_block,
-                        "resumed_speed": scheduled_speed,
-                        "resumed_authority": train_info.get("commanded_authority", 0),
+                        "restored_speed": saved_speed,
+                        "restored_authority": saved_authority,
                     },
                 )
             else:
@@ -1879,7 +1858,14 @@ class TrackControl:
                     line_data = static_data.get("static_data", {}).get(line, [])
                     for block_num in complete_path[1:]:
                         for block_info in line_data:
-                            if int(block_info.get("Block Number", -1)) == block_num:
+                            block_num_raw = block_info.get("Block Number", "N/A")
+                            if block_num_raw in ["N/A", "nan", None]:
+                                continue
+                            try:
+                                block_num_parsed = int(block_num_raw)
+                            except (ValueError, TypeError):
+                                continue
+                            if block_num_parsed == block_num:
                                 total_distance_meters += float(
                                     block_info.get("Block Length (m)", 0)
                                 )
@@ -1961,8 +1947,6 @@ class TrackControl:
                 # Parsing error or calculation issue
                 optimal_speed = 30
                 logger = get_logger()
-                import traceback
-
                 logger.warn(
                     "TRAIN",
                     f"Train {train_id} speed calculation failed, using default 30 mph: {str(e)}",
@@ -2003,12 +1987,19 @@ class TrackControl:
             authority = 200.0  # Yard distance
 
             line_data = static_data.get("static_data", {}).get(line, [])
-            for block_num in complete_path[1:-1]:  # Exclude last block (destination)
-                # Find this block in static data
+            for block_num in complete_path[1:]:
                 for block_info in line_data:
-                    if int(block_info.get("Block Number", -1)) == block_num:
-                        block_length_m = float(block_info.get("Block Length (m)", 0))
-                        authority_meters += block_length_m
+                    block_num_raw = block_info.get("Block Number", "N/A")
+                    if block_num_raw in ["N/A", "nan", None]:
+                        continue
+                    try:
+                        block_num_parsed = int(block_num_raw)
+                    except (ValueError, TypeError):
+                        continue
+                    if block_num_parsed == block_num:
+                        total_distance_meters += float(
+                            block_info.get("Block Length (m)", 0)
+                        )
                         break
 
             # Convert meters to yards and add to yard distance
@@ -2335,12 +2326,19 @@ class TrackControl:
                 # Sum all blocks from current_block onward (including current_block)
                 for block_num in complete_path[idx:]:
                     for block_info in line_data:
-                        if int(block_info.get("Block Number", -1)) == block_num:
+                        block_num_raw = block_info.get("Block Number", "N/A")
+                        if block_num_raw in ["N/A", "nan", None]:
+                            continue
+                        try:
+                            block_num_parsed = int(block_num_raw)
+                        except (ValueError, TypeError):
+                            continue
+                        if block_num_parsed == block_num:
                             authority_meters += float(
                                 block_info.get("Block Length (m)", 0)
                             )
                             break
-                authority += int(authority_meters * 1.09361)
+                authority += authority_meters * 1.09361
             else:
                 logger = get_logger()
                 logger.error(
@@ -2990,7 +2988,7 @@ class TrackControl:
         self, track_data, current_block, route, line, line_prefix
     ):
         """Set switches to route train through the specified route (list of station blocks)"""
-        config = self.infrastructure[line]
+        config = this.infrastructure[line]
         switch_blocks = config["switch_blocks"]
 
         # Calculate complete block-by-block path to first station in route
@@ -3045,7 +3043,8 @@ class TrackControl:
                     # 63: 0=straight to 64, 1=branch from Yard
                     elif switch_block == 63:
                         switch_position = 0 if prev_block == 62 else 1
-                    # 77: 0=to Poplar/Castle Shannon (78), 1=to main loop (101)
+                    # 77: 0=to Poplar (88) or Castle Shannon (96)
+                    # Position 1: going to main loop (105+) or anything else
                     elif switch_block == 77:
                         switch_position = 0 if next_block == 78 else 1
                     # 85: 0=straight to 86, 1=branch to 100
@@ -3057,7 +3056,7 @@ class TrackControl:
                     # 9: 0=to 10, 1=to Yard
                     if switch_block == 9:
                         switch_position = 0 if next_block == 10 else 1
-                    # 16: 0=straight to 15, 1=branch to 1
+                    # 16: 0=straight to 15, 1:="1->16" (from yard)
                     elif switch_block == 16:
                         switch_position = 0 if prev_block == 15 else 1
                     # 27: 0=straight to 28, 1=branch to 76
