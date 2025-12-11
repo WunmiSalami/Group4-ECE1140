@@ -616,7 +616,7 @@ class TrainModelUI(ttk.Frame):
                     self.after(1, lambda: self._run_cycle(schedule=False))
             except Exception as e:
                 print(f"Error in file watch: {e}")
-            time.sleep(0.2)
+            time.sleep(0.5)
 
     def on_close(self):
         self._stop_event.set()

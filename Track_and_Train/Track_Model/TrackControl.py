@@ -1570,9 +1570,9 @@ class TrackControl:
             return
 
         # Get line info needed for calculations
-        line = train_info.get(
-            "line"
-        )  # Calculate optimal speed based on arrival time and total distance
+        line = train_info.get("line")
+
+        # Calculate optimal speed based on arrival time and total distance
         arrival_time_str = train_info.get("arrival_time", "")
         if arrival_time_str:
             from datetime import datetime, timedelta
@@ -1618,35 +1618,67 @@ class TrackControl:
                     )
                     return  # Abort dispatch
 
-                # Calculate total dwell time (all intermediate stops)
-                num_stops = len(route) - 1  # Exclude starting point
-                total_dwell_seconds = num_stops * self.DWELL_TIME
+                # Calculate required speed accounting for acceleration/deceleration
+                if time_available > 0:
+                    # Physics constants
+                    accel = 1.64  # ft/s²
+                    decel = 3.94  # ft/s²
 
-                # Calculate travel time (exclude dwell time)
-                travel_time_seconds = time_available - total_dwell_seconds
+                    # Convert distance to feet
+                    total_distance_ft = total_distance_yards * 3.0
 
-                if travel_time_seconds > 0:
-                    # Calculate required speed (yards/sec → mph)
-                    # 1 yard/sec = 2.045 mph
-                    speed_yards_per_sec = total_distance_yards / travel_time_seconds
-                    optimal_speed = speed_yards_per_sec * 2.045
-                    # Note: Speed limits enforced per-block by train model via beacon data
+                    # Solve for cruise speed assuming: accel phase + cruise phase + decel phase
+                    # Total distance: d = (v²/2a) + v*t_cruise + (v²/2d)
+                    # Total time: t = (v/a) + t_cruise + (v/d)
+                    # Rearranging to solve for v (cruise velocity):
+                    # d = v²(1/2a + 1/2d) + v*(t - v/a - v/d)
+                    # d = v²(1/2a + 1/2d) + v*t - v²(1/a + 1/d)
+                    # d = v*t + v²(1/2a + 1/2d - 1/a - 1/d)
+                    # d = v*t - v²(1/2a + 1/2d)
+                    # Rearranging: v²(1/2a + 1/2d) - v*t + d = 0
+                    # Standard form: Av² + Bv + C = 0
+
+                    A = 1 / (2 * accel) + 1 / (2 * decel)
+                    B = -time_available
+                    C = total_distance_ft
+
+                    discriminant = B**2 - 4 * A * C
+
+                    if discriminant >= 0:
+                        # Solve quadratic for cruise velocity (ft/s)
+                        cruise_velocity_fps = (-B - (discriminant**0.5)) / (2 * A)
+                        optimal_speed = cruise_velocity_fps * 0.681818  # ft/s → mph
+
+                        # Sanity check: speed must be positive and reasonable
+                        if optimal_speed <= 0 or optimal_speed > 100:
+                            optimal_speed = 30
+                            logger = get_logger()
+                            logger.warn(
+                                "TRAIN",
+                                f"Train {train_id} calculated speed out of range, using default 30 mph",
+                                {
+                                    "train_id": train_id,
+                                    "calculated_speed": optimal_speed,
+                                    "time_available": time_available,
+                                    "distance_yards": total_distance_yards,
+                                },
+                            )
+                    else:
+                        # Not enough time - impossible schedule
+                        optimal_speed = 30
+                        logger = get_logger()
+                        logger.warn(
+                            "TRAIN",
+                            f"Train {train_id} impossible schedule: not enough time",
+                            {
+                                "train_id": train_id,
+                                "time_available": time_available,
+                                "distance_yards": total_distance_yards,
+                                "arrival_time": arrival_time_str,
+                            },
+                        )
                 else:
-                    # Impossible schedule (not enough time)
                     optimal_speed = 30
-                    # Log warning but don't fail - let train model handle speed limits
-
-                    logger = get_logger()
-                    logger.warn(
-                        "TRAIN",
-                        f"Train {train_id} impossible schedule: arrival time too soon",
-                        {
-                            "train_id": train_id,
-                            "time_available": time_available,
-                            "dwell_time_needed": total_dwell_seconds,
-                            "arrival_time": arrival_time_str,
-                        },
-                    )
 
             except Exception as e:
                 # Parsing error or calculation issue
@@ -1702,8 +1734,15 @@ class TrackControl:
                         authority_meters += block_length_m
                         break
 
-            # Convert meters to yards and add to yard distance, then add 50 yard buffer
-            authority += authority_meters * 1.09361 + 50.0
+            # Convert meters to yards and add to yard distance
+            authority += authority_meters * 1.09361
+            # Add buffer ONLY if not final destination, otherwise reduce buffer
+            if train_info.get("current_leg_index", 0) < len(route) - 1:
+                # Not final destination - add full buffer for safety
+                authority += 50.0
+            else:
+                # Final destination - reduce buffer to prevent overshoot
+                authority += 10.0  # Smaller buffer, just enough for stopping
         else:
             # No fallback - log error if static data unavailable
             logger = get_logger()
@@ -1750,6 +1789,7 @@ class TrackControl:
 
         # Log dispatch with calculated speed
         logger = get_logger()
+        num_stops = len(route) - 1  # Exclude starting point
         logger.info(
             "TRAIN",
             f"Train {train_id} dispatched: {optimal_speed:.1f} mph to reach {train_info.get('destination')} by {arrival_time_str if arrival_time_str else 'N/A'}",

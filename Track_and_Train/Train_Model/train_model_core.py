@@ -28,29 +28,37 @@ def safe_read_json(path):
         return {}
 
 
+import threading
+
+_file_locks = {}
+
+
 def safe_write_json(path, data):
-    payload = json.dumps(data, indent=4)
-    out_dir = os.path.dirname(os.path.abspath(path))
-    if out_dir and not os.path.exists(out_dir):
-        os.makedirs(out_dir, exist_ok=True)
-    tmp = path + ".tmp"
-    for attempt in range(3):
+    """Write JSON with file locking to prevent corruption from concurrent writes"""
+    if path not in _file_locks:
+        _file_locks[path] = threading.Lock()
+    lock = _file_locks[path]
+    max_retries = 5
+    retry_delay = 0.05
+    for attempt in range(max_retries):
         try:
-            with open(tmp, "w") as f:
-                f.write(payload)
-            os.replace(tmp, path)
-            return
-        except PermissionError:
-            try:
-                if os.path.exists(tmp):
-                    os.remove(tmp)
-            except Exception as e:
-                print(f"Error removing temp file {tmp}: {e}")
-            time.sleep(0.1 * (attempt + 1))
-        except Exception:
+            with lock:  # Thread-safe locking
+                out_dir = os.path.dirname(os.path.abspath(path))
+                if out_dir and not os.path.exists(out_dir):
+                    os.makedirs(out_dir, exist_ok=True)
+                temp_path = path + ".tmp"
+                with open(temp_path, "w") as f:
+                    json.dump(data, f, indent=4)
+                os.replace(temp_path, path)
+                return
+        except PermissionError as e:
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay * (attempt + 1))
+            else:
+                print(f"[ERROR] Failed to write JSON after {max_retries} attempts: {e}")
+        except Exception as e:
+            print(f"[ERROR] Error writing JSON: {e}")
             break
-    with open(path, "w") as f:
-        f.write(payload)
 
 
 # === Train Data shape ===
@@ -353,6 +361,19 @@ class TrainModel:
             #     },
             # )
 
+        # Door logic: open doors when at station and stopped/very slow
+        actual_left_door = False
+        actual_right_door = False
+        if current_station and current_station.strip() and self.velocity_mph < 0.5:
+            # At station and stopped - open appropriate door
+            if side_door == "Left":
+                actual_left_door = True
+                actual_right_door = False
+            elif side_door == "Right":
+                actual_left_door = False
+                actual_right_door = True
+            # If side_door is neither "Left" nor "Right", both stay closed
+
         return {
             "velocity_mph": self.velocity_mph,
             "acceleration_ftps2": self.acceleration_ftps2,
@@ -360,8 +381,9 @@ class TrainModel:
             "authority_yds": self.authority_yds,
             "station_name": current_station or "",
             "next_station": next_station or "",
-            "left_door_open": bool(left_door),
-            "right_door_open": bool(right_door),
+            "left_door_open": actual_left_door,
+            "right_door_open": actual_right_door,
+            "door_side": side_door,
             "speed_limit": float(speed_limit or 0.0),
         }
 

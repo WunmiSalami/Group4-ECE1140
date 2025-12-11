@@ -3,24 +3,30 @@ Line Network - Defines train paths and topology for Red and Green lines
 Knows how trains move through the network and provides visualization info
 """
 
+import os
+
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))  # Track_and_Train
+import sys
 import pandas as pd
 import re
 from typing import List, Dict, Tuple, Optional, Set
 from dataclasses import dataclass
 import json
 import random
-import os
-import sys
+import time
 from logger import get_logger
 
+# Add train manager to path
+TRAIN_MANAGER_DIR = os.path.join(PROJECT_ROOT, "Train_Model")
+sys.path.insert(0, TRAIN_MANAGER_DIR)
+from train_manager import safe_write_json
+
 # Correct fixed paths for Track and Train JSONs
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))  # Track_and_Train
 TRACK_MODEL_DIR = os.path.join(PROJECT_ROOT, "Track_Model")
 TRAIN_MODEL_DIR = os.path.join(PROJECT_ROOT, "Train_Model")
 
 # Add Track_Model to path for imports
 sys.path.insert(0, TRACK_MODEL_DIR)
-
 from DynamicBlockManager import DynamicBlockManager
 
 # JSON paths
@@ -177,10 +183,6 @@ class LineNetwork:
             self.logger.error("NETWORK", f"Error updating train model data: {e}")
 
     def write_to_train_model_json(self, commanded_speeds, commanded_authorities):
-        import json
-        import os
-        import time
-
         json_path = TRAIN_MODEL_JSON
         logger = get_logger()
         max_retries = 3
@@ -281,11 +283,8 @@ class LineNetwork:
                 else:
                     self.red_line_trains = trains
 
-                # Write with atomic operation
-                temp_path = json_path + ".tmp"
-                with open(temp_path, "w") as f:
-                    json.dump(train_model_data, f, indent=4)
-                os.replace(temp_path, json_path)
+                # Use safe_write_json for atomic write with locking and retry
+                safe_write_json(json_path, train_model_data)
                 break  # Success
 
             except Exception as e:
@@ -517,44 +516,43 @@ class LineNetwork:
         return "N/A"
 
     def find_next_station(self, current_block, previous_block):
-        """Search for next station based on direction of travel."""
+        """Search for next station based on direction AND switch positions."""
         try:
             json_path = TRACK_STATIC_JSON
             with open(json_path, "r") as f:
                 static_data = json.load(f)
 
             blocks = static_data.get("static_data", {}).get(self.line_name, [])
-
-            # Find current block index
-            current_idx = None
+            # Determine actual next block (accounting for switches)
+            actual_next_block = self._get_actual_next_block_with_switches(
+                current_block, previous_block
+            )
+            # Find next station from actual_next_block
             for i, block in enumerate(blocks):
-                if block.get("Block Number") == current_block:
-                    current_idx = i
+                if block.get("Block Number") == actual_next_block:
+                    # Search forward from here
+                    for j in range(i, len(blocks)):
+                        station = blocks[j].get("Station", "N/A")
+                        if station != "N/A":
+                            side_door = blocks[j].get("Station Side", "N/A")
+                            return station, side_door
                     break
-
-            if current_idx is None:
-                return "N/A", "N/A"
-
-            # Determine direction
-            if previous_block is not None and current_block > previous_block:
-                # Moving forward (counting up)
-                for i in range(current_idx + 1, len(blocks)):
-                    station = blocks[i].get("Station", "N/A")
-                    if station != "N/A":
-                        side_door = blocks[i].get("Station Side", "N/A")
-                        return station, side_door
-            else:
-                # Moving backward (counting down)
-                for i in range(current_idx - 1, -1, -1):
-                    station = blocks[i].get("Station", "N/A")
-                    if station != "N/A":
-                        side_door = blocks[i].get("Station Side", "N/A")
-                        return station, side_door
-
             return "N/A", "N/A"
-
         except Exception as e:
             return "N/A", "N/A"
+
+    def _get_actual_next_block_with_switches(self, current_block, previous_block):
+        """Get the actual next block considering switch positions."""
+        if self.line_name == "Green":
+            return self._get_green_line_next_block(current_block, previous_block)
+        elif self.line_name == "Red":
+            return self._get_red_line_next_block(current_block, previous_block)
+        else:
+            # Fallback: sequential
+            if previous_block is not None and previous_block < current_block:
+                return current_block + 1
+            else:
+                return current_block - 1
 
     def write_beacon_data_to_train_model(
         self, next_block: int, train_id: int, previous_block: int

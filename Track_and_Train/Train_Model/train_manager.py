@@ -33,14 +33,42 @@ def safe_read_json(path: str) -> dict:
         return {}
 
 
+# --- Improved safe_write_json with per-file locking and atomic write ---
+_file_locks = {}  # Dictionary of locks per file path
+
+
 def safe_write_json(path: str, data: dict):
-    try:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w") as f:
-            json.dump(data, f, indent=4)
-    except Exception as e:
-        logger = get_logger()
-        logger.error("DATA", f"Error writing JSON: {e}", {"error": str(e)})
+    """Write JSON with file locking to prevent corruption from concurrent writes"""
+    if path not in _file_locks:
+        _file_locks[path] = threading.Lock()
+    lock = _file_locks[path]
+    max_retries = 5
+    retry_delay = 0.05
+    for attempt in range(max_retries):
+        try:
+            with lock:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                temp_path = path + ".tmp"
+                with open(temp_path, "w") as f:
+                    json.dump(data, f, indent=4)
+                os.replace(temp_path, path)
+                return
+        except PermissionError as e:
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay * (attempt + 1))
+            else:
+                logger = get_logger()
+                logger.error(
+                    "DATA",
+                    f"Failed to write JSON after {max_retries} attempts: {e}",
+                    {"error": str(e), "path": path},
+                )
+        except Exception as e:
+            logger = get_logger()
+            logger.error(
+                "DATA", f"Error writing JSON: {e}", {"error": str(e), "path": path}
+            )
+            break
 
 
 class beacon:
@@ -682,10 +710,14 @@ class train_controller_ui(tk.Toplevel):
 
             try:
                 # print("[periodic_update] Updating speed_entry")
-                if (
-                    self.speed_entry.winfo_exists()
-                    and self.speed_entry.focus_get() != self.speed_entry
-                ):
+                try:
+                    has_focus = (
+                        self.speed_entry.winfo_exists()
+                        and self.speed_entry.focus_get() == self.speed_entry
+                    )
+                except (KeyError, tk.TclError):
+                    has_focus = False
+                if self.speed_entry.winfo_exists() and not has_focus:
                     current_entry = float(self.speed_entry.get())
                     if current_entry != state["driver_velocity"]:
                         self.speed_entry.delete(0, tk.END)
