@@ -340,18 +340,18 @@ class TrainModel:
             from logger import get_logger
 
             logger = get_logger()
-            logger.debug(
-                "TRAIN_MODEL",
-                f"Power={power_command:.0f}W, Speed={self.velocity_mph:.2f}mph, Authority={self.authority_yds:.0f}yds",
-                {
-                    "power_W": round(power_command, 0),
-                    "velocity_mph": round(self.velocity_mph, 2),
-                    "acceleration_ftps2": round(self.acceleration_ftps2, 2),
-                    "position_yds": round(self.position_yds, 2),
-                    "authority_remaining_yds": round(self.authority_yds, 0),
-                    "commanded_authority": current_authority,
-                },
-            )
+            # logger.debug(
+            #     "TRAIN_MODEL",
+            #     f"Power={power_command:.0f}W, Speed={self.velocity_mph:.2f}mph, Authority={self.authority_yds:.0f}yds",
+            #     {
+            #         "power_W": round(power_command, 0),
+            #         "velocity_mph": round(self.velocity_mph, 2),
+            #         "acceleration_ftps2": round(self.acceleration_ftps2, 2),
+            #         "position_yds": round(self.position_yds, 2),
+            #         "authority_remaining_yds": round(self.authority_yds, 0),
+            #         "commanded_authority": current_authority,
+            #     },
+            # )
 
         return {
             "velocity_mph": self.velocity_mph,

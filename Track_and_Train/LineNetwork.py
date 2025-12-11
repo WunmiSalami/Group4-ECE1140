@@ -100,6 +100,7 @@ class LineNetwork:
     """Network for a specific line (Red or Green)."""
 
     def __init__(self, line_name: str, block_manager=None):
+        self.logger = get_logger()
         self.line_name = line_name.replace(" Line", "")
         self.connections: Dict[int, List[int]] = {}  # block -> list of connected blocks
         self.branch_points: Dict[int, BranchPoint] = {}

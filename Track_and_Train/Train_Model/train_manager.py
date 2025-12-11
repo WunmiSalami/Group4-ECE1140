@@ -595,53 +595,54 @@ class train_controller_ui(tk.Toplevel):
         import traceback
 
         try:
-            print("[periodic_update] Start")
+            # Commenting out debug prints for cleaner output
+            # print("[periodic_update] Start")
             # Check if window still exists before updating
             if not self.winfo_exists():
-                print("[periodic_update] Window does not exist, returning.")
+                # print("[periodic_update] Window does not exist, returning.")
                 return
 
-            print("[periodic_update] Calling update_from_train_model")
+            # print("[periodic_update] Calling update_from_train_model")
             self.controller.update_from_train_model()
-            print("[periodic_update] Getting state")
+            # print("[periodic_update] Getting state")
             state = self.controller.get_state()
-            print(f"[periodic_update] State: {state}")
+            # print(f"[periodic_update] State: {state}")
 
             if not state.get("manual_mode", False):
-                print("[periodic_update] In automatic mode")
+                # print("[periodic_update] In automatic mode")
                 if state["driver_velocity"] != state["commanded_speed"]:
-                    print(
-                        f"[periodic_update] Syncing driver_velocity {state['driver_velocity']} to commanded_speed {state['commanded_speed']}"
-                    )
+                    # print(
+                    #     f"[periodic_update] Syncing driver_velocity {state['driver_velocity']} to commanded_speed {state['commanded_speed']}"
+                    # )
                     self.controller.update_state(
                         {"driver_velocity": state["commanded_speed"]}
                     )
                     state = self.controller.get_state()
-                    print(f"[periodic_update] State after sync: {state}")
+                    # print(f"[periodic_update] State after sync: {state}")
 
             # Emergency brake stays on until manually released - do not auto-release
             # Service brake is managed by calculate_power_command based on authority
 
             if not state["emergency_brake"]:
-                print(
-                    "[periodic_update] Emergency brake OFF, calculating power command"
-                )
+                # print(
+                #     "[periodic_update] Emergency brake OFF, calculating power command"
+                # )
                 power = self.controller.calculate_power_command(state)
-                print(f"[periodic_update] Power command calculated: {power}")
+                # print(f"[periodic_update] Power command calculated: {power}")
                 self.controller.vital_control_check_and_update({"power_command": power})
             else:
-                print("[periodic_update] Emergency brake ON, stopping train")
+                # print("[periodic_update] Emergency brake ON, stopping train")
                 self.controller._accumulated_error = 0
                 self.controller.vital_control_check_and_update(
                     {"power_command": 0, "driver_velocity": 0}
                 )
 
-            print(
-                f"[periodic_update] Updating speed_display: {state['train_velocity']:.1f} MPH"
-            )
+            # print(
+            #     f"[periodic_update] Updating speed_display: {state['train_velocity']:.1f} MPH"
+            # )
             self.speed_display.config(text=f"{state['train_velocity']:.1f} MPH")
             try:
-                print("[periodic_update] Updating info_table")
+                # print("[periodic_update] Updating info_table")
                 self.info_table.set(
                     "commanded_speed",
                     column="Value",
@@ -671,7 +672,7 @@ class train_controller_ui(tk.Toplevel):
                 traceback.print_exc()
 
             try:
-                print("[periodic_update] Updating set_speed_label")
+                # print("[periodic_update] Updating set_speed_label")
                 self.set_speed_label.config(
                     text=f"Set: {state['driver_velocity']:.1f} MPH"
                 )
@@ -680,7 +681,7 @@ class train_controller_ui(tk.Toplevel):
                 traceback.print_exc()
 
             try:
-                print("[periodic_update] Updating speed_entry")
+                # print("[periodic_update] Updating speed_entry")
                 if (
                     self.speed_entry.winfo_exists()
                     and self.speed_entry.focus_get() != self.speed_entry
@@ -694,12 +695,12 @@ class train_controller_ui(tk.Toplevel):
                 traceback.print_exc()
 
             try:
-                print("[periodic_update] Updating button states")
+                # print("[periodic_update] Updating button states")
                 self.update_button_states(state)
             except tk.TclError as e:
                 print(f"[periodic_update] Button destroyed during update: {e}")
                 traceback.print_exc()
-            print("[periodic_update] End")
+            # print("[periodic_update] End")
         except Exception as e:
             print(f"[periodic_update] Error in periodic update: {e}")
             traceback.print_exc()
