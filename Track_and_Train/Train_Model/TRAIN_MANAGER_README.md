@@ -24,7 +24,8 @@ Deletion follows a similar coordinated approach. When a train is removed (either
 
 Train Manager maintains consistency between Train Model's internal state and the JSON representation that Track Control and other modules read. After each physics cycle in Train Model, Train Manager verifies that state updates are written to the JSON file correctly. If JSON write operations fail (due to file locks, disk errors, or corruption), Train Manager implements retry logic with exponential backoff, logging failures for debugging while preventing cascading errors.
 
-The module also handles state recovery scenarios. If the system detects that a train's JSON entry is missing or corrupted (perhaps due to a crash or file system issue), Train Manager can reconstruct the entry from the Train Model's in-memory state. This recovery mechanism ensures that temporary file system issues don't permanently lose train state, allowing operations to continue with minimal disruption.
+
+The module also handles state recovery scenarios. If the system detects that a train's JSON entry is missing or corrupted (perhaps due to a crash or file system error), Train Manager can reconstruct the entry from the Train Model's in-memory state. This recovery mechanism ensures that temporary file system errors don't permanently lose train state, allowing operations to continue with minimal disruption.
 
 Train Manager monitors for state inconsistencies between different system components. For example, if Track Control believes Train 1 is at block 65 but Train Model reports block 63, Train Manager detects this mismatch and logs a warning. In severe cases (large position discrepancies that suggest data corruption), Train Manager can trigger a synchronization operation that forces all modules to re-read the authoritative state from Train Model.
 
@@ -242,13 +243,15 @@ For bulk queries, Train Manager provides functions like `get_all_trains_on_line(
 
 ### **Handling State Synchronization**
 
-Train Manager continuously monitors for state consistency issues between Train Model's in-memory state and the JSON file representation. This monitoring runs in a background thread that periodically (every 1-2 seconds) performs verification checks.
+
+Train Manager continuously monitors for state consistency between Train Model's in-memory state and the JSON file representation. This monitoring runs in a background thread that periodically (every 1-2 seconds) performs verification checks.
 
 The verification process reads each train's state from both the Train Model instance (via internal API calls) and the JSON file. It compares key values: current block, position, velocity, motion state. If the values match within acceptable tolerances (position within 1 yard, velocity within 0.1 m/s), the state is considered synchronized.
 
 If Train Manager detects a mismatch—for example, Train Model reports current_block=65 but the JSON file shows current_block=63—it logs a warning: `"State mismatch detected for Train 1: Train Model block=65, JSON block=63"`. For minor discrepancies (1-2 block difference, small position errors), Train Manager triggers a synchronization operation that forces Train Model to write its current state to the JSON file, overwriting the inconsistent values.
 
-For severe discrepancies (position differs by more than 100 yards, block differs by more than 5 blocks), Train Manager escalates the issue. It logs an error: `"Critical state inconsistency for Train 1, possible data corruption"`. It may automatically stop the train to prevent unsafe operation until the inconsistency is resolved. Train Manager notifies the operator through the UI that manual intervention is required.
+
+For severe discrepancies (position differs by more than 100 yards, block differs by more than 5 blocks), Train Manager escalates the error. It logs: `"Critical state inconsistency for Train 1, possible data corruption"`. It may automatically stop the train to prevent unsafe operation until the inconsistency is resolved. Train Manager notifies the operator through the UI that manual intervention is required.
 
 Train Manager also detects orphaned state—JSON entries for trains that don't have corresponding Train Model instances. This can occur if a Train Model crashes or is improperly deleted. Train Manager's cleanup thread identifies these orphaned entries and removes them from the JSON file, logging: `"Removed orphaned state for Train 3"`.
 
@@ -270,7 +273,8 @@ Train Manager logs the deletion: `"Train 1 deleted successfully"`. It returns a 
 
 ### **Error Recovery Example**
 
-Train Manager's error recovery mechanisms activate when Train Model encounters issues during operation. Consider a scenario where Train 1's physics simulation throws an exception due to a calculation error (perhaps a division by zero from unexpected input values).
+
+Train Manager's error recovery mechanisms activate when Train Model encounters errors during operation. Consider a scenario where Train 1's physics simulation throws an exception due to a calculation error (perhaps a division by zero from unexpected input values).
 
 Train Model's physics thread catches the exception and logs: `"Physics calculation error for Train 1: division by zero"`. The exception propagates to Train Manager through an error callback mechanism. Train Manager receives the error notification with context about what operation failed.
 
