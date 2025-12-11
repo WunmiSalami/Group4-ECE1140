@@ -1738,8 +1738,8 @@ class TrackControl:
             authority += authority_meters * 1.09361
             # Add buffer ONLY if not final destination, otherwise reduce buffer
             if train_info.get("current_leg_index", 0) < len(route) - 1:
-                # Not final destination - add full buffer for safety
-                authority += 50.0
+                # Not final destination - add reduced buffer for safety
+                authority += 25.0
             else:
                 # Final destination - reduce buffer to prevent overshoot
                 authority += 10.0  # Smaller buffer, just enough for stopping
