@@ -1,0 +1,26 @@
+================================================================================
+Train Track Control System - Log Started
+Session: 20251211_170213
+================================================================================
+
+[2025-12-11 17:02:14.375] [DEBUG] [NETWORK   ] Red Line loading branch points from static JSON
+[2025-12-11 17:02:14.377] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 16 -> [1, 15]
+[2025-12-11 17:02:14.379] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 27 -> [28, 76]
+[2025-12-11 17:02:14.380] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 33 -> [32, 72]
+[2025-12-11 17:02:14.381] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 38 -> [39, 71]
+[2025-12-11 17:02:14.382] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 44 -> [43, 67]
+[2025-12-11 17:02:14.383] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 52 -> [53, 66]
+[2025-12-11 17:02:14.384] [INFO ] [NETWORK   ] Red Line branch points loaded: 7 total
+[2025-12-11 17:06:36.958] [WARN ] [FAILURE   ] Red line A1 POWER failure activated
+[2025-12-11 17:06:40.778] [WARN ] [FAILURE   ] Red line S74 CIRCUIT failure activated
+[2025-12-11 17:06:46.545] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=57.91 mph, authority=3266.00 yds
+[2025-12-11 17:06:46.546] [INFO ] [TRAIN     ] Train 2 commands written to JSON: speed=22.41 mph, authority=0.00 yds
+[2025-12-11 17:06:48.095] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+[2025-12-11 17:06:48.096] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+[2025-12-11 17:06:48.097] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+[2025-12-11 17:06:48.099] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+[2025-12-11 17:06:48.100] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+[2025-12-11 17:06:48.102] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-11 17:06:51.646] [WARN ] [FAILURE   ] Green line I56 POWER failure activated
+[2025-12-11 17:06:53.244] [WARN ] [FAILURE   ] Green line I56 CIRCUIT failure activated
+[2025-12-11 17:06:54.876] [WARN ] [FAILURE   ] Green line I56 BROKEN RAIL failure activated
