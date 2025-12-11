@@ -258,6 +258,20 @@ class TrainModel:
         right_door=False,
         driver_velocity=0.0,
     ):
+        # Log if commanded speed or authority is zeroed (for debugging Train 2 issue)
+        from logger import get_logger
+
+        logger = get_logger()
+        if commanded_speed == 0 or commanded_authority == 0:
+            logger.warn(
+                "TRAIN_MODEL",
+                f"Zeroing command: speed={commanded_speed}, authority={commanded_authority}",
+                {
+                    "commanded_speed": commanded_speed,
+                    "commanded_authority": commanded_authority,
+                    "train_model_id": getattr(self, "train_id", None),
+                },
+            )
         # Preserve position when new authority is commanded (new leg after dwelling)
         current_authority = float(commanded_authority or 0.0)
         if current_authority != self.last_commanded_authority and current_authority > 0:

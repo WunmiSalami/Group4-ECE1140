@@ -688,16 +688,23 @@ class LineNetwork:
             self.logger.error("TRACK", f"Error writing to track control: {e}")
 
     def update_block_occupancy(
-        self, current_block: int, previous_block: Optional[int] = None
+        self, train_id: int, current_block: int, previous_block: Optional[int] = None
     ):
-        """Update occupancy in block manager when train moves."""
+        """Update occupancy in block manager when THIS train moves."""
         if not self.block_manager:
             return
-        # Clear all blocks first
-        for block_id in self.block_manager.line_states.get(self.line_name, {}):
-            self.block_manager.line_states[self.line_name][block_id][
-                "occupancy"
-            ] = False
+        # Clear ONLY this train's previous block (if exists)
+        if previous_block is not None:
+            for block_id in self.block_manager.line_states.get(self.line_name, {}):
+                try:
+                    block_num_str = "".join(filter(str.isdigit, block_id))
+                    if block_num_str and int(block_num_str) == previous_block:
+                        self.block_manager.line_states[self.line_name][block_id][
+                            "occupancy"
+                        ] = False
+                        break
+                except (ValueError, AttributeError):
+                    continue
 
         # Set current block as occupied
         for block_id in self.block_manager.line_states.get(self.line_name, {}):
@@ -708,6 +715,8 @@ class LineNetwork:
                         "occupancy"
                     ] = True
                     break
+            except (ValueError, AttributeError):
+                continue
             except (ValueError, AttributeError):
                 continue
 
@@ -1089,7 +1098,7 @@ class LineNetwork:
     def _finalize_block_transition(
         self, next_block: int, current: int, train_id: int
     ) -> None:
-        self.update_block_occupancy(next_block, current)
+        self.update_block_occupancy(train_id, next_block, current)
         # Only send beacon at stations, not every block
         station_name = self.get_station_name(next_block)
         if station_name != "N/A":

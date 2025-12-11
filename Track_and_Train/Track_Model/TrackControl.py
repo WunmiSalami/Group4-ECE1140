@@ -18,6 +18,209 @@ from schedule_manager import (
 
 
 class TrackControl:
+    def _check_traffic_lights_ahead(self, train_id, train_info, line, track_data):
+        """
+        Check 3 blocks ahead for red traffic lights.
+        Stop train if red light detected.
+        Returns: True if red light detected (need to stop), False otherwise
+        """
+        logger = get_logger()
+        current_block = train_info.get("current_block", 0)
+        expected_path = train_info.get("expected_path", [])
+        if not expected_path or current_block not in expected_path:
+            return False  # Can't check without path
+        try:
+            current_idx = expected_path.index(current_block)
+        except ValueError:
+            return False
+        # Check next 3 blocks ahead
+        blocks_to_check = expected_path[current_idx + 1 : current_idx + 4]
+        config = self.infrastructure[line]
+        light_blocks = config["light_blocks"]
+        line_prefix = "G" if line == "Green" else "R"
+        lights = track_data.get(f"{line_prefix}-lights", [])
+        for check_block in blocks_to_check:
+            if check_block in light_blocks:
+                light_idx = light_blocks.index(check_block)
+                bit_idx = light_idx * 2  # Each light uses 2 bits
+                if bit_idx + 1 >= len(lights):
+                    continue  # Light data not available
+                light_bits = [lights[bit_idx], lights[bit_idx + 1]]
+                # 00 = Super Green, 01 = Green, 10 = Yellow, 11 = Red
+                if light_bits == [1, 1]:  # Red light
+                    if not train_info.get("red_light_stopped", False):
+                        train_info["commanded_speed"] = 0
+                        train_info["commanded_authority"] = 0
+                        train_info["red_light_stopped"] = True
+                        train_info["red_light_block"] = check_block
+                        logger.warn(
+                            "TRAFFIC_LIGHT",
+                            f"Train {train_id} STOPPED: Red light at block {check_block}",
+                            {
+                                "train_id": train_id,
+                                "line": line,
+                                "current_block": current_block,
+                                "red_light_block": check_block,
+                                "blocks_ahead": check_block - current_block,
+                            },
+                        )
+                    return True
+                elif light_bits == [1, 0]:  # Yellow light
+                    if not train_info.get("yellow_light_warned", False):
+                        train_info["yellow_light_warned"] = True
+                        logger.info(
+                            "TRAFFIC_LIGHT",
+                            f"Train {train_id}: Yellow light ahead at block {check_block}",
+                            {
+                                "train_id": train_id,
+                                "current_block": current_block,
+                                "yellow_light_block": check_block,
+                            },
+                        )
+        # No red lights ahead - resume if previously stopped
+        if train_info.get("red_light_stopped", False):
+            train_info["red_light_stopped"] = False
+            train_info["yellow_light_warned"] = False
+            train_info.pop("red_light_block", None)
+            logger.info(
+                "TRAFFIC_LIGHT",
+                f"Train {train_id} clear: No red lights within 3 blocks ahead",
+                {
+                    "train_id": train_id,
+                    "current_block": current_block,
+                },
+            )
+        return False
+
+    def _check_train_separation(self, train_id, train_info, line, occupancy):
+        """
+        Check if another train is too close (within 1 block ahead).
+        Maintains at least 1 empty block separation between trains.
+        Returns: True if separation violated (need to stop), False otherwise
+        """
+        logger = get_logger()
+        current_block = train_info.get("current_block", 0)
+        expected_path = train_info.get("expected_path", [])
+
+        if not expected_path or current_block not in expected_path:
+            return False  # Can't check without path
+
+        try:
+            current_idx = expected_path.index(current_block)
+        except ValueError:
+            return False
+
+        # Check next 2 blocks ahead (immediate next + 1 buffer)
+        blocks_to_check = expected_path[current_idx + 1 : current_idx + 3]
+
+        for check_block in blocks_to_check:
+            if check_block - 1 < len(occupancy) and occupancy[check_block - 1] == 1:
+                other_train_present = False
+
+                for other_id, other_info in self.active_trains.items():
+                    if other_id == train_id:
+                        continue  # Skip self
+
+                    if other_info.get("line") != line:
+                        continue  # Different line
+
+                    if other_info.get("current_block") == check_block:
+                        other_train_present = True
+
+                        # Stop this train
+                        if not train_info.get("separation_stopped", False):
+                            train_info["commanded_speed"] = 0
+                            train_info["commanded_authority"] = 0
+                            train_info["separation_stopped"] = True
+
+                            logger.warn(
+                                "SEPARATION",
+                                f"Train {train_id} STOPPED: Train {other_id} too close at block {check_block}",
+                                {
+                                    "train_id": train_id,
+                                    "other_train_id": other_id,
+                                    "current_block": current_block,
+                                    "blocked_by_block": check_block,
+                                    "blocks_ahead": check_block - current_block,
+                                },
+                            )
+                        return True
+
+                if not other_train_present:
+                    logger.debug(
+                        "SEPARATION",
+                        f"Train {train_id}: Block {check_block} occupied but no train identified",
+                        {"train_id": train_id, "check_block": check_block},
+                    )
+
+        # No train ahead - resume if previously stopped
+        if train_info.get("separation_stopped", False):
+            train_info["separation_stopped"] = False
+
+            # Restore speed and recalculate authority based on state
+            state = train_info.get("state")
+
+            if state == "En Route":
+                # Restore scheduled speed
+                scheduled_speed = train_info.get("scheduled_speed", 30)
+                train_info["commanded_speed"] = scheduled_speed
+
+                # Recalculate authority to next station
+                current_leg_index = train_info.get("current_leg_index", 0)
+                route = train_info.get("route", [])
+
+                if route and current_leg_index < len(route):
+                    next_station_block = route[current_leg_index]
+                    complete_path = self._calculate_complete_block_path(
+                        current_block, next_station_block, line
+                    )
+
+                    # Calculate authority
+                    static_data = self._read_static_data()
+                    if static_data and complete_path:
+                        authority_meters = 0.0
+                        line_data = static_data.get("static_data", {}).get(line, [])
+
+                        try:
+                            idx = complete_path.index(current_block)
+                        except ValueError:
+                            idx = 0
+
+                        for block_num in complete_path[idx:]:
+                            for block_info in line_data:
+                                if int(block_info.get("Block Number", -1)) == block_num:
+                                    authority_meters += float(
+                                        block_info.get("Block Length (m)", 0)
+                                    )
+                                    break
+
+                        authority = int(authority_meters * 1.09361)
+                        train_info["commanded_authority"] = authority
+                    else:
+                        train_info["commanded_authority"] = 500  # Fallback
+
+                logger.info(
+                    "SEPARATION",
+                    f"Train {train_id} RESUMING: path clear, speed={scheduled_speed:.2f} mph, authority={train_info.get('commanded_authority', 0):.0f} yds",
+                    {
+                        "train_id": train_id,
+                        "current_block": current_block,
+                        "resumed_speed": scheduled_speed,
+                        "resumed_authority": train_info.get("commanded_authority", 0),
+                    },
+                )
+            else:
+                logger.info(
+                    "SEPARATION",
+                    f"Train {train_id} clear: No trains within 2 blocks ahead",
+                    {
+                        "train_id": train_id,
+                        "current_block": current_block,
+                    },
+                )
+
+        return False
+
     def __init__(self, parent):
         self.parent = parent
 
@@ -67,7 +270,7 @@ class TrackControl:
                     28: {0: "28->29", 1: "150->28"},
                     57: {0: "57->58", 1: "57->Yard"},
                     63: {0: "63->64", 1: "Yard->63"},
-                    77: {0: "76->77", 1: "77->101"},
+                    77: {0: "77->78", 1: "77->101"},
                     85: {0: "85->86", 1: "100->85"},
                 },
                 "stations": {
@@ -1466,34 +1669,79 @@ class TrackControl:
         """Update train positions from occupancy array for specific line"""
         # Find all occupied blocks
         occupied_blocks = [idx for idx, occ in enumerate(occupancy) if occ == 1]
+        if not occupied_blocks:
+            return  # No trains on this line
 
-        # Get trains on this line sorted by train_id
-        line_trains = sorted(
-            [
-                (tid, info)
-                for tid, info in self.active_trains.items()
-                if info.get("line") == line
-            ],
-            key=lambda x: x[0],
-        )
+        # Get trains on this line
+        line_trains = {
+            tid: info
+            for tid, info in self.active_trains.items()
+            if info.get("line") == line
+        }
+        if not line_trains:
+            return  # No active trains for this line
 
-        # Assign occupied blocks to trains in order
-        for i, (train_id, train_info) in enumerate(line_trains):
-            if i < len(occupied_blocks):
-                actual_block = occupied_blocks[i] + 1
+        logger = get_logger()
+
+        # Match each train to closest occupied block on their expected path
+        assigned_blocks = set()
+
+        for train_id, train_info in line_trains.items():
+            current_block = train_info.get("current_block")
+            expected_path = train_info.get("expected_path", [])
+
+            best_match = None
+            best_distance = float("inf")
+            occ_idx_for_station = None
+
+            for occ_idx in occupied_blocks:
+                actual_block = occ_idx + 1  # Convert to 1-indexed
+
+                if actual_block in assigned_blocks:
+                    continue  # Already assigned to another train
+
+                # Check if this block is on the expected path
+                if expected_path and actual_block in expected_path:
+                    # Find distance along path
+                    try:
+                        current_idx = (
+                            expected_path.index(current_block)
+                            if current_block in expected_path
+                            else 0
+                        )
+                        actual_idx = expected_path.index(actual_block)
+                        path_distance = abs(actual_idx - current_idx)
+                    except ValueError:
+                        path_distance = float("inf")
+                else:
+                    # Not on expected path - use Manhattan distance as fallback
+                    path_distance = (
+                        abs(actual_block - current_block)
+                        if current_block
+                        else float("inf")
+                    )
+
+                # Prefer blocks on expected path and closer to current position
+                if path_distance < best_distance:
+                    best_distance = path_distance
+                    best_match = actual_block
+                    occ_idx_for_station = occ_idx
+
+            # Assign best match to this train
+            if best_match is not None:
                 old_block = train_info.get("current_block")
-                train_info["current_block"] = actual_block
+                train_info["current_block"] = best_match
+                assigned_blocks.add(best_match)
 
                 # Log block transitions
-                if old_block is not None and old_block != actual_block:
-                    logger = get_logger()
+                if old_block is not None and old_block != best_match:
                     logger.info(
                         "TRAIN",
-                        f"Train {train_id} BLOCK TRANSITION: {old_block} → {actual_block}",
+                        f"Train {train_id} BLOCK TRANSITION: {old_block} → {best_match}",
                         {
                             "train_id": train_id,
                             "old_block": old_block,
-                            "new_block": actual_block,
+                            "new_block": best_match,
                             "state": train_info.get("state"),
                             "motion": train_info.get("motion_state", "Unknown"),
                         },
@@ -1501,22 +1749,20 @@ class TrackControl:
 
                 # Path verification: check if train is on expected path
                 expected_path = train_info.get("expected_path", [])
-                if expected_path and actual_block not in expected_path:
-                    logger = get_logger()
+                if expected_path and best_match not in expected_path:
                     logger.warn(
                         "ROUTING",
-                        f"Train {train_id} DEVIATED: expected path {expected_path}, actual block {actual_block}",
+                        f"Train {train_id} DEVIATED: expected path {expected_path}, actual block {best_match}",
                         {
                             "train_id": train_id,
                             "expected_path": expected_path,
-                            "actual_block": actual_block,
+                            "actual_block": best_match,
                         },
                     )
 
                 # Check if at station
                 config = self.infrastructure[line]
                 stations = config["stations"]
-                # Handle list format: create mapping for all blocks
                 block_to_station = {}
                 for station_name, blocks in stations.items():
                     if isinstance(blocks, list):
@@ -1525,8 +1771,25 @@ class TrackControl:
                     else:
                         block_to_station[blocks] = station_name
 
-                if occupied_blocks[i] in block_to_station:
-                    train_info["current_station"] = block_to_station[occupied_blocks[i]]
+                if (
+                    occ_idx_for_station is not None
+                    and (occ_idx_for_station + 1) in block_to_station
+                ):
+                    train_info["current_station"] = block_to_station[
+                        occ_idx_for_station + 1
+                    ]
+            else:
+                # No occupied block found for this train
+                logger.warn(
+                    "POSITION",
+                    f"Train {train_id} has no matching occupied block",
+                    {
+                        "train_id": train_id,
+                        "current_block": current_block,
+                        "occupied_blocks": [idx + 1 for idx in occupied_blocks],
+                        "assigned_blocks": list(assigned_blocks),
+                    },
+                )
 
     def _process_train_state_machine(
         self, train_id, train_info, track_data, track_model_data
@@ -1543,6 +1806,16 @@ class TrackControl:
 
         current_position_yds = float(block_info.get("position", 0.0) or 0.0)
         motion_state = block_info.get("motion", "Stopped")
+
+        # SAFETY CHECKS (run for all states except Arrived/Dwelling/At Station)
+        if state not in ["Arrived", "Dwelling", "At Station"]:
+            occupancy = track_data.get(f"{line_prefix}-Occupancy", [])
+            # Check train separation
+            if self._check_train_separation(train_id, train_info, line, occupancy):
+                return  # Train stopped for separation, skip state machine
+            # Check traffic lights
+            if self._check_traffic_lights_ahead(train_id, train_info, line, track_data):
+                return  # Train stopped for red light, skip state machine
 
         # State machine transitions
         if state == "Dispatching":
@@ -1739,7 +2012,7 @@ class TrackControl:
                         break
 
             # Convert meters to yards and add to yard distance
-            authority += authority_meters * 1.09361
+            authority += authority_meters * 1.09361 + 10  # Extra 10 yards buffer
         else:
             # No fallback - log error if static data unavailable
             logger = get_logger()
@@ -1803,10 +2076,127 @@ class TrackControl:
             },
         )
 
-        # Set switches for route
-        self._set_switches_for_route(
-            track_data, current_block, route, train_info.get("line"), line_prefix
+        # Calculate and store expected path for this leg
+        complete_path = self._calculate_complete_block_path(
+            current_block, next_station_block, line
         )
+        train_info["expected_path"] = complete_path
+
+        logger.info(
+            "DISPATCH",
+            f"Train {train_id} expected path: {complete_path[0]}→{complete_path[-1]} ({len(complete_path)} blocks)",
+            {
+                "train_id": train_id,
+                "path_start": complete_path[0],
+                "path_end": complete_path[-1],
+                "path_length": len(complete_path),
+                "first_10_blocks": complete_path[:10],
+            },
+        )
+
+        # Switch setting now handled dynamically in _set_switches_for_approaching_trains()
+        # (called from PLC cycle, not from dispatch)
+
+    def _set_switches_for_approaching_trains(self, track_data, line, line_prefix):
+        """
+        Dynamically set switches based on trains approaching them.
+        Only sets switch if train is within 5 blocks of the switch.
+        Priority given to closest train.
+        """
+        logger = get_logger()
+        config = self.infrastructure[line]
+        switch_blocks = config["switch_blocks"]
+        switch_routes = config["switch_routes"]
+        switches = track_data.get(f"{line_prefix}-switches", [])
+        # Get all trains on this line
+        line_trains = {
+            tid: info
+            for tid, info in self.active_trains.items()
+            if info.get("line") == line
+        }
+        # For each switch, find closest approaching train
+        for idx, switch_block in enumerate(switch_blocks):
+            if idx >= len(switches):
+                continue
+
+            # SPECIAL CASE: Switch 63 (yard exit) for Green Line
+            if line == "Green" and switch_block == 63:
+                for train_id, train_info in line_trains.items():
+                    current_block = train_info.get("current_block", 0)
+                    expected_path = train_info.get("expected_path", [])
+                    if current_block == 0 and expected_path and 63 in expected_path:
+                        if switches[idx] != 1:
+                            old_pos = switches[idx]
+                            switches[idx] = 1
+                            logger.info(
+                                "SWITCH",
+                                f"Green line block 63 switch: pos {old_pos} → 1 (Yard exit for Train {train_id})",
+                                {
+                                    "line": line,
+                                    "block": switch_block,
+                                    "train_id": train_id,
+                                },
+                            )
+                        break
+                continue  # Skip normal processing for switch 63
+
+            closest_train = None
+            min_distance = float("inf")
+            desired_position = 0  # Default
+            for train_id, train_info in line_trains.items():
+                current_block = train_info.get("current_block", 0)
+                expected_path = train_info.get("expected_path", [])
+                if not expected_path or switch_block not in expected_path:
+                    continue  # Switch not on this train's path
+                try:
+                    current_idx = (
+                        expected_path.index(current_block)
+                        if current_block in expected_path
+                        else -1
+                    )
+                    switch_idx = expected_path.index(switch_block)
+                except ValueError:
+                    continue
+                # Calculate distance along path
+                if current_idx >= 0 and switch_idx > current_idx:
+                    path_distance = switch_idx - current_idx
+                    if path_distance <= 5 and path_distance < min_distance:
+                        min_distance = path_distance
+                        closest_train = train_id
+                        # Determine desired position for this train
+                        if line == "Green":
+                            desired_position = self._determine_green_switch_position(
+                                switch_block,
+                                train_info.get("route", []),
+                                current_block,
+                                train_info.get("destination"),
+                            )
+                        else:  # Red line
+                            desired_position = self._determine_red_switch_position(
+                                switch_block,
+                                train_info.get("route", []),
+                                current_block,
+                                train_info.get("destination"),
+                            )
+            # Set switch for closest approaching train
+            if closest_train is not None and switches[idx] != desired_position:
+                old_pos = switches[idx]
+                switches[idx] = desired_position
+                logger.info(
+                    "SWITCH",
+                    f"{line} line block {switch_block} switch: pos {old_pos} → {desired_position} (for Train {closest_train}, {min_distance} blocks away)",
+                    {
+                        "line": line,
+                        "block": switch_block,
+                        "old_position": old_pos,
+                        "new_position": desired_position,
+                        "train_id": closest_train,
+                        "distance": min_distance,
+                        "route_description": switch_routes[switch_block][
+                            desired_position
+                        ],
+                    },
+                )
 
     def _handle_enroute_state(
         self,
@@ -1995,8 +2385,8 @@ class TrackControl:
             occupancy = track_data.get(f"{line_prefix}-Occupancy", [])
             failures = track_data.get(f"{line_prefix}-Failures", [])
 
-            # 1. Switch Control
-            self._control_switches_for_line(track_data, line, line_prefix)
+            # 1. Switch Control - DYNAMIC (proximity-based)
+            self._set_switches_for_approaching_trains(track_data, line, line_prefix)
 
             # 2. Traffic Light Control
             self._control_traffic_lights(track_data, line, line_prefix, occupancy)
@@ -2006,75 +2396,6 @@ class TrackControl:
 
             # 4. Failure Handling
             self._handle_failures_for_line(track_data, line, line_prefix, failures)
-
-    def _control_switches_for_line(self, track_data, line, line_prefix):
-        """Set switches based on active train routes"""
-        config = self.infrastructure[line]
-        switch_blocks = config["switch_blocks"]
-        switch_routes = config["switch_routes"]
-        switches = track_data.get(f"{line_prefix}-switches", [])
-
-        logger = get_logger()
-
-        # Get all trains on this line
-        line_trains = {
-            tid: info
-            for tid, info in self.active_trains.items()
-            if info.get("line") == line
-        }
-
-        for idx, switch_block in enumerate(switch_blocks):
-            if idx >= len(switches):
-                continue
-
-            # Determine switch position based on train routes
-            desired_position = 0  # Default position
-
-            for train_id, train_info in line_trains.items():
-                route = train_info.get("route", [])
-                current_block = train_info.get("current_block", 0)
-
-                if not route:
-                    continue
-
-                # Check if this switch is relevant to train's route
-                # Line-specific switch logic
-                if line == "Green":
-                    desired_position = self._determine_green_switch_position(
-                        switch_block,
-                        route,
-                        current_block,
-                        train_info.get("destination"),
-                    )
-                else:  # Red line
-                    desired_position = self._determine_red_switch_position(
-                        switch_block,
-                        route,
-                        current_block,
-                        train_info.get("destination"),
-                    )
-
-                # If any train needs non-default position, use it
-                if desired_position != 0:
-                    break
-
-            # Update switch if changed
-            if switches[idx] != desired_position:
-                old_pos = switches[idx]
-                switches[idx] = desired_position
-                logger.info(
-                    "SWITCH",
-                    f"{line} line block {switch_block} switch: pos {old_pos} → {desired_position}",
-                    {
-                        "line": line,
-                        "block": switch_block,
-                        "old_position": old_pos,
-                        "new_position": desired_position,
-                        "route_description": switch_routes[switch_block][
-                            desired_position
-                        ],
-                    },
-                )
 
     def _determine_green_switch_position(
         self, switch_block, route, current_block, destination
@@ -2329,7 +2650,7 @@ class TrackControl:
                 )
 
     def _handle_failures_for_line(self, track_data, line, line_prefix, failures):
-        """Handle failures: stop trains, adjust authority, attempt rerouting"""
+        """Handle failures: check 3 blocks ahead and stop if detected"""
         logger = get_logger()
 
         for train_id, train_info in list(self.active_trains.items()):
@@ -2337,59 +2658,86 @@ class TrackControl:
                 continue
 
             current_block = train_info.get("current_block", 0)
-            route = train_info.get("route", [])
+            expected_path = train_info.get("expected_path", [])
 
-            # Check for failures ahead on route
-            failure_blocks = []
-            for block in route:
-                if block < len(failures) and failures[block] != 0:
-                    failure_blocks.append((block, failures[block]))
+            if not expected_path or current_block not in expected_path:
+                continue  # Can't check ahead without path
 
-            if not failure_blocks:
+            # Find current position in path
+            try:
+                current_idx = expected_path.index(current_block)
+            except ValueError:
                 continue
 
-            # Find closest failure
-            closest_failure = None
-            min_distance = float("inf")
+            # Check next 3 blocks in path
+            blocks_to_check = expected_path[current_idx + 1 : current_idx + 4]
 
-            for fail_block, fail_type in failure_blocks:
-                distance = abs(fail_block - current_block)
-                if distance < min_distance:
-                    min_distance = distance
-                    closest_failure = (fail_block, fail_type)
+            failure_detected = False
+            failure_info = None
 
-            if closest_failure and min_distance <= self.FAILURE_STOP_DISTANCE:
-                fail_block, fail_type = closest_failure
-                failure_names = {0: "None", 1: "Broken Rail", 2: "Power", 3: "Circuit"}
+            for i, block in enumerate(blocks_to_check):
+                if block < len(failures) and failures[block] != 0:
+                    failure_detected = True
+                    failure_names = {
+                        1: "Broken Rail",
+                        2: "Power Failure",
+                        3: "Circuit Failure",
+                    }
+                    failure_info = {
+                        "block": block,
+                        "type": failures[block],
+                        "type_name": failure_names.get(failures[block], "Unknown"),
+                        "distance": i + 1,  # Blocks ahead
+                    }
+                    break
 
-                # Stop the train
-                old_speed = train_info.get("commanded_speed", 0)
-                old_authority = train_info.get("commanded_authority", 0)
+            # Handle failure state
+            if failure_detected:
+                # Stop the train if not already stopped
+                if not train_info.get("failure_stopped", False):
+                    old_speed = train_info.get("commanded_speed", 0)
+                    old_authority = train_info.get("commanded_authority", 0)
 
-                train_info["commanded_speed"] = 0
-                train_info["commanded_authority"] = 0
-                train_info["state"] = (
-                    f"Stopped - {failure_names.get(fail_type, 'Unknown')} Failure"
-                )
+                    train_info["commanded_speed"] = 0
+                    train_info["commanded_authority"] = 0
+                    train_info["failure_stopped"] = True
+                    train_info["failure_info"] = failure_info  # Store for logging
 
-                if old_speed > 0 or old_authority > 0:
-                    logger.warn(
-                        "FAILURE",
-                        f"Train {train_id} stopped due to {failure_names.get(fail_type)} at block {fail_block}",
-                        {
-                            "train_id": train_id,
-                            "line": line,
-                            "current_block": current_block,
-                            "failure_block": fail_block,
-                            "failure_type": failure_names.get(fail_type),
-                            "distance_to_failure": min_distance,
-                            "old_speed": old_speed,
-                            "old_authority": old_authority,
-                        },
-                    )
+                    if old_speed > 0 or old_authority > 0:
+                        logger.warn(
+                            "FAILURE",
+                            f"Train {train_id} STOPPED: {failure_info['type_name']} detected {failure_info['distance']} blocks ahead at block {failure_info['block']}",
+                            {
+                                "train_id": train_id,
+                                "line": line,
+                                "current_block": current_block,
+                                "failure_block": failure_info["block"],
+                                "failure_type": failure_info["type_name"],
+                                "distance_blocks_ahead": failure_info["distance"],
+                            },
+                        )
+            else:
+                # No failure ahead - resume if previously stopped
+                if train_info.get("failure_stopped", False):
+                    train_info["failure_stopped"] = False
 
-                # TODO: Attempt rerouting using alternate switches
-                # This would require path-finding algorithm to find alternate route
+                    # Restore to appropriate state
+                    if train_info.get("state") == "En Route":
+                        # Restore scheduled speed and recalculate authority
+                        scheduled_speed = train_info.get("scheduled_speed", 30)
+                        train_info["commanded_speed"] = scheduled_speed
+                        # Authority will be recalculated in next state machine cycle
+
+                        logger.info(
+                            "FAILURE",
+                            f"Train {train_id} RESUMING: failure cleared",
+                            {
+                                "train_id": train_id,
+                                "line": line,
+                                "current_block": current_block,
+                                "resumed_speed": scheduled_speed,
+                            },
+                        )
 
     def _expand_route_to_complete_path(self, route, line):
         """
@@ -2534,6 +2882,10 @@ class TrackControl:
         # 77 → 78-100 (Poplar/Castle Shannon spur)
         if start_block == 77 and 78 <= end_block <= 100:
             return list(range(77, end_block + 1))
+
+        # Both on Poplar/Castle Shannon spur (78-100) - SAME SPUR
+        if 78 <= start_block <= 100 and 78 <= end_block <= 100:
+            return list(range(start_block, end_block + 1))
 
         # From Poplar/Castle Shannon spur to main loop
         if 78 <= start_block <= 100 and end_block >= 101:
