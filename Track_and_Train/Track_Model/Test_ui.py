@@ -1206,9 +1206,9 @@ class TrackModelTestUI:
             prefix = "G" if line == "Green" else "R"
             failures_array = data.get(f"{prefix}-Failures", [])
             # DEBUG
-            print(
-                f"🔍 Checking failures for Train {train_id}, current block {current_block}"
-            )
+            # print(
+            # f"🔍 Checking failures for Train {train_id}, current block {current_block}"
+            # )
             train_key = f"{line[0]}_train_{train_id}"
             previous_block = self.train_last_known_blocks.get(train_key, None)
             next_blocks = self._get_next_blocks_with_switches(
@@ -1455,9 +1455,9 @@ class TrackModelTestUI:
                         # Light cleared (GREEN or Super GREEN) - restore speed
                         self._restore_speed_after_light(train_id, line)
                     # DEBUG PRINTS
-                    print(
-                        f"🔍 Train {train_id}: current_block={current_block}, failure={failure_detected}, zeroed={is_zeroed}"
-                    )
+                    # print(
+                    # f"🔍 Train {train_id}: current_block={current_block}, failure={failure_detected}, zeroed={is_zeroed}"
+                    # )
                     if failure_detected and not is_zeroed:
                         # print(f"🔍 Entering ZERO branch")
                         self._zero_authority_for_failure(train_id, line)
