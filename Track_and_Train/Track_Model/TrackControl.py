@@ -127,17 +127,8 @@ class TrackControl:
                     if other_info.get("current_block") == check_block:
                         other_train_present = True
 
-                        # Stop this train - SAVE original commands first!
+                        # Stop this train
                         if not train_info.get("separation_stopped", False):
-                            # Save original commands before zeroing
-                            train_info["saved_commanded_speed"] = train_info.get(
-                                "commanded_speed", 0
-                            )
-                            train_info["saved_commanded_authority"] = train_info.get(
-                                "commanded_authority", 0
-                            )
-
-                            # Zero commands
                             train_info["commanded_speed"] = 0
                             train_info["commanded_authority"] = 0
                             train_info["separation_stopped"] = True
@@ -151,10 +142,6 @@ class TrackControl:
                                     "current_block": current_block,
                                     "blocked_by_block": check_block,
                                     "blocks_ahead": check_block - current_block,
-                                    "saved_speed": train_info["saved_commanded_speed"],
-                                    "saved_authority": train_info[
-                                        "saved_commanded_authority"
-                                    ],
                                 },
                             )
                         return True
@@ -170,22 +157,56 @@ class TrackControl:
         if train_info.get("separation_stopped", False):
             train_info["separation_stopped"] = False
 
-            # RESTORE saved commands
-            saved_speed = train_info.get("saved_commanded_speed", 0)
-            saved_authority = train_info.get("saved_commanded_authority", 0)
+            # Restore speed and recalculate authority based on state
+            state = train_info.get("state")
 
-            if saved_speed > 0:
-                train_info["commanded_speed"] = saved_speed
-                train_info["commanded_authority"] = saved_authority
+            if state == "En Route":
+                # Restore scheduled speed
+                scheduled_speed = train_info.get("scheduled_speed", 30)
+                train_info["commanded_speed"] = scheduled_speed
+
+                # Recalculate authority to next station
+                current_leg_index = train_info.get("current_leg_index", 0)
+                route = train_info.get("route", [])
+
+                if route and current_leg_index < len(route):
+                    next_station_block = route[current_leg_index]
+                    complete_path = self._calculate_complete_block_path(
+                        current_block, next_station_block, line
+                    )
+
+                    # Calculate authority
+                    static_data = self._read_static_data()
+                    if static_data and complete_path:
+                        authority_meters = 0.0
+                        line_data = static_data.get("static_data", {}).get(line, [])
+
+                        try:
+                            idx = complete_path.index(current_block)
+                        except ValueError:
+                            idx = 0
+
+                        for block_num in complete_path[idx:]:
+                            for block_info in line_data:
+                                if int(block_info.get("Block Number", -1)) == block_num:
+                                    authority_meters += float(
+                                        block_info.get("Block Length (m)", 0)
+                                    )
+                                    break
+
+                        authority = int(authority_meters * 1.09361)
+                        train_info["commanded_authority"] = authority
+                    else:
+                        train_info["commanded_authority"] = 500  # Fallback
 
                 logger.info(
                     "SEPARATION",
-                    f"Train {train_id} RESUMING: path clear, restored speed={saved_speed:.2f} mph, authority={saved_authority:.0f} yds",
+                    f"Train {train_id} RESUMING: path clear, speed={scheduled_speed:.2f} mph, authority={train_info.get('commanded_authority', 0):.0f} yds",
                     {
                         "train_id": train_id,
                         "current_block": current_block,
-                        "restored_speed": saved_speed,
-                        "restored_authority": saved_authority,
+                        "resumed_speed": scheduled_speed,
+                        "resumed_authority": train_info.get("commanded_authority", 0),
                     },
                 )
             else:
@@ -1858,14 +1879,7 @@ class TrackControl:
                     line_data = static_data.get("static_data", {}).get(line, [])
                     for block_num in complete_path[1:]:
                         for block_info in line_data:
-                            block_num_raw = block_info.get("Block Number", "N/A")
-                            if block_num_raw in ["N/A", "nan", None]:
-                                continue
-                            try:
-                                block_num_parsed = int(block_num_raw)
-                            except (ValueError, TypeError):
-                                continue
-                            if block_num_parsed == block_num:
+                            if int(block_info.get("Block Number", -1)) == block_num:
                                 total_distance_meters += float(
                                     block_info.get("Block Length (m)", 0)
                                 )
@@ -1947,6 +1961,8 @@ class TrackControl:
                 # Parsing error or calculation issue
                 optimal_speed = 30
                 logger = get_logger()
+                import traceback
+
                 logger.warn(
                     "TRAIN",
                     f"Train {train_id} speed calculation failed, using default 30 mph: {str(e)}",
@@ -1987,19 +2003,12 @@ class TrackControl:
             authority = 200.0  # Yard distance
 
             line_data = static_data.get("static_data", {}).get(line, [])
-            for block_num in complete_path[1:]:
+            for block_num in complete_path[1:-1]:  # Exclude last block (destination)
+                # Find this block in static data
                 for block_info in line_data:
-                    block_num_raw = block_info.get("Block Number", "N/A")
-                    if block_num_raw in ["N/A", "nan", None]:
-                        continue
-                    try:
-                        block_num_parsed = int(block_num_raw)
-                    except (ValueError, TypeError):
-                        continue
-                    if block_num_parsed == block_num:
-                        total_distance_meters += float(
-                            block_info.get("Block Length (m)", 0)
-                        )
+                    if int(block_info.get("Block Number", -1)) == block_num:
+                        block_length_m = float(block_info.get("Block Length (m)", 0))
+                        authority_meters += block_length_m
                         break
 
             # Convert meters to yards and add to yard distance
@@ -2326,19 +2335,12 @@ class TrackControl:
                 # Sum all blocks from current_block onward (including current_block)
                 for block_num in complete_path[idx:]:
                     for block_info in line_data:
-                        block_num_raw = block_info.get("Block Number", "N/A")
-                        if block_num_raw in ["N/A", "nan", None]:
-                            continue
-                        try:
-                            block_num_parsed = int(block_num_raw)
-                        except (ValueError, TypeError):
-                            continue
-                        if block_num_parsed == block_num:
+                        if int(block_info.get("Block Number", -1)) == block_num:
                             authority_meters += float(
                                 block_info.get("Block Length (m)", 0)
                             )
                             break
-                authority += authority_meters * 1.09361
+                authority += int(authority_meters * 1.09361)
             else:
                 logger = get_logger()
                 logger.error(
@@ -2859,197 +2861,124 @@ class TrackControl:
 
     def _fill_blocks_between_stations(self, start_block, end_block):
         """
-        Fill in all blocks between two blocks (handles BOTH Green and Red Line)
+        Fill in all blocks between two blocks on Green Line.
+        Handles switches and special topology.
+        Works for both station blocks and arbitrary blocks.
         """
         from logger import get_logger
 
         logger = get_logger()
 
-        # Determine which line based on block numbers
-        if start_block <= 150 and end_block <= 150:
-            line = "Green"
-        else:
-            line = "Red"
-
-        if line == "Red":
-            return self._fill_red_line_blocks(start_block, end_block)
-        else:
-            # ... existing Green Line logic ...
-            # (Paste the original Green Line logic here)
-            # 77 → 101+ (main loop via switch)
-            if start_block == 77 and end_block >= 101:
-                return [77, 101] + list(range(102, end_block + 1))
-            if start_block == 77 and 78 <= end_block <= 100:
-                return list(range(77, end_block + 1))
-            if 78 <= start_block <= 100 and 78 <= end_block <= 100:
-                return list(range(start_block, end_block + 1))
-            if 78 <= start_block <= 100 and end_block >= 101:
-                path = list(range(start_block, 101))
-                path.extend(range(100, 76, -1))
-                path.extend([101] + list(range(102, end_block + 1)))
-                return path
-            if 78 <= start_block <= 100 and end_block <= 62:
-                path = list(range(start_block, 101))
-                path.extend(range(100, 76, -1))
-                path.extend([101] + list(range(102, 151)))
-                if end_block >= 28:
-                    path.extend([28] + list(range(29, end_block + 1)))
-                else:
-                    path.extend(
-                        [28] + list(range(29, 63)) + list(range(1, end_block + 1))
-                    )
-                return path
-            if 101 <= start_block <= 150 and 63 <= end_block <= 77:
-                path = list(range(start_block, 151))
-                path.extend([28])
-                path.extend(range(29, 63))
-                path.extend(range(63, end_block + 1))
-                logger.info(
-                    "PATH",
-                    f"Main loop to first section: {start_block}→{end_block} via 150→28→63",
-                    {"path_length": len(path), "path": path},
-                )
-                return path
-            if 101 <= start_block <= 150 and 28 <= end_block <= 62:
-                path = list(range(start_block, 151))
-                path.extend([28] + list(range(29, end_block + 1)))
-                return path
-            if 101 <= start_block <= 150 and 1 <= end_block <= 27:
-                path = list(range(start_block, 151))
-                path.extend([28] + list(range(29, 63)) + list(range(1, end_block + 1)))
-                return path
-            if start_block == 150 and end_block <= 62:
-                if end_block >= 28:
-                    return [150, 28] + list(range(29, end_block + 1))
-                else:
-                    return (
-                        [150, 28] + list(range(29, 63)) + list(range(1, end_block + 1))
-                    )
-            if 1 <= start_block <= 62 and end_block >= 63:
-                path = list(range(start_block, 64))
-                path.extend(range(64, end_block + 1))
-                return path
-            if 9 <= start_block <= 13 and end_block <= 2:
-                return list(range(start_block, 14)) + (
-                    [1, 2] if end_block == 2 else [1]
-                )
-            if 63 <= start_block <= 77 and 63 <= end_block <= 77:
-                return list(range(start_block, end_block + 1))
-            if 101 <= start_block <= 150 and 101 <= end_block <= 150:
-                return list(range(start_block, end_block + 1))
-            if 28 <= start_block <= 62 and 28 <= end_block <= 62:
-                if start_block < end_block:
-                    return list(range(start_block, end_block + 1))
-                else:
-                    return list(range(start_block, end_block - 1, -1))
-            if 1 <= start_block <= 27 and 1 <= end_block <= 27:
-                if start_block < end_block:
-                    return list(range(start_block, end_block + 1))
-                else:
-                    return list(range(start_block, end_block - 1, -1))
-            logger.error(
-                "PATH",
-                f"UNHANDLED PATH: {start_block} → {end_block}",
-                {"start": start_block, "end": end_block},
-            )
-            raise ValueError(
-                f"Cannot calculate path from {start_block} to {end_block} on Green Line - unhandled case!"
-            )
-
-    def _fill_red_line_blocks(self, start_block, end_block):
-        """Fill blocks for Red Line topology with shortcuts"""
-        from logger import get_logger
-
-        logger = get_logger()
         logger.debug(
-            "RED_PATH", f"Calculating Red Line path: {start_block} → {end_block}"
+            "PATH",
+            f"Calculating path from {start_block} to {end_block}",
+            {"start": start_block, "end": end_block},
         )
 
-        # YARD → anywhere
-        if start_block == 0:
-            if end_block == 7:  # Shadyside special case
-                return [0, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7]
-            else:
-                # Sequential from yard through block 9
-                path = [0] + list(range(9, end_block + 1))
-                return path
+        # 77 → 101+ (main loop via switch)
+        if start_block == 77 and end_block >= 101:
+            return [77, 101] + list(range(102, end_block + 1))
 
-        # Shadyside → anywhere
-        if start_block == 7:
-            # Go back to 16 first
-            path = list(range(7, 0, -1)) + [16]
-            if end_block > 16:
-                path.extend(range(17, end_block + 1))
-            return path
+        # 77 → 78-100 (Poplar/Castle Shannon spur)
+        if start_block == 77 and 78 <= end_block <= 100:
+            return list(range(77, end_block + 1))
 
-        # Anywhere → Shadyside
-        if end_block == 7:
-            # Go to 16 first, then branch
-            if start_block < 16:
-                path = list(range(start_block, 17))
-            else:
-                path = list(range(start_block, 16, -1))
-            path.extend([1, 2, 3, 4, 5, 6, 7])
-            return path
-
-        # SOUTH HILLS (60-66) → anywhere UP
-        if start_block >= 60 and end_block < 60:
-            # Must use return path via 52
-            path = list(range(start_block, 67))  # Go to 66
-            path.append(52)  # Branch to 52
-
-            # Now decide which shortcut to use
-            if end_block >= 45:  # First Ave or higher
-                # Direct path back up
-                path.extend(range(51, end_block - 1, -1))
-            elif end_block >= 35:  # Steel Plaza
-                # Use shortcut via 44→67→71→38
-                path.extend(range(51, 44, -1))
-                path.extend([67, 68, 69, 70, 71, 38])
-                path.extend(range(37, end_block - 1, -1))
-            elif end_block >= 25:  # Penn Station
-                # Use shortcut via 33→72→76→27
-                path.extend(range(51, 33, -1))
-                path.extend([72, 73, 74, 75, 76, 27])
-                path.extend(range(26, end_block - 1, -1))
-            else:  # Herron Ave or Shadyside
-                # Go all the way up
-                path.extend(range(51, end_block - 1, -1))
-            return path
-
-        # DOWN to SOUTH HILLS from upper blocks
-        if start_block < 60 and end_block >= 60:
-            # Sequential down
+        # Both on Poplar/Castle Shannon spur (78-100) - SAME SPUR
+        if 78 <= start_block <= 100 and 78 <= end_block <= 100:
             return list(range(start_block, end_block + 1))
 
-        # UPPER blocks → UPPER blocks (may use shortcuts)
-        if start_block > end_block:  # Going UP (backwards)
-            # Decide if shortcut needed
-            if start_block >= 45 and end_block <= 25:
-                # From First Ave/Steel Plaza area going UP to Penn/Herron
-                # Use shortcut via 44→67→71→38
-                path = list(range(start_block, 44, -1))
-                path.extend([67, 68, 69, 70, 71, 38])
-                path.extend(range(37, end_block - 1, -1))
-                return path
-            elif start_block >= 35 and end_block <= 16:
-                # From Steel Plaza/Penn going UP to Herron
-                # Use shortcut via 33→72→76→27
-                path = list(range(start_block, 33, -1))
-                path.extend([72, 73, 74, 75, 76, 27])
-                path.extend(range(26, end_block - 1, -1))
-                return path
+        # From Poplar/Castle Shannon spur to main loop
+        if 78 <= start_block <= 100 and end_block >= 101:
+            path = list(range(start_block, 101))
+            path.extend(range(100, 76, -1))
+            path.extend([101] + list(range(102, end_block + 1)))
+            return path
+
+        # From Poplar/Castle Shannon spur to return path
+        if 78 <= start_block <= 100 and end_block <= 62:
+            path = list(range(start_block, 101))
+            path.extend(range(100, 76, -1))
+            path.extend([101] + list(range(102, 151)))
+            if end_block >= 28:
+                path.extend([28] + list(range(29, end_block + 1)))
             else:
-                # Direct path back
+                path.extend([28] + list(range(29, 63)) + list(range(1, end_block + 1)))
+            return path
+
+        # From main loop (101-150) to first section (63-77) - FULL LOOP, NO YARD
+        if 101 <= start_block <= 150 and 63 <= end_block <= 77:
+            path = list(range(start_block, 151))  # To 150
+            path.extend([28])  # Switch at 150→28
+            path.extend(range(29, 63))  # Down to 62
+            path.extend(range(63, end_block + 1))  # 63→destination
+            logger.info(
+                "PATH",
+                f"Main loop to first section: {start_block}→{end_block} via 150→28→63",
+                {"path_length": len(path), "path": path},
+            )
+            return path
+
+        # From main loop (101-150) to return path (28-62)
+        if 101 <= start_block <= 150 and 28 <= end_block <= 62:
+            path = list(range(start_block, 151))
+            path.extend([28] + list(range(29, end_block + 1)))
+            return path
+
+        # From main loop to wrap section (1-27)
+        if 101 <= start_block <= 150 and 1 <= end_block <= 27:
+            path = list(range(start_block, 151))
+            path.extend([28] + list(range(29, 63)) + list(range(1, end_block + 1)))
+            return path
+
+        # 150 → 28 (crossing switch 28)
+        if start_block == 150 and end_block <= 62:
+            if end_block >= 28:
+                return [150, 28] + list(range(29, end_block + 1))
+            else:
+                return [150, 28] + list(range(29, 63)) + list(range(1, end_block + 1))
+
+        # From return path to main sections (requires going through 63, not Yard!)
+        if 1 <= start_block <= 62 and end_block >= 63:
+            # Go sequential to 63, then continue
+            path = list(range(start_block, 64))  # Up to 63
+            path.extend(range(64, end_block + 1))  # Continue to destination
+            return path
+
+        # 9-13 → 1-2 (via switch at 13→1)
+        if 9 <= start_block <= 13 and end_block <= 2:
+            return list(range(start_block, 14)) + ([1, 2] if end_block == 2 else [1])
+
+        # Both in same sequential section - blocks 63-77
+        if 63 <= start_block <= 77 and 63 <= end_block <= 77:
+            return list(range(start_block, end_block + 1))
+
+        # Both in main loop (101-150)
+        if 101 <= start_block <= 150 and 101 <= end_block <= 150:
+            return list(range(start_block, end_block + 1))
+
+        # Both in return path (28-62)
+        if 28 <= start_block <= 62 and 28 <= end_block <= 62:
+            if start_block < end_block:
+                return list(range(start_block, end_block + 1))
+            else:
                 return list(range(start_block, end_block - 1, -1))
 
-        # DOWN (sequential)
-        if start_block < end_block:
-            return list(range(start_block, end_block + 1))
+        # Both in wrap section (1-27)
+        if 1 <= start_block <= 27 and 1 <= end_block <= 27:
+            if start_block < end_block:
+                return list(range(start_block, end_block + 1))
+            else:
+                return list(range(start_block, end_block - 1, -1))
 
-        # Fallback
-        logger.error("RED_PATH", f"UNHANDLED: {start_block} → {end_block}")
-        raise ValueError(f"Cannot calculate Red Line path: {start_block} → {end_block}")
+        # If we reach here, path is not handled - THROW EXCEPTION
+        logger.error(
+            "PATH",
+            f"UNHANDLED PATH: {start_block} → {end_block}",
+            {"start": start_block, "end": end_block},
+        )
+        raise ValueError(
+            f"Cannot calculate path from {start_block} to {end_block} on Green Line - unhandled case!"
+        )
 
     def _calculate_green_line_station_to_station_path(self, start_block, end_block):
         """Calculate path between two blocks on Green Line using track topology.
@@ -3061,7 +2990,7 @@ class TrackControl:
         self, track_data, current_block, route, line, line_prefix
     ):
         """Set switches to route train through the specified route (list of station blocks)"""
-        config = this.infrastructure[line]
+        config = self.infrastructure[line]
         switch_blocks = config["switch_blocks"]
 
         # Calculate complete block-by-block path to first station in route
@@ -3116,8 +3045,7 @@ class TrackControl:
                     # 63: 0=straight to 64, 1=branch from Yard
                     elif switch_block == 63:
                         switch_position = 0 if prev_block == 62 else 1
-                    # 77: 0=to Poplar (88) or Castle Shannon (96)
-                    # Position 1: going to main loop (105+) or anything else
+                    # 77: 0=to Poplar/Castle Shannon (78), 1=to main loop (101)
                     elif switch_block == 77:
                         switch_position = 0 if next_block == 78 else 1
                     # 85: 0=straight to 86, 1=branch to 100
@@ -3129,7 +3057,7 @@ class TrackControl:
                     # 9: 0=to 10, 1=to Yard
                     if switch_block == 9:
                         switch_position = 0 if next_block == 10 else 1
-                    # 16: 0=straight to 15, 1:="1->16" (from yard)
+                    # 16: 0=straight to 15, 1=branch to 1
                     elif switch_block == 16:
                         switch_position = 0 if prev_block == 15 else 1
                     # 27: 0=straight to 28, 1=branch to 76

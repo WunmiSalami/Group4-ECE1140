@@ -1,0 +1,550 @@
+================================================================================
+Train Track Control System - Log Started
+Session: 20251211_213803
+================================================================================
+
+[2025-12-11 21:38:03.660] [DEBUG] [NETWORK   ] Red Line loading branch points from static JSON
+[2025-12-11 21:38:03.665] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 16 -> [1, 15]
+[2025-12-11 21:38:03.667] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 27 -> [28, 76]
+[2025-12-11 21:38:03.669] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 33 -> [32, 72]
+[2025-12-11 21:38:03.671] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 38 -> [39, 71]
+[2025-12-11 21:38:03.672] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 44 -> [43, 67]
+[2025-12-11 21:38:03.673] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 52 -> [53, 66]
+[2025-12-11 21:38:03.675] [INFO ] [NETWORK   ] Red Line branch points loaded: 7 total
+[2025-12-11 21:38:03.679] [DEBUG] [LIGHT     ] Red line block 8 traffic light: Super Green → Green
+[2025-12-11 21:38:03.681] [DEBUG] [LIGHT     ] Red line block 14 traffic light: Super Green → Green
+[2025-12-11 21:38:03.683] [DEBUG] [LIGHT     ] Red line block 26 traffic light: Super Green → Green
+[2025-12-11 21:38:03.684] [DEBUG] [LIGHT     ] Red line block 31 traffic light: Super Green → Green
+[2025-12-11 21:38:03.686] [DEBUG] [LIGHT     ] Red line block 37 traffic light: Super Green → Green
+[2025-12-11 21:38:03.687] [DEBUG] [LIGHT     ] Red line block 42 traffic light: Super Green → Green
+[2025-12-11 21:38:03.689] [DEBUG] [LIGHT     ] Red line block 51 traffic light: Super Green → Green
+[2025-12-11 21:38:04.680] [ERROR] [DATA      ] Failed to write JSON after 5 attempts: [WinError 5] Access is denied: 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json.tmp' -> 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json'
+[2025-12-11 21:38:35.661] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-11 21:38:35.664] [INFO ] [TRAIN     ] Train 2 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-11 21:38:35.667] [INFO ] [TRAIN     ] Train 3 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-11 21:38:38.298] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+[2025-12-11 21:38:38.300] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+[2025-12-11 21:38:38.303] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+[2025-12-11 21:38:38.305] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+[2025-12-11 21:38:38.307] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+[2025-12-11 21:38:38.308] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+[2025-12-11 21:38:38.312] [DEBUG] [LIGHT     ] Green line block 3 traffic light: Super Green → Green
+[2025-12-11 21:38:38.314] [DEBUG] [LIGHT     ] Green line block 7 traffic light: Super Green → Green
+[2025-12-11 21:38:38.315] [DEBUG] [LIGHT     ] Green line block 29 traffic light: Super Green → Green
+[2025-12-11 21:38:38.318] [DEBUG] [LIGHT     ] Green line block 58 traffic light: Super Green → Green
+[2025-12-11 21:38:38.320] [DEBUG] [LIGHT     ] Green line block 62 traffic light: Super Green → Green
+[2025-12-11 21:38:38.322] [DEBUG] [LIGHT     ] Green line block 76 traffic light: Super Green → Green
+[2025-12-11 21:38:38.324] [DEBUG] [LIGHT     ] Green line block 86 traffic light: Super Green → Green
+[2025-12-11 21:38:38.325] [DEBUG] [LIGHT     ] Green line block 100 traffic light: Super Green → N/A
+[2025-12-11 21:38:38.327] [DEBUG] [LIGHT     ] Green line block 101 traffic light: Super Green → N/A
+[2025-12-11 21:38:38.328] [DEBUG] [LIGHT     ] Green line block 150 traffic light: Super Green → N/A
+[2025-12-11 21:38:56.703] [INFO ] [SWITCH    ] Green line block 63 switch changed to position 64
+[2025-12-11 21:38:56.709] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=30.00 mph, authority=1000.00 yds
+[2025-12-11 21:38:57.278] [DEBUG] [POSITION  ] Train 1 position tracking initialized
+[2025-12-11 21:38:57.286] [DEBUG] [POSITION  ] Train 1 Block 0: pos=0.14yds, delta=0.14yds, block_traveled=0.14yds
+[2025-12-11 21:38:58.343] [DEBUG] [POSITION  ] Train 1 Block 0: pos=0.41yds, delta=0.27yds, block_traveled=0.41yds
+[2025-12-11 21:38:59.398] [DEBUG] [POSITION  ] Train 1 Block 0: pos=2.05yds, delta=1.64yds, block_traveled=2.05yds
+[2025-12-11 21:38:59.559] [ERROR] [NETWORK   ] Error updating train model data: 'TrainLogger' object has no attribute 'warning'
+[2025-12-11 21:39:00.429] [DEBUG] [POSITION  ] Train 1 Block 0: pos=3.83yds, delta=1.78yds, block_traveled=3.83yds
+[2025-12-11 21:39:01.489] [DEBUG] [POSITION  ] Train 1 Block 0: pos=6.15yds, delta=2.32yds, block_traveled=6.15yds
+[2025-12-11 21:39:02.537] [DEBUG] [POSITION  ] Train 1 Block 0: pos=9.02yds, delta=2.87yds, block_traveled=9.02yds
+[2025-12-11 21:39:03.619] [DEBUG] [POSITION  ] Train 1 Block 0: pos=12.44yds, delta=3.42yds, block_traveled=12.44yds
+[2025-12-11 21:39:04.663] [DEBUG] [POSITION  ] Train 1 Block 0: pos=16.40yds, delta=3.96yds, block_traveled=16.40yds
+[2025-12-11 21:39:05.707] [DEBUG] [POSITION  ] Train 1 Block 0: pos=20.91yds, delta=4.51yds, block_traveled=20.91yds
+[2025-12-11 21:39:06.753] [DEBUG] [POSITION  ] Train 1 Block 0: pos=28.70yds, delta=7.79yds, block_traveled=28.70yds
+[2025-12-11 21:39:07.800] [DEBUG] [POSITION  ] Train 1 Block 0: pos=34.58yds, delta=5.88yds, block_traveled=34.58yds
+[2025-12-11 21:39:08.846] [DEBUG] [POSITION  ] Train 1 Block 0: pos=41.00yds, delta=6.42yds, block_traveled=41.00yds
+[2025-12-11 21:39:09.897] [DEBUG] [POSITION  ] Train 1 Block 0: pos=47.97yds, delta=6.97yds, block_traveled=47.97yds
+[2025-12-11 21:39:11.004] [DEBUG] [POSITION  ] Train 1 Block 0: pos=55.49yds, delta=7.52yds, block_traveled=55.49yds
+[2025-12-11 21:39:12.071] [DEBUG] [POSITION  ] Train 1 Block 0: pos=63.55yds, delta=8.06yds, block_traveled=63.55yds
+[2025-12-11 21:39:13.138] [DEBUG] [POSITION  ] Train 1 Block 0: pos=72.16yds, delta=8.61yds, block_traveled=72.16yds
+[2025-12-11 21:39:14.261] [DEBUG] [POSITION  ] Train 1 Block 0: pos=86.10yds, delta=13.94yds, block_traveled=86.10yds
+[2025-12-11 21:39:15.307] [DEBUG] [POSITION  ] Train 1 Block 0: pos=96.08yds, delta=9.98yds, block_traveled=96.08yds
+[2025-12-11 21:39:16.386] [DEBUG] [POSITION  ] Train 1 Block 0: pos=106.60yds, delta=10.52yds, block_traveled=106.60yds
+[2025-12-11 21:39:17.439] [DEBUG] [POSITION  ] Train 1 Block 0: pos=117.67yds, delta=11.07yds, block_traveled=117.67yds
+[2025-12-11 21:39:18.496] [DEBUG] [POSITION  ] Train 1 Block 0: pos=129.29yds, delta=11.62yds, block_traveled=129.29yds
+[2025-12-11 21:39:19.558] [DEBUG] [POSITION  ] Train 1 Block 0: pos=141.45yds, delta=12.16yds, block_traveled=141.45yds
+[2025-12-11 21:39:20.641] [DEBUG] [POSITION  ] Train 1 Block 0: pos=154.16yds, delta=12.71yds, block_traveled=154.16yds
+[2025-12-11 21:39:21.690] [DEBUG] [POSITION  ] Train 1 Block 0: pos=160.72yds, delta=6.56yds, block_traveled=160.72yds
+[2025-12-11 21:39:22.737] [DEBUG] [POSITION  ] Train 1 Block 0: pos=181.22yds, delta=20.50yds, block_traveled=181.22yds
+[2025-12-11 21:39:23.784] [DEBUG] [POSITION  ] Train 1 Block 0: pos=195.57yds, delta=14.35yds, block_traveled=195.57yds
+[2025-12-11 21:39:24.827] [DEBUG] [POSITION  ] Train 1 Block 0: pos=210.00yds, delta=14.43yds, block_traveled=210.00yds
+[2025-12-11 21:39:24.842] [INFO ] [POSITION  ] Train 1 Block 0: ADVANCING to next block (traveled 210.00/200.00 yds)
+[2025-12-11 21:39:24.851] [DEBUG] [POSITION  ] Train 1 Block 0: motion state = Moving
+[2025-12-11 21:39:24.857] [DEBUG] [ROUTING   ] Green Line routing: current=0, previous=None
+[2025-12-11 21:39:24.863] [DEBUG] [ROUTING   ] Block 0 is in switch_routes
+[2025-12-11 21:39:24.868] [DEBUG] [ROUTING   ] Block 0 routes through switch 63, target=64
+[2025-12-11 21:39:24.874] [DEBUG] [ROUTING   ] Switch target adjusted to 63
+[2025-12-11 21:39:24.879] [INFO ] [ROUTING   ] Using switch target: 0 → 63
+[2025-12-11 21:39:24.884] [INFO ] [ROUTING   ] Green Line final routing decision: 0 → 63
+[2025-12-11 21:39:24.889] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 0 → 63
+    [Previous message repeated 85 times]
+[2025-12-11 21:39:25.087] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 85 times]
+[2025-12-11 21:39:25.097] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 85 times]
+[2025-12-11 21:39:25.109] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 85 times]
+[2025-12-11 21:39:25.120] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 85 times]
+[2025-12-11 21:39:25.129] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 85 times]
+[2025-12-11 21:39:25.136] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+    [Previous message repeated 85 times]
+[2025-12-11 21:39:25.152] [INFO ] [TRAIN     ] Train 2 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+    [Previous message repeated 85 times]
+[2025-12-11 21:39:25.160] [INFO ] [TRAIN     ] Train 3 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-11 21:39:25.978] [DEBUG] [POSITION  ] Train 1 Block 63: pos=231.84yds, delta=21.84yds, block_traveled=31.84yds
+[2025-12-11 21:39:27.023] [DEBUG] [POSITION  ] Train 1 Block 63: pos=246.49yds, delta=14.65yds, block_traveled=46.49yds
+[2025-12-11 21:39:28.068] [DEBUG] [POSITION  ] Train 1 Block 63: pos=261.14yds, delta=14.65yds, block_traveled=61.14yds
+[2025-12-11 21:39:29.098] [DEBUG] [POSITION  ] Train 1 Block 63: pos=275.79yds, delta=14.65yds, block_traveled=75.79yds
+    [Previous message repeated 58 times]
+[2025-12-11 21:39:29.476] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=30.00 mph, authority=1000.00 yds
+[2025-12-11 21:39:30.127] [DEBUG] [POSITION  ] Train 1 Block 63: pos=290.44yds, delta=14.65yds, block_traveled=90.44yds
+[2025-12-11 21:39:31.156] [DEBUG] [POSITION  ] Train 1 Block 63: pos=305.09yds, delta=14.65yds, block_traveled=105.09yds
+[2025-12-11 21:39:32.186] [DEBUG] [POSITION  ] Train 1 Block 63: pos=319.74yds, delta=14.65yds, block_traveled=119.74yds
+[2025-12-11 21:39:32.194] [INFO ] [POSITION  ] Train 1 Block 63: ADVANCING to next block (traveled 119.74/109.36 yds)
+[2025-12-11 21:39:32.201] [DEBUG] [POSITION  ] Train 1 Block 63: motion state = Moving
+[2025-12-11 21:39:32.207] [DEBUG] [ROUTING   ] Green Line routing: current=63, previous=0
+[2025-12-11 21:39:32.211] [DEBUG] [ROUTING   ] Block 63 NOT in switch_routes, using motion logic
+[2025-12-11 21:39:32.216] [WARN ] [ROUTING   ] DEFAULT CASE: 63 → 64 (previous=0)
+[2025-12-11 21:39:32.219] [INFO ] [ROUTING   ] Green Line final routing decision: 63 → 64
+[2025-12-11 21:39:32.223] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 63 → 64
+[2025-12-11 21:39:33.284] [DEBUG] [POSITION  ] Train 1 Block 64: pos=334.39yds, delta=14.65yds, block_traveled=25.03yds
+[2025-12-11 21:39:33.740] [ERROR] [NETWORK   ] Error updating train model data: 'TrainLogger' object has no attribute 'warning'
+[2025-12-11 21:39:34.317] [DEBUG] [POSITION  ] Train 1 Block 64: pos=349.04yds, delta=14.65yds, block_traveled=39.68yds
+[2025-12-11 21:39:35.363] [DEBUG] [POSITION  ] Train 1 Block 64: pos=363.69yds, delta=14.65yds, block_traveled=54.33yds
+[2025-12-11 21:39:36.415] [DEBUG] [POSITION  ] Train 1 Block 64: pos=378.34yds, delta=14.65yds, block_traveled=68.98yds
+[2025-12-11 21:39:37.470] [DEBUG] [POSITION  ] Train 1 Block 64: pos=392.99yds, delta=14.65yds, block_traveled=83.63yds
+    [Previous message repeated 9 times]
+[2025-12-11 21:39:39.001] [ERROR] [DATA      ] Failed to write JSON after 5 attempts: [WinError 5] Access is denied: 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json.tmp' -> 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json'
+[2025-12-11 21:39:39.008] [DEBUG] [POSITION  ] Train 1 Block 64: pos=407.64yds, delta=14.65yds, block_traveled=98.28yds
+[2025-12-11 21:39:40.095] [DEBUG] [POSITION  ] Train 1 Block 64: pos=429.61yds, delta=21.97yds, block_traveled=120.25yds
+[2025-12-11 21:39:40.107] [INFO ] [POSITION  ] Train 1 Block 64: ADVANCING to next block (traveled 120.25/109.36 yds)
+[2025-12-11 21:39:40.116] [DEBUG] [POSITION  ] Train 1 Block 64: motion state = Moving
+[2025-12-11 21:39:40.123] [DEBUG] [ROUTING   ] Green Line routing: current=64, previous=63
+[2025-12-11 21:39:40.132] [DEBUG] [ROUTING   ] Block 64 NOT in switch_routes, using motion logic
+[2025-12-11 21:39:40.141] [DEBUG] [ROUTING   ] Motion forward: 64 → 65
+[2025-12-11 21:39:40.148] [INFO ] [ROUTING   ] Green Line final routing decision: 64 → 65
+[2025-12-11 21:39:40.157] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 64 → 65
+[2025-12-11 21:39:40.207] [DEBUG] [ROUTING   ] Green Line routing: current=65, previous=64
+[2025-12-11 21:39:40.226] [DEBUG] [ROUTING   ] Block 65 NOT in switch_routes, using motion logic
+[2025-12-11 21:39:40.244] [DEBUG] [ROUTING   ] Motion forward: 65 → 66
+[2025-12-11 21:39:40.262] [INFO ] [ROUTING   ] Green Line final routing decision: 65 → 66
+[2025-12-11 21:39:40.275] [DEBUG] [BEACON    ] Train 1 beacon updated at block 65
+[2025-12-11 21:39:41.371] [DEBUG] [POSITION  ] Train 1 Block 65: pos=444.26yds, delta=14.65yds, block_traveled=25.54yds
+[2025-12-11 21:39:42.408] [DEBUG] [POSITION  ] Train 1 Block 65: pos=451.59yds, delta=7.33yds, block_traveled=32.87yds
+[2025-12-11 21:39:43.455] [DEBUG] [POSITION  ] Train 1 Block 65: pos=473.56yds, delta=21.97yds, block_traveled=54.84yds
+[2025-12-11 21:39:44.495] [DEBUG] [POSITION  ] Train 1 Block 65: pos=488.21yds, delta=14.65yds, block_traveled=69.49yds
+[2025-12-11 21:39:45.828] [DEBUG] [POSITION  ] Train 1 Block 65: pos=510.19yds, delta=21.98yds, block_traveled=91.47yds
+[2025-12-11 21:39:46.881] [DEBUG] [POSITION  ] Train 1 Block 65: pos=524.84yds, delta=14.65yds, block_traveled=106.12yds
+[2025-12-11 21:39:48.468] [DEBUG] [POSITION  ] Train 1 Block 65: pos=546.81yds, delta=21.97yds, block_traveled=128.09yds
+    [Previous message repeated 36 times]
+[2025-12-11 21:39:48.993] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 36 times]
+[2025-12-11 21:39:49.005] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 36 times]
+[2025-12-11 21:39:49.019] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 36 times]
+[2025-12-11 21:39:49.031] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 36 times]
+[2025-12-11 21:39:49.041] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 36 times]
+[2025-12-11 21:39:49.050] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+    [Previous message repeated 35 times]
+[2025-12-11 21:39:49.065] [INFO ] [TRAIN     ] Train 2 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+    [Previous message repeated 35 times]
+[2025-12-11 21:39:49.075] [INFO ] [TRAIN     ] Train 3 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-11 21:39:49.543] [DEBUG] [POSITION  ] Train 1 Block 65: pos=561.46yds, delta=14.65yds, block_traveled=142.74yds
+[2025-12-11 21:39:50.655] [DEBUG] [POSITION  ] Train 1 Block 65: pos=583.44yds, delta=21.98yds, block_traveled=164.72yds
+[2025-12-11 21:39:51.718] [DEBUG] [POSITION  ] Train 1 Block 65: pos=590.77yds, delta=7.33yds, block_traveled=172.05yds
+[2025-12-11 21:39:52.759] [DEBUG] [POSITION  ] Train 1 Block 65: pos=612.74yds, delta=21.97yds, block_traveled=194.02yds
+    [Previous message repeated 33 times]
+[2025-12-11 21:39:52.962] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=30.00 mph, authority=1000.00 yds
+[2025-12-11 21:39:53.794] [DEBUG] [POSITION  ] Train 1 Block 65: pos=627.39yds, delta=14.65yds, block_traveled=208.67yds
+[2025-12-11 21:39:54.866] [DEBUG] [POSITION  ] Train 1 Block 65: pos=642.04yds, delta=14.65yds, block_traveled=223.32yds
+[2025-12-11 21:39:54.880] [INFO ] [POSITION  ] Train 1 Block 65: ADVANCING to next block (traveled 223.32/218.72 yds)
+[2025-12-11 21:39:54.898] [DEBUG] [POSITION  ] Train 1 Block 65: motion state = Moving
+[2025-12-11 21:39:54.908] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 65 → 66
+[2025-12-11 21:39:55.997] [DEBUG] [POSITION  ] Train 1 Block 66: pos=656.69yds, delta=14.65yds, block_traveled=19.25yds
+[2025-12-11 21:39:57.039] [DEBUG] [POSITION  ] Train 1 Block 66: pos=678.67yds, delta=21.98yds, block_traveled=41.23yds
+[2025-12-11 21:39:58.085] [DEBUG] [POSITION  ] Train 1 Block 66: pos=693.32yds, delta=14.65yds, block_traveled=55.88yds
+[2025-12-11 21:39:59.135] [DEBUG] [POSITION  ] Train 1 Block 66: pos=707.97yds, delta=14.65yds, block_traveled=70.53yds
+[2025-12-11 21:40:00.188] [DEBUG] [POSITION  ] Train 1 Block 66: pos=722.62yds, delta=14.65yds, block_traveled=85.18yds
+[2025-12-11 21:40:01.229] [DEBUG] [POSITION  ] Train 1 Block 66: pos=737.27yds, delta=14.65yds, block_traveled=99.83yds
+[2025-12-11 21:40:02.297] [DEBUG] [POSITION  ] Train 1 Block 66: pos=751.92yds, delta=14.65yds, block_traveled=114.48yds
+[2025-12-11 21:40:03.356] [DEBUG] [POSITION  ] Train 1 Block 66: pos=766.57yds, delta=14.65yds, block_traveled=129.13yds
+[2025-12-11 21:40:04.425] [DEBUG] [POSITION  ] Train 1 Block 66: pos=788.54yds, delta=21.97yds, block_traveled=151.10yds
+[2025-12-11 21:40:06.006] [DEBUG] [POSITION  ] Train 1 Block 66: pos=803.19yds, delta=14.65yds, block_traveled=165.75yds
+[2025-12-11 21:40:07.076] [DEBUG] [POSITION  ] Train 1 Block 66: pos=817.84yds, delta=14.65yds, block_traveled=180.40yds
+[2025-12-11 21:40:08.161] [DEBUG] [POSITION  ] Train 1 Block 66: pos=839.82yds, delta=21.98yds, block_traveled=202.38yds
+[2025-12-11 21:40:09.240] [DEBUG] [POSITION  ] Train 1 Block 66: pos=854.47yds, delta=14.65yds, block_traveled=217.03yds
+[2025-12-11 21:40:10.348] [DEBUG] [POSITION  ] Train 1 Block 66: pos=869.12yds, delta=14.65yds, block_traveled=231.68yds
+[2025-12-11 21:40:10.359] [INFO ] [POSITION  ] Train 1 Block 66: ADVANCING to next block (traveled 231.68/218.72 yds)
+[2025-12-11 21:40:10.368] [DEBUG] [POSITION  ] Train 1 Block 66: motion state = Moving
+[2025-12-11 21:40:10.374] [DEBUG] [ROUTING   ] Green Line routing: current=66, previous=65
+[2025-12-11 21:40:10.380] [DEBUG] [ROUTING   ] Block 66 NOT in switch_routes, using motion logic
+[2025-12-11 21:40:10.385] [DEBUG] [ROUTING   ] Motion forward: 66 → 67
+[2025-12-11 21:40:10.392] [INFO ] [ROUTING   ] Green Line final routing decision: 66 → 67
+[2025-12-11 21:40:10.400] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 66 → 67
+[2025-12-11 21:40:11.455] [DEBUG] [POSITION  ] Train 1 Block 67: pos=883.77yds, delta=14.65yds, block_traveled=27.60yds
+    [Previous message repeated 7 times]
+[2025-12-11 21:40:12.932] [ERROR] [DATA      ] Failed to write JSON after 5 attempts: [WinError 5] Access is denied: 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json.tmp' -> 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json'
+[2025-12-11 21:40:12.943] [DEBUG] [POSITION  ] Train 1 Block 67: pos=898.42yds, delta=14.65yds, block_traveled=42.25yds
+[2025-12-11 21:40:14.050] [DEBUG] [POSITION  ] Train 1 Block 67: pos=920.39yds, delta=21.97yds, block_traveled=64.22yds
+[2025-12-11 21:40:15.082] [DEBUG] [POSITION  ] Train 1 Block 67: pos=935.04yds, delta=14.65yds, block_traveled=78.87yds
+[2025-12-11 21:40:16.117] [DEBUG] [POSITION  ] Train 1 Block 67: pos=942.37yds, delta=7.33yds, block_traveled=86.20yds
+[2025-12-11 21:40:17.148] [DEBUG] [POSITION  ] Train 1 Block 67: pos=957.02yds, delta=14.65yds, block_traveled=100.85yds
+[2025-12-11 21:40:18.191] [DEBUG] [POSITION  ] Train 1 Block 67: pos=978.99yds, delta=21.97yds, block_traveled=122.82yds
+[2025-12-11 21:40:18.205] [INFO ] [POSITION  ] Train 1 Block 67: ADVANCING to next block (traveled 122.82/109.36 yds)
+[2025-12-11 21:40:18.217] [DEBUG] [POSITION  ] Train 1 Block 67: motion state = Moving
+[2025-12-11 21:40:18.227] [DEBUG] [ROUTING   ] Green Line routing: current=67, previous=66
+[2025-12-11 21:40:18.237] [DEBUG] [ROUTING   ] Block 67 NOT in switch_routes, using motion logic
+[2025-12-11 21:40:18.245] [DEBUG] [ROUTING   ] Motion forward: 67 → 68
+[2025-12-11 21:40:18.252] [INFO ] [ROUTING   ] Green Line final routing decision: 67 → 68
+[2025-12-11 21:40:18.260] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 67 → 68
+    [Previous message repeated 47 times]
+[2025-12-11 21:40:18.420] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 47 times]
+[2025-12-11 21:40:18.428] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 47 times]
+[2025-12-11 21:40:18.437] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 47 times]
+[2025-12-11 21:40:18.445] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 47 times]
+[2025-12-11 21:40:18.451] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 47 times]
+[2025-12-11 21:40:18.457] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+    [Previous message repeated 47 times]
+[2025-12-11 21:40:18.468] [INFO ] [TRAIN     ] Train 2 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+    [Previous message repeated 47 times]
+[2025-12-11 21:40:18.477] [INFO ] [TRAIN     ] Train 3 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-11 21:40:19.327] [DEBUG] [POSITION  ] Train 1 Block 68: pos=993.64yds, delta=14.65yds, block_traveled=28.11yds
+    [Previous message repeated 43 times]
+[2025-12-11 21:40:19.536] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=30.00 mph, authority=1000.00 yds
+[2025-12-11 21:40:20.360] [DEBUG] [POSITION  ] Train 1 Block 68: pos=1000.00yds, delta=6.36yds, block_traveled=34.47yds
+[2025-12-11 21:40:21.393] [DEBUG] [POSITION  ] Train 1 Block 68: pos=1000.00yds, delta=0.00yds, block_traveled=34.47yds
+[2025-12-11 21:40:29.192] [ERROR] [NETWORK   ] Error updating train model data: 'TrainLogger' object has no attribute 'warning'
+[2025-12-11 21:43:23.892] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=30.00 mph, authority=2000.00 yds
+[2025-12-11 21:43:24.512] [DEBUG] [POSITION  ] Train 1 Block 68: POSITION RESET DETECTED - syncing previous position
+[2025-12-11 21:43:24.526] [DEBUG] [POSITION  ] Train 1 Block 68: pos=34.61yds, delta=0.00yds, block_traveled=34.47yds
+[2025-12-11 21:43:25.608] [DEBUG] [POSITION  ] Train 1 Block 68: pos=35.29yds, delta=0.68yds, block_traveled=35.15yds
+[2025-12-11 21:43:26.677] [DEBUG] [POSITION  ] Train 1 Block 68: pos=36.52yds, delta=1.23yds, block_traveled=36.38yds
+[2025-12-11 21:43:27.786] [DEBUG] [POSITION  ] Train 1 Block 68: pos=39.39yds, delta=2.87yds, block_traveled=39.25yds
+[2025-12-11 21:43:29.307] [DEBUG] [POSITION  ] Train 1 Block 68: pos=41.99yds, delta=2.60yds, block_traveled=41.85yds
+[2025-12-11 21:43:30.405] [DEBUG] [POSITION  ] Train 1 Block 68: pos=46.91yds, delta=4.92yds, block_traveled=46.77yds
+[2025-12-11 21:43:31.499] [DEBUG] [POSITION  ] Train 1 Block 68: pos=50.87yds, delta=3.96yds, block_traveled=50.73yds
+[2025-12-11 21:43:32.570] [DEBUG] [POSITION  ] Train 1 Block 68: pos=55.38yds, delta=4.51yds, block_traveled=55.24yds
+[2025-12-11 21:43:33.629] [DEBUG] [POSITION  ] Train 1 Block 68: pos=60.44yds, delta=5.06yds, block_traveled=60.30yds
+[2025-12-11 21:43:35.226] [DEBUG] [POSITION  ] Train 1 Block 68: pos=66.04yds, delta=5.60yds, block_traveled=65.90yds
+[2025-12-11 21:43:36.310] [DEBUG] [POSITION  ] Train 1 Block 68: pos=78.89yds, delta=12.85yds, block_traveled=78.75yds
+[2025-12-11 21:43:37.885] [DEBUG] [POSITION  ] Train 1 Block 68: pos=86.13yds, delta=7.24yds, block_traveled=85.99yds
+[2025-12-11 21:43:39.448] [DEBUG] [POSITION  ] Train 1 Block 68: pos=98.02yds, delta=11.89yds, block_traveled=97.88yds
+[2025-12-11 21:43:40.503] [DEBUG] [POSITION  ] Train 1 Block 68: pos=111.14yds, delta=13.12yds, block_traveled=111.00yds
+[2025-12-11 21:43:40.515] [INFO ] [POSITION  ] Train 1 Block 68: ADVANCING to next block (traveled 111.00/109.36 yds)
+[2025-12-11 21:43:40.526] [DEBUG] [POSITION  ] Train 1 Block 68: motion state = Moving
+[2025-12-11 21:43:40.535] [DEBUG] [ROUTING   ] Green Line routing: current=68, previous=67
+[2025-12-11 21:43:40.541] [DEBUG] [ROUTING   ] Block 68 NOT in switch_routes, using motion logic
+[2025-12-11 21:43:40.548] [DEBUG] [ROUTING   ] Motion forward: 68 → 69
+[2025-12-11 21:43:40.556] [INFO ] [ROUTING   ] Green Line final routing decision: 68 → 69
+[2025-12-11 21:43:40.564] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 68 → 69
+[2025-12-11 21:43:41.622] [DEBUG] [POSITION  ] Train 1 Block 69: pos=120.57yds, delta=9.43yds, block_traveled=11.07yds
+[2025-12-11 21:43:42.651] [DEBUG] [POSITION  ] Train 1 Block 69: pos=125.49yds, delta=4.92yds, block_traveled=15.99yds
+[2025-12-11 21:43:43.687] [DEBUG] [POSITION  ] Train 1 Block 69: pos=135.74yds, delta=10.25yds, block_traveled=26.24yds
+[2025-12-11 21:43:44.721] [DEBUG] [POSITION  ] Train 1 Block 69: pos=146.54yds, delta=10.80yds, block_traveled=37.04yds
+[2025-12-11 21:43:45.753] [DEBUG] [POSITION  ] Train 1 Block 69: pos=163.76yds, delta=17.22yds, block_traveled=54.26yds
+[2025-12-11 21:43:46.538] [WARN ] [FAILURE   ] Green line L71 BROKEN RAIL failure activated
+[2025-12-11 21:43:46.798] [DEBUG] [POSITION  ] Train 1 Block 69: pos=175.92yds, delta=12.16yds, block_traveled=66.42yds
+    [Previous message repeated 5 times]
+[2025-12-11 21:43:48.084] [ERROR] [DATA      ] Failed to write JSON after 5 attempts: [WinError 5] Access is denied: 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json.tmp' -> 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json'
+[2025-12-11 21:43:48.099] [DEBUG] [POSITION  ] Train 1 Block 69: pos=188.63yds, delta=12.71yds, block_traveled=79.13yds
+[2025-12-11 21:43:49.174] [DEBUG] [POSITION  ] Train 1 Block 69: pos=208.72yds, delta=20.09yds, block_traveled=99.22yds
+[2025-12-11 21:43:50.246] [DEBUG] [POSITION  ] Train 1 Block 69: pos=222.80yds, delta=14.08yds, block_traveled=113.30yds
+[2025-12-11 21:43:50.266] [INFO ] [POSITION  ] Train 1 Block 69: ADVANCING to next block (traveled 113.30/109.36 yds)
+[2025-12-11 21:43:50.280] [DEBUG] [POSITION  ] Train 1 Block 69: motion state = Moving
+[2025-12-11 21:43:50.295] [DEBUG] [ROUTING   ] Green Line routing: current=69, previous=68
+[2025-12-11 21:43:50.308] [DEBUG] [ROUTING   ] Block 69 NOT in switch_routes, using motion logic
+[2025-12-11 21:43:50.321] [DEBUG] [ROUTING   ] Motion forward: 69 → 70
+[2025-12-11 21:43:50.334] [INFO ] [ROUTING   ] Green Line final routing decision: 69 → 70
+[2025-12-11 21:43:50.349] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 69 → 70
+    [Previous message repeated 385 times]
+[2025-12-11 21:43:50.763] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 385 times]
+[2025-12-11 21:43:50.785] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 385 times]
+[2025-12-11 21:43:50.799] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 385 times]
+[2025-12-11 21:43:50.812] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 385 times]
+[2025-12-11 21:43:50.829] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 385 times]
+[2025-12-11 21:43:50.843] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+    [Previous message repeated 380 times]
+[2025-12-11 21:43:50.867] [INFO ] [TRAIN     ] Train 2 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+    [Previous message repeated 380 times]
+[2025-12-11 21:43:50.883] [INFO ] [TRAIN     ] Train 3 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-11 21:43:51.508] [DEBUG] [POSITION  ] Train 1 Block 70: pos=237.42yds, delta=14.62yds, block_traveled=18.56yds
+[2025-12-11 21:43:53.019] [DEBUG] [POSITION  ] Train 1 Block 70: pos=251.66yds, delta=14.24yds, block_traveled=32.80yds
+    [Previous message repeated 48 times]
+[2025-12-11 21:43:53.572] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=30.00 mph, authority=2000.00 yds
+[2025-12-11 21:43:54.083] [DEBUG] [POSITION  ] Train 1 Block 70: pos=273.64yds, delta=21.98yds, block_traveled=54.78yds
+[2025-12-11 21:43:55.171] [DEBUG] [POSITION  ] Train 1 Block 70: pos=288.29yds, delta=14.65yds, block_traveled=69.43yds
+[2025-12-11 21:43:56.231] [DEBUG] [POSITION  ] Train 1 Block 70: pos=302.94yds, delta=14.65yds, block_traveled=84.08yds
+[2025-12-11 21:43:57.292] [DEBUG] [POSITION  ] Train 1 Block 70: pos=317.59yds, delta=14.65yds, block_traveled=98.73yds
+[2025-12-11 21:43:58.351] [DEBUG] [POSITION  ] Train 1 Block 70: pos=332.24yds, delta=14.65yds, block_traveled=113.38yds
+[2025-12-11 21:43:58.381] [INFO ] [POSITION  ] Train 1 Block 70: ADVANCING to next block (traveled 113.38/109.36 yds)
+[2025-12-11 21:43:58.403] [DEBUG] [POSITION  ] Train 1 Block 70: motion state = Moving
+[2025-12-11 21:43:58.419] [DEBUG] [ROUTING   ] Green Line routing: current=70, previous=69
+[2025-12-11 21:43:58.435] [DEBUG] [ROUTING   ] Block 70 NOT in switch_routes, using motion logic
+[2025-12-11 21:43:58.450] [DEBUG] [ROUTING   ] Motion forward: 70 → 71
+[2025-12-11 21:43:58.466] [INFO ] [ROUTING   ] Green Line final routing decision: 70 → 71
+[2025-12-11 21:43:58.481] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 70 → 71
+[2025-12-11 21:43:59.580] [DEBUG] [POSITION  ] Train 1 Block 71: pos=354.21yds, delta=21.97yds, block_traveled=25.99yds
+[2025-12-11 21:44:00.657] [DEBUG] [POSITION  ] Train 1 Block 71: pos=368.86yds, delta=14.65yds, block_traveled=40.64yds
+[2025-12-11 21:44:01.718] [DEBUG] [POSITION  ] Train 1 Block 71: pos=383.51yds, delta=14.65yds, block_traveled=55.29yds
+[2025-12-11 21:44:02.833] [DEBUG] [POSITION  ] Train 1 Block 71: pos=405.49yds, delta=21.98yds, block_traveled=77.27yds
+[2025-12-11 21:44:03.899] [DEBUG] [POSITION  ] Train 1 Block 71: pos=420.14yds, delta=14.65yds, block_traveled=91.92yds
+[2025-12-11 21:44:05.039] [DEBUG] [POSITION  ] Train 1 Block 71: pos=434.79yds, delta=14.65yds, block_traveled=106.57yds
+[2025-12-11 21:44:06.084] [DEBUG] [POSITION  ] Train 1 Block 71: pos=442.11yds, delta=7.32yds, block_traveled=113.89yds
+[2025-12-11 21:44:06.110] [INFO ] [POSITION  ] Train 1 Block 71: ADVANCING to next block (traveled 113.89/109.36 yds)
+[2025-12-11 21:44:06.131] [DEBUG] [POSITION  ] Train 1 Block 71: motion state = Moving
+[2025-12-11 21:44:06.149] [DEBUG] [ROUTING   ] Green Line routing: current=71, previous=70
+[2025-12-11 21:44:06.167] [DEBUG] [ROUTING   ] Block 71 NOT in switch_routes, using motion logic
+[2025-12-11 21:44:06.185] [DEBUG] [ROUTING   ] Motion forward: 71 → 72
+[2025-12-11 21:44:06.208] [INFO ] [ROUTING   ] Green Line final routing decision: 71 → 72
+[2025-12-11 21:44:06.226] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 71 → 72
+[2025-12-11 21:44:07.327] [DEBUG] [POSITION  ] Train 1 Block 72: pos=464.09yds, delta=21.98yds, block_traveled=26.51yds
+[2025-12-11 21:44:08.418] [DEBUG] [POSITION  ] Train 1 Block 72: pos=478.74yds, delta=14.65yds, block_traveled=41.16yds
+[2025-12-11 21:44:09.497] [DEBUG] [POSITION  ] Train 1 Block 72: pos=493.39yds, delta=14.65yds, block_traveled=55.81yds
+[2025-12-11 21:44:10.560] [DEBUG] [POSITION  ] Train 1 Block 72: pos=508.04yds, delta=14.65yds, block_traveled=70.46yds
+[2025-12-11 21:44:11.956] [DEBUG] [POSITION  ] Train 1 Block 72: pos=530.01yds, delta=21.97yds, block_traveled=92.43yds
+[2025-12-11 21:44:13.026] [DEBUG] [POSITION  ] Train 1 Block 72: pos=551.99yds, delta=21.98yds, block_traveled=114.41yds
+[2025-12-11 21:44:13.050] [INFO ] [POSITION  ] Train 1 Block 72: ADVANCING to next block (traveled 114.41/109.36 yds)
+[2025-12-11 21:44:13.080] [DEBUG] [POSITION  ] Train 1 Block 72: motion state = Moving
+[2025-12-11 21:44:13.101] [DEBUG] [ROUTING   ] Green Line routing: current=72, previous=71
+[2025-12-11 21:44:13.122] [DEBUG] [ROUTING   ] Block 72 NOT in switch_routes, using motion logic
+[2025-12-11 21:44:13.150] [DEBUG] [ROUTING   ] Motion forward: 72 → 73
+[2025-12-11 21:44:13.180] [INFO ] [ROUTING   ] Green Line final routing decision: 72 → 73
+[2025-12-11 21:44:13.203] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 72 → 73
+[2025-12-11 21:44:13.241] [DEBUG] [ROUTING   ] Green Line routing: current=73, previous=72
+[2025-12-11 21:44:13.262] [DEBUG] [ROUTING   ] Block 73 NOT in switch_routes, using motion logic
+[2025-12-11 21:44:13.283] [DEBUG] [ROUTING   ] Motion forward: 73 → 74
+[2025-12-11 21:44:13.303] [INFO ] [ROUTING   ] Green Line final routing decision: 73 → 74
+[2025-12-11 21:44:13.364] [DEBUG] [BEACON    ] Train 1 beacon updated at block 73
+    [Previous message repeated 37 times]
+[2025-12-11 21:44:13.630] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 37 times]
+[2025-12-11 21:44:13.651] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 37 times]
+[2025-12-11 21:44:13.666] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 37 times]
+[2025-12-11 21:44:13.683] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 37 times]
+[2025-12-11 21:44:13.702] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 37 times]
+[2025-12-11 21:44:13.723] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+    [Previous message repeated 33 times]
+[2025-12-11 21:44:13.748] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=30.00 mph, authority=2000.00 yds
+    [Previous message repeated 37 times]
+[2025-12-11 21:44:13.771] [INFO ] [TRAIN     ] Train 2 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+    [Previous message repeated 37 times]
+[2025-12-11 21:44:13.794] [INFO ] [TRAIN     ] Train 3 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-11 21:44:14.348] [ERROR] [DATA      ] Failed to write JSON after 5 attempts: [WinError 5] Access is denied: 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json.tmp' -> 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json'
+[2025-12-11 21:44:14.495] [DEBUG] [POSITION  ] Train 1 Block 73: pos=559.31yds, delta=7.32yds, block_traveled=12.37yds
+[2025-12-11 21:44:15.598] [DEBUG] [POSITION  ] Train 1 Block 73: pos=588.61yds, delta=29.30yds, block_traveled=41.67yds
+[2025-12-11 21:44:16.658] [DEBUG] [POSITION  ] Train 1 Block 73: pos=603.26yds, delta=14.65yds, block_traveled=56.32yds
+[2025-12-11 21:44:18.183] [DEBUG] [POSITION  ] Train 1 Block 73: pos=617.91yds, delta=14.65yds, block_traveled=70.97yds
+[2025-12-11 21:44:19.263] [DEBUG] [POSITION  ] Train 1 Block 73: pos=639.89yds, delta=21.98yds, block_traveled=92.95yds
+[2025-12-11 21:44:20.337] [DEBUG] [POSITION  ] Train 1 Block 73: pos=654.54yds, delta=14.65yds, block_traveled=107.60yds
+[2025-12-11 21:44:21.415] [DEBUG] [POSITION  ] Train 1 Block 73: pos=669.19yds, delta=14.65yds, block_traveled=122.25yds
+[2025-12-11 21:44:21.436] [INFO ] [POSITION  ] Train 1 Block 73: ADVANCING to next block (traveled 122.25/109.36 yds)
+[2025-12-11 21:44:21.489] [DEBUG] [POSITION  ] Train 1 Block 73: motion state = Moving
+[2025-12-11 21:44:21.515] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 73 → 74
+[2025-12-11 21:44:22.608] [DEBUG] [POSITION  ] Train 1 Block 74: pos=691.16yds, delta=21.97yds, block_traveled=34.86yds
+[2025-12-11 21:44:24.143] [DEBUG] [POSITION  ] Train 1 Block 74: pos=705.81yds, delta=14.65yds, block_traveled=49.51yds
+[2025-12-11 21:44:25.238] [DEBUG] [POSITION  ] Train 1 Block 74: pos=727.79yds, delta=21.98yds, block_traveled=71.49yds
+[2025-12-11 21:44:26.856] [DEBUG] [POSITION  ] Train 1 Block 74: pos=742.44yds, delta=14.65yds, block_traveled=86.14yds
+[2025-12-11 21:44:27.994] [DEBUG] [POSITION  ] Train 1 Block 74: pos=757.09yds, delta=14.65yds, block_traveled=100.79yds
+[2025-12-11 21:44:29.058] [DEBUG] [POSITION  ] Train 1 Block 74: pos=779.06yds, delta=21.97yds, block_traveled=122.76yds
+[2025-12-11 21:44:29.086] [INFO ] [POSITION  ] Train 1 Block 74: ADVANCING to next block (traveled 122.76/109.36 yds)
+[2025-12-11 21:44:29.112] [DEBUG] [POSITION  ] Train 1 Block 74: motion state = Moving
+[2025-12-11 21:44:29.141] [DEBUG] [ROUTING   ] Green Line routing: current=74, previous=73
+[2025-12-11 21:44:29.165] [DEBUG] [ROUTING   ] Block 74 NOT in switch_routes, using motion logic
+[2025-12-11 21:44:29.196] [DEBUG] [ROUTING   ] Motion forward: 74 → 75
+[2025-12-11 21:44:29.222] [INFO ] [ROUTING   ] Green Line final routing decision: 74 → 75
+[2025-12-11 21:44:29.244] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 74 → 75
+[2025-12-11 21:44:30.374] [DEBUG] [POSITION  ] Train 1 Block 75: pos=801.04yds, delta=21.98yds, block_traveled=35.38yds
+[2025-12-11 21:44:31.486] [DEBUG] [POSITION  ] Train 1 Block 75: pos=815.69yds, delta=14.65yds, block_traveled=50.03yds
+[2025-12-11 21:44:32.841] [DEBUG] [POSITION  ] Train 1 Block 75: pos=830.34yds, delta=14.65yds, block_traveled=64.68yds
+[2025-12-11 21:44:34.445] [DEBUG] [POSITION  ] Train 1 Block 75: pos=852.31yds, delta=21.97yds, block_traveled=86.65yds
+[2025-12-11 21:44:35.586] [DEBUG] [POSITION  ] Train 1 Block 75: pos=874.29yds, delta=21.98yds, block_traveled=108.63yds
+[2025-12-11 21:44:36.712] [DEBUG] [POSITION  ] Train 1 Block 75: pos=888.94yds, delta=14.65yds, block_traveled=123.28yds
+[2025-12-11 21:44:36.753] [INFO ] [POSITION  ] Train 1 Block 75: ADVANCING to next block (traveled 123.28/109.36 yds)
+[2025-12-11 21:44:36.793] [DEBUG] [POSITION  ] Train 1 Block 75: motion state = Moving
+[2025-12-11 21:44:36.821] [DEBUG] [ROUTING   ] Green Line routing: current=75, previous=74
+[2025-12-11 21:44:36.853] [DEBUG] [ROUTING   ] Block 75 NOT in switch_routes, using motion logic
+[2025-12-11 21:44:36.887] [DEBUG] [ROUTING   ] Motion forward: 75 → 76
+[2025-12-11 21:44:36.929] [INFO ] [ROUTING   ] Green Line final routing decision: 75 → 76
+[2025-12-11 21:44:36.988] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 75 → 76
+[2025-12-11 21:44:38.143] [DEBUG] [POSITION  ] Train 1 Block 76: pos=910.91yds, delta=21.97yds, block_traveled=35.89yds
+[2025-12-11 21:44:39.421] [DEBUG] [POSITION  ] Train 1 Block 76: pos=925.56yds, delta=14.65yds, block_traveled=50.54yds
+[2025-12-11 21:44:40.504] [DEBUG] [POSITION  ] Train 1 Block 76: pos=947.54yds, delta=21.98yds, block_traveled=72.52yds
+[2025-12-11 21:44:41.577] [DEBUG] [POSITION  ] Train 1 Block 76: pos=962.19yds, delta=14.65yds, block_traveled=87.17yds
+[2025-12-11 21:44:42.646] [DEBUG] [POSITION  ] Train 1 Block 76: pos=969.51yds, delta=7.32yds, block_traveled=94.49yds
+    [Previous message repeated 44 times]
+[2025-12-11 21:44:42.740] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 44 times]
+[2025-12-11 21:44:42.779] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 44 times]
+[2025-12-11 21:44:42.802] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 44 times]
+[2025-12-11 21:44:42.837] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 44 times]
+[2025-12-11 21:44:42.866] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 44 times]
+[2025-12-11 21:44:42.895] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+    [Previous message repeated 44 times]
+[2025-12-11 21:44:42.926] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=30.00 mph, authority=2000.00 yds
+    [Previous message repeated 44 times]
+[2025-12-11 21:44:42.958] [INFO ] [TRAIN     ] Train 2 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+    [Previous message repeated 44 times]
+[2025-12-11 21:44:42.987] [INFO ] [TRAIN     ] Train 3 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-11 21:44:43.718] [DEBUG] [POSITION  ] Train 1 Block 76: pos=991.49yds, delta=21.98yds, block_traveled=116.47yds
+[2025-12-11 21:44:43.744] [INFO ] [POSITION  ] Train 1 Block 76: ADVANCING to next block (traveled 116.47/109.36 yds)
+[2025-12-11 21:44:43.802] [DEBUG] [POSITION  ] Train 1 Block 76: motion state = Moving
+[2025-12-11 21:44:43.824] [DEBUG] [ROUTING   ] Green Line routing: current=76, previous=75
+[2025-12-11 21:44:43.849] [DEBUG] [ROUTING   ] Block 76 NOT in switch_routes, using motion logic
+[2025-12-11 21:44:43.882] [DEBUG] [ROUTING   ] Motion forward: 76 → 77
+[2025-12-11 21:44:43.922] [INFO ] [ROUTING   ] Green Line final routing decision: 76 → 77
+[2025-12-11 21:44:43.946] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 76 → 77
+[2025-12-11 21:44:43.987] [DEBUG] [ROUTING   ] Green Line routing: current=77, previous=76
+[2025-12-11 21:44:44.015] [DEBUG] [ROUTING   ] Block 77 is in switch_routes
+[2025-12-11 21:44:44.050] [DEBUG] [ROUTING   ] Block 77 is actual switch, target=76
+[2025-12-11 21:44:44.081] [INFO ] [ROUTING   ] Using switch target: 77 → 76
+[2025-12-11 21:44:44.111] [WARN ] [ROUTING   ] HARD RULE VIOLATION: would return to previous 76, correcting
+[2025-12-11 21:44:44.137] [DEBUG] [ROUTING   ] Corrected to forward: 77 → 78
+[2025-12-11 21:44:44.165] [INFO ] [ROUTING   ] Green Line final routing decision: 77 → 78
+[2025-12-11 21:44:44.206] [DEBUG] [BEACON    ] Train 1 beacon updated at block 77
+[2025-12-11 21:44:45.354] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1013.46yds, delta=21.97yds, block_traveled=29.07yds
+[2025-12-11 21:44:46.440] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1028.11yds, delta=14.65yds, block_traveled=43.72yds
+[2025-12-11 21:44:47.538] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1042.76yds, delta=14.65yds, block_traveled=58.37yds
+[2025-12-11 21:44:48.598] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1057.41yds, delta=14.65yds, block_traveled=73.02yds
+[2025-12-11 21:44:49.683] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1072.06yds, delta=14.65yds, block_traveled=87.67yds
+    [Previous message repeated 4 times]
+[2025-12-11 21:44:51.060] [ERROR] [DATA      ] Failed to write JSON after 5 attempts: [WinError 5] Access is denied: 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json.tmp' -> 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json'
+[2025-12-11 21:44:51.085] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1094.04yds, delta=21.98yds, block_traveled=109.65yds
+[2025-12-11 21:44:52.152] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1116.01yds, delta=21.97yds, block_traveled=131.62yds
+[2025-12-11 21:44:53.218] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1123.34yds, delta=7.33yds, block_traveled=138.95yds
+[2025-12-11 21:44:54.349] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1137.99yds, delta=14.65yds, block_traveled=153.60yds
+[2025-12-11 21:44:55.414] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1159.96yds, delta=21.97yds, block_traveled=175.57yds
+[2025-12-11 21:44:56.507] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1174.61yds, delta=14.65yds, block_traveled=190.22yds
+[2025-12-11 21:44:57.600] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1189.26yds, delta=14.65yds, block_traveled=204.87yds
+[2025-12-11 21:44:58.660] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1211.24yds, delta=21.98yds, block_traveled=226.85yds
+[2025-12-11 21:44:59.734] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1225.89yds, delta=14.65yds, block_traveled=241.50yds
+[2025-12-11 21:45:00.806] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1240.54yds, delta=14.65yds, block_traveled=256.15yds
+[2025-12-11 21:45:01.861] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1255.19yds, delta=14.65yds, block_traveled=270.80yds
+[2025-12-11 21:45:02.938] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1269.84yds, delta=14.65yds, block_traveled=285.45yds
+[2025-12-11 21:45:04.004] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1284.49yds, delta=14.65yds, block_traveled=300.10yds
+[2025-12-11 21:45:05.091] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1299.14yds, delta=14.65yds, block_traveled=314.75yds
+[2025-12-11 21:45:06.181] [DEBUG] [POSITION  ] Train 1 Block 77: pos=1313.79yds, delta=14.65yds, block_traveled=329.40yds
+[2025-12-11 21:45:06.205] [INFO ] [POSITION  ] Train 1 Block 77: ADVANCING to next block (traveled 329.40/328.08 yds)
+[2025-12-11 21:45:06.224] [DEBUG] [POSITION  ] Train 1 Block 77: motion state = Moving
+[2025-12-11 21:45:06.245] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 77 → 78
+[2025-12-11 21:45:07.361] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1335.76yds, delta=21.97yds, block_traveled=23.29yds
+[2025-12-11 21:45:08.423] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1350.41yds, delta=14.65yds, block_traveled=37.94yds
+    [Previous message repeated 43 times]
+[2025-12-11 21:45:08.797] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 43 times]
+[2025-12-11 21:45:08.816] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 43 times]
+[2025-12-11 21:45:08.837] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 43 times]
+[2025-12-11 21:45:08.853] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 43 times]
+[2025-12-11 21:45:08.869] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 43 times]
+[2025-12-11 21:45:08.888] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+    [Previous message repeated 43 times]
+[2025-12-11 21:45:08.911] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=30.00 mph, authority=2000.00 yds
+    [Previous message repeated 43 times]
+[2025-12-11 21:45:08.927] [INFO ] [TRAIN     ] Train 2 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+    [Previous message repeated 43 times]
+[2025-12-11 21:45:08.945] [INFO ] [TRAIN     ] Train 3 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-11 21:45:09.497] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1365.06yds, delta=14.65yds, block_traveled=52.59yds
+[2025-12-11 21:45:10.566] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1379.71yds, delta=14.65yds, block_traveled=67.24yds
+[2025-12-11 21:45:11.625] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1394.36yds, delta=14.65yds, block_traveled=81.89yds
+[2025-12-11 21:45:12.688] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1409.01yds, delta=14.65yds, block_traveled=96.54yds
+[2025-12-11 21:45:13.768] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1423.66yds, delta=14.65yds, block_traveled=111.19yds
+[2025-12-11 21:45:14.829] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1430.99yds, delta=7.33yds, block_traveled=118.52yds
+[2025-12-11 21:45:15.900] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1452.96yds, delta=21.97yds, block_traveled=140.49yds
+[2025-12-11 21:45:16.991] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1467.61yds, delta=14.65yds, block_traveled=155.14yds
+[2025-12-11 21:45:18.066] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1482.26yds, delta=14.65yds, block_traveled=169.79yds
+[2025-12-11 21:45:19.126] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1496.91yds, delta=14.65yds, block_traveled=184.44yds
+[2025-12-11 21:45:20.189] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1518.89yds, delta=21.98yds, block_traveled=206.42yds
+[2025-12-11 21:45:21.261] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1533.54yds, delta=14.65yds, block_traveled=221.07yds
+[2025-12-11 21:45:22.320] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1548.19yds, delta=14.65yds, block_traveled=235.72yds
+[2025-12-11 21:45:23.384] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1562.84yds, delta=14.65yds, block_traveled=250.37yds
+[2025-12-11 21:45:24.455] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1577.49yds, delta=14.65yds, block_traveled=265.02yds
+[2025-12-11 21:45:25.528] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1592.14yds, delta=14.65yds, block_traveled=279.67yds
+[2025-12-11 21:45:26.648] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1599.46yds, delta=7.32yds, block_traveled=286.99yds
+[2025-12-11 21:45:27.695] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1614.11yds, delta=14.65yds, block_traveled=301.64yds
+[2025-12-11 21:45:28.779] [DEBUG] [POSITION  ] Train 1 Block 78: pos=1643.41yds, delta=29.30yds, block_traveled=330.94yds
+[2025-12-11 21:45:28.807] [INFO ] [POSITION  ] Train 1 Block 78: ADVANCING to next block (traveled 330.94/328.08 yds)
+[2025-12-11 21:45:28.835] [DEBUG] [POSITION  ] Train 1 Block 78: motion state = Moving
+[2025-12-11 21:45:28.857] [DEBUG] [ROUTING   ] Green Line routing: current=78, previous=77
+[2025-12-11 21:45:28.875] [DEBUG] [ROUTING   ] Block 78 NOT in switch_routes, using motion logic
+[2025-12-11 21:45:28.901] [DEBUG] [ROUTING   ] Motion forward: 78 → 79
+[2025-12-11 21:45:28.924] [INFO ] [ROUTING   ] Green Line final routing decision: 78 → 79
+[2025-12-11 21:45:28.948] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 78 → 79
+[2025-12-11 21:45:30.054] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1658.06yds, delta=14.65yds, block_traveled=17.51yds
+    [Previous message repeated 4 times]
+[2025-12-11 21:45:30.239] [ERROR] [NETWORK   ] Error updating train model data: 'TrainLogger' object has no attribute 'warning'
+[2025-12-11 21:45:31.127] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1672.71yds, delta=14.65yds, block_traveled=32.16yds
+[2025-12-11 21:45:32.213] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1687.36yds, delta=14.65yds, block_traveled=46.81yds
+[2025-12-11 21:45:33.273] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1702.01yds, delta=14.65yds, block_traveled=61.46yds
+[2025-12-11 21:45:34.334] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1723.99yds, delta=21.98yds, block_traveled=83.44yds
+[2025-12-11 21:45:35.503] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1738.64yds, delta=14.65yds, block_traveled=98.09yds
+[2025-12-11 21:45:36.567] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1753.29yds, delta=14.65yds, block_traveled=112.74yds
+[2025-12-11 21:45:37.628] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1767.94yds, delta=14.65yds, block_traveled=127.39yds
+    [Previous message repeated 3 times]
+[2025-12-11 21:45:39.213] [ERROR] [DATA      ] Failed to write JSON after 5 attempts: [WinError 5] Access is denied: 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json.tmp' -> 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json'
+[2025-12-11 21:45:39.242] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1789.91yds, delta=21.97yds, block_traveled=149.36yds
+[2025-12-11 21:45:40.316] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1804.56yds, delta=14.65yds, block_traveled=164.01yds
+[2025-12-11 21:45:41.400] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1826.54yds, delta=21.98yds, block_traveled=185.99yds
+[2025-12-11 21:45:42.484] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1841.19yds, delta=14.65yds, block_traveled=200.64yds
+[2025-12-11 21:45:43.567] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1855.84yds, delta=14.65yds, block_traveled=215.29yds
+[2025-12-11 21:45:44.629] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1870.49yds, delta=14.65yds, block_traveled=229.94yds
+    [Previous message repeated 61 times]
+[2025-12-11 21:45:45.153] [DEBUG] [NETWORK   ] Green Line loading branch points from static JSON
+    [Previous message repeated 61 times]
+[2025-12-11 21:45:45.183] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 13 -> [1, 12]
+    [Previous message repeated 61 times]
+[2025-12-11 21:45:45.211] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 28 -> [29, 150]
+    [Previous message repeated 61 times]
+[2025-12-11 21:45:45.238] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 77 -> [76, 101]
+    [Previous message repeated 61 times]
+[2025-12-11 21:45:45.267] [DEBUG] [NETWORK   ] Green Line branch point loaded: block 85 -> [86, 100]
+    [Previous message repeated 61 times]
+[2025-12-11 21:45:45.296] [INFO ] [NETWORK   ] Green Line branch points loaded: 6 total
+    [Previous message repeated 60 times]
+[2025-12-11 21:45:45.328] [INFO ] [TRAIN     ] Train 1 commands written to JSON: speed=30.00 mph, authority=2000.00 yds
+    [Previous message repeated 60 times]
+[2025-12-11 21:45:45.360] [INFO ] [TRAIN     ] Train 2 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+    [Previous message repeated 60 times]
+[2025-12-11 21:45:45.387] [INFO ] [TRAIN     ] Train 3 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-11 21:45:45.695] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1885.14yds, delta=14.65yds, block_traveled=244.59yds
+[2025-12-11 21:45:47.009] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1899.79yds, delta=14.65yds, block_traveled=259.24yds
+[2025-12-11 21:45:48.084] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1914.44yds, delta=14.65yds, block_traveled=273.89yds
+[2025-12-11 21:45:49.217] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1936.41yds, delta=21.97yds, block_traveled=295.86yds
+[2025-12-11 21:45:50.321] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1951.06yds, delta=14.65yds, block_traveled=310.51yds
+[2025-12-11 21:45:51.434] [DEBUG] [POSITION  ] Train 1 Block 79: pos=1973.04yds, delta=21.98yds, block_traveled=332.49yds
+[2025-12-11 21:45:51.492] [INFO ] [POSITION  ] Train 1 Block 79: ADVANCING to next block (traveled 332.49/328.08 yds)
+[2025-12-11 21:45:51.521] [DEBUG] [POSITION  ] Train 1 Block 79: motion state = Moving
+[2025-12-11 21:45:51.580] [DEBUG] [ROUTING   ] Green Line routing: current=79, previous=78
+[2025-12-11 21:45:51.603] [DEBUG] [ROUTING   ] Block 79 NOT in switch_routes, using motion logic
+[2025-12-11 21:45:51.628] [DEBUG] [ROUTING   ] Motion forward: 79 → 80
+[2025-12-11 21:45:51.651] [INFO ] [ROUTING   ] Green Line final routing decision: 79 → 80
+[2025-12-11 21:45:51.676] [INFO ] [POSITION  ] Train 1: BLOCK TRANSITION 79 → 80
+[2025-12-11 21:45:52.786] [DEBUG] [POSITION  ] Train 1 Block 80: pos=1987.69yds, delta=14.65yds, block_traveled=19.06yds
+[2025-12-11 21:45:54.102] [DEBUG] [POSITION  ] Train 1 Block 80: pos=2000.00yds, delta=12.31yds, block_traveled=31.37yds
+[2025-12-11 21:45:55.168] [DEBUG] [POSITION  ] Train 1 Block 80: pos=2000.00yds, delta=0.00yds, block_traveled=31.37yds

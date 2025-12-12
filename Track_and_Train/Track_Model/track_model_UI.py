@@ -984,7 +984,8 @@ class TrackModelUI(ttk.Frame):
 
 
 if __name__ == "__main__":
-    app = TrackModelUI()
+    root = tk.Tk()
+    app = TrackModelUI(root)
     app.mainloop()
 
     if os.path.exists(STATIC_JSON_PATH):
