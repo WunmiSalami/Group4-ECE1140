@@ -797,13 +797,12 @@ class TrackModelUI(ttk.Frame):
                 self.station_vars["Boarding:"].set(passengers_boarding)
                 self.station_vars["Ticket Sales:"].set(ticket_sales)
 
-                # Only update failure vars if they don't match (to avoid overriding user input)
+                # Always update failure vars and sync to block_manager
                 for key in self.failure_vars:
                     state_key = key.split()[0].lower()
                     stored_value = failures.get(state_key, False)
-                    # Only update if the stored value differs from current checkbox state
-                    if self.failure_vars[key].get() != stored_value:
-                        self.failure_vars[key].set(stored_value)
+                    self.failure_vars[key].set(stored_value)
+                self.update_failures()
 
                 failures_active = any(failures.values())
                 if failures_active:
@@ -859,13 +858,32 @@ class TrackModelUI(ttk.Frame):
     def update_failures(self):
         selected_line = self.line_selector.get()
         selected_block = self.block_selector.get()
+        power = self.failure_vars["Power Failure"].get()
+        circuit = self.failure_vars["Circuit Failure"].get()
+        broken = self.failure_vars["Broken Track"].get()
+        print(
+            f"[DEBUG] update_failures called: line={selected_line}, block={selected_block}, power={power}, circuit={circuit}, broken={broken}"
+        )
         if selected_line and selected_block and self.block_manager:
+            print(
+                f"[DEBUG] Calling block_manager.update_failures with: line={selected_line}, block={selected_block}, power={power}, circuit={circuit}, broken={broken}"
+            )
             self.block_manager.update_failures(
                 selected_line,
                 selected_block,
-                power=self.failure_vars["Power Failure"].get(),
-                circuit=self.failure_vars["Circuit Failure"].get(),
-                broken=self.failure_vars["Broken Track"].get(),
+                power=power,
+                circuit=circuit,
+                broken=broken,
+            )
+            # Write failures to JSON immediately!
+            if self.line_network:
+                print(
+                    f"[DEBUG] Writing failures to JSON via line_network.write_failures_to_json()"
+                )
+                self.line_network.write_failures_to_json()
+        else:
+            print(
+                f"[DEBUG] update_failures: Skipped (missing line/block/block_manager)"
             )
 
     def poll_visualizer_clicks(self):

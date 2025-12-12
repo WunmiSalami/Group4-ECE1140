@@ -105,21 +105,11 @@ class Train:
     def _update_physics(self):
         """Update train physics"""
 
-        # Check for new authority - preserve position
+        # Check for new authority - only reset position on FIRST dispatch
         current_authority = self.commanded_authority_yds
-        if current_authority != self.last_commanded_authority and current_authority > 0:
-            try:
-                with open(self.json_path, "r") as f:
-                    data = json.load(f)
 
-                if self.train_key in data:
-                    motion = data[self.train_key].get("motion", {})
-                    yards_in_block = motion.get("yards_into_current_block", 0.0)
-                    self.position_yds = yards_in_block
-            except Exception:
-                self.position_yds = 0.0
-
-            self.last_commanded_authority = current_authority
+        # Track authority changes (but don't reset position anymore)
+        self.last_commanded_authority = current_authority
 
         # Determine acceleration
         if self.commanded_authority_yds <= 0:
@@ -192,7 +182,7 @@ class Train:
                         f.seek(0)
                         f.truncate()
 
-                        # Update motion section only (do not write yards_into_current_block)
+                        # Write only current motion and position_yds
                         if self.train_key in data:
                             if "motion" not in data[self.train_key]:
                                 data[self.train_key]["motion"] = {}

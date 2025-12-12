@@ -1,0 +1,24 @@
+================================================================================
+Train Track Control System - Log Started
+Session: 20251212_004022
+================================================================================
+
+[2025-12-12 00:40:22.596] [DEBUG] [NETWORK   ] Red Line loading branch points from static JSON
+[2025-12-12 00:40:22.598] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 16 -> [1, 15]
+[2025-12-12 00:40:22.599] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 27 -> [28, 76]
+[2025-12-12 00:40:22.599] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 33 -> [32, 72]
+[2025-12-12 00:40:22.600] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 38 -> [39, 71]
+[2025-12-12 00:40:22.601] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 44 -> [43, 67]
+[2025-12-12 00:40:22.601] [DEBUG] [NETWORK   ] Red Line branch point loaded: block 52 -> [53, 66]
+[2025-12-12 00:40:22.602] [INFO ] [NETWORK   ] Red Line branch points loaded: 7 total
+[2025-12-12 00:40:22.604] [DEBUG] [LIGHT     ] Red line block 8 traffic light: Super Green → Green
+[2025-12-12 00:40:22.604] [DEBUG] [LIGHT     ] Red line block 14 traffic light: Super Green → Green
+[2025-12-12 00:40:22.605] [DEBUG] [LIGHT     ] Red line block 26 traffic light: Super Green → Green
+[2025-12-12 00:40:22.605] [DEBUG] [LIGHT     ] Red line block 31 traffic light: Super Green → Green
+[2025-12-12 00:40:22.606] [DEBUG] [LIGHT     ] Red line block 37 traffic light: Super Green → Green
+[2025-12-12 00:40:22.607] [DEBUG] [LIGHT     ] Red line block 42 traffic light: Super Green → Green
+[2025-12-12 00:40:22.607] [DEBUG] [LIGHT     ] Red line block 51 traffic light: Super Green → Green
+[2025-12-12 00:40:22.608] [INFO ] [TRAIN     ] Train 4 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-12 00:40:22.609] [INFO ] [TRAIN     ] Train 5 commands written to JSON: speed=0.00 mph, authority=0.00 yds
+[2025-12-12 00:40:24.188] [ERROR] [DATA      ] Failed to write JSON after 5 attempts: [WinError 5] Access is denied: 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json.tmp' -> 'C:\\Users\\wunmi\\OneDrive\\Documents\\Academics\\Trains\\Group4-ECE1140\\Group4-ECE1140\\Track_and_Train\\track_model_Train_Model.json'
+[2025-12-12 00:40:42.008] [ERROR] [NETWORK   ] Error updating train model data: 'TrainLogger' object has no attribute 'warning'

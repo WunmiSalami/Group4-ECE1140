@@ -211,19 +211,25 @@ class LineNetwork:
                         )
                         return
 
-                # Process data (your existing logic)
+                # Determine starting train ID based on line
+                if self.line_name == "Red":
+                    train_id_start = 4  # Red line trains are 4, 5
+                else:
+                    train_id_start = 1  # Green line trains are 1, 2, 3
+
                 trains = []
                 for i in range(len(commanded_speeds)):
-                    train_key = f"{self.line_name[0]}_train_{i + 1}"
+                    train_id = train_id_start + i
+                    train_key = f"{self.line_name[0]}_train_{train_id}"
                     if train_key in train_model_data:
                         motion = train_model_data[train_key]["motion"]["current motion"]
                         pos = train_model_data[train_key]["motion"].get(
                             "position_yds", 0
                         )
-                        trains.append({"train_id": i + 1, "motion": motion})
+                        trains.append({"train_id": train_id, "motion": motion})
 
-                        old_pos = self.train_positions.get(i + 1, 0)
-                        self.train_positions[i + 1] = pos
+                        old_pos = self.train_positions.get(train_id, 0)
+                        self.train_positions[train_id] = pos
 
                         train_model_data[train_key]["block"]["commanded speed"] = (
                             commanded_speeds[i]
@@ -234,16 +240,16 @@ class LineNetwork:
 
                         if not hasattr(self, "yards_into_current_block"):
                             self.yards_into_current_block = {}
-                        yards_in_block = self.yards_into_current_block.get(i + 1, 0)
+                        yards_in_block = self.yards_into_current_block.get(train_id, 0)
                         train_model_data[train_key]["motion"][
                             "yards_into_current_block"
                         ] = yards_in_block
 
                         logger.info(
                             "TRAIN",
-                            f"Train {i + 1} commands written to JSON: speed={commanded_speeds[i]:.2f} mph, authority={commanded_authorities[i]:.2f} yds",
+                            f"Train {train_id} commands written to JSON: speed={commanded_speeds[i]:.2f} mph, authority={commanded_authorities[i]:.2f} yds",
                             {
-                                "train_id": i + 1,
+                                "train_id": train_id,
                                 "line": self.line_name,
                                 "commanded_speed": commanded_speeds[i],
                                 "commanded_authority": commanded_authorities[i],

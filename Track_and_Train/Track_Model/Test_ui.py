@@ -15,6 +15,169 @@ import sys
 
 
 class TrackModelTestUI:
+    def _check_traffic_light_ahead(self, train_id, line, current_block):
+        """Check traffic light in next block and return action needed"""
+        try:
+            with open(self.track_io_file, "r") as f:
+                data = json.load(f)
+            prefix = "G" if line == "Green" else "R"
+            lights_array = data.get(f"{prefix}-lights", [])
+            # Get next block (just 1 block ahead)
+            next_blocks = self._get_next_blocks_with_switches(current_block, line, 1)
+            if not next_blocks:
+                return None  # No action needed
+            next_block = next_blocks[0]
+            # Check if next block has a traffic light
+            if line == "Green":
+                traffic_light_blocks = [0, 3, 7, 29, 58, 62, 76, 86, 100, 101, 150, 151]
+            else:
+                traffic_light_blocks = [0, 8, 14, 26, 31, 37, 42, 51]
+            if next_block not in traffic_light_blocks:
+                return None  # No traffic light at next block
+            # Find traffic light index
+            traffic_light_index = traffic_light_blocks.index(next_block)
+            bit_index = traffic_light_index * 2
+            # Read 2 bits
+            if bit_index + 1 < len(lights_array):
+                bit1 = lights_array[bit_index]
+                bit2 = lights_array[bit_index + 1]
+                # Decode: 00=Super Green, 01=Green, 10=Yellow, 11=Red
+                if bit1 == 1 and bit2 == 1:
+                    return "RED"  # STOP
+                elif bit1 == 1 and bit2 == 0:
+                    return "YELLOW"  # SLOW DOWN
+            return None  # Green or Super Green - no action
+        except Exception as e:
+            self._print(f"❌ Error checking traffic light: {e}", "#ed4245")
+            return None
+
+    def _handle_red_light(self, train_id, line):
+        """Stop train immediately for RED light"""
+        try:
+            prefix = "G" if line == "Green" else "R"
+            train_key = f"{prefix}_train_{train_id}"
+            array_idx = (train_id - 1) if line == "Green" else (train_id - 4)
+            with open(self.track_io_file, "r") as f:
+                data = json.load(f)
+            # Save original speed if not already saved
+            if train_key not in self.saved_authorities:
+                current_speed = (
+                    data.get(f"{prefix}-Train", {}).get("commanded speed", [])[
+                        array_idx
+                    ]
+                    if array_idx
+                    < len(data.get(f"{prefix}-Train", {}).get("commanded speed", []))
+                    else 0
+                )
+                current_auth = (
+                    data.get(f"{prefix}-Train", {}).get("commanded authority", [])[
+                        array_idx
+                    ]
+                    if array_idx
+                    < len(
+                        data.get(f"{prefix}-Train", {}).get("commanded authority", [])
+                    )
+                    else 0
+                )
+                self.saved_authorities[train_key] = current_auth
+            # Set speed and authority to 0
+            if f"{prefix}-Train" not in data:
+                data[f"{prefix}-Train"] = {
+                    "commanded speed": [],
+                    "commanded authority": [],
+                }
+            while len(data[f"{prefix}-Train"]["commanded speed"]) <= array_idx:
+                data[f"{prefix}-Train"]["commanded speed"].append(0)
+            while len(data[f"{prefix}-Train"]["commanded authority"]) <= array_idx:
+                data[f"{prefix}-Train"]["commanded authority"].append(0)
+            data[f"{prefix}-Train"]["commanded speed"][array_idx] = 0
+            data[f"{prefix}-Train"]["commanded authority"][array_idx] = 0
+            with open(self.track_io_file, "w") as f:
+                json.dump(data, f, indent=4)
+            self.authority_zeroed[train_key] = True
+            self._print(f"🚦 RED LIGHT! Train {train_id} STOPPED", "#ed4245")
+        except Exception as e:
+            self._print(f"❌ Error stopping for red light: {e}", "#ed4245")
+
+    def _handle_yellow_light(self, train_id, line):
+        """Slow down train for YELLOW light"""
+        try:
+            prefix = "G" if line == "Green" else "R"
+            array_idx = (train_id - 1) if line == "Green" else (train_id - 4)
+            with open(self.track_io_file, "r") as f:
+                data = json.load(f)
+            if f"{prefix}-Train" not in data:
+                return
+            current_speed = (
+                data[f"{prefix}-Train"]["commanded speed"][array_idx]
+                if array_idx < len(data[f"{prefix}-Train"]["commanded speed"])
+                else 0
+            )
+            # Reduce speed to half
+            new_speed = current_speed / 2.0
+            data[f"{prefix}-Train"]["commanded speed"][array_idx] = new_speed
+            with open(self.track_io_file, "w") as f:
+                json.dump(data, f, indent=4)
+            self._print(
+                f"🚦 YELLOW LIGHT! Train {train_id} slowing to {new_speed:.1f} mph",
+                "#faa61a",
+            )
+        except Exception as e:
+            self._print(f"❌ Error slowing for yellow light: {e}", "#ed4245")
+
+        def _check_red_light_ahead(self, train_id, line, current_block):
+            """Check if there's a RED light in the next block ahead"""
+            try:
+                with open(self.track_io_file, "r") as f:
+                    data = json.load(f)
+                prefix = "G" if line == "Green" else "R"
+                lights_array = data.get(f"{prefix}-lights", [])
+                # Get next block (just 1 block ahead)
+                next_blocks = self._get_next_blocks_with_switches(
+                    current_block, line, 1
+                )
+                if not next_blocks:
+                    return False
+                next_block = next_blocks[0]
+                # Check if next block has a traffic light
+                if line == "Green":
+                    traffic_light_blocks = [
+                        0,
+                        3,
+                        7,
+                        29,
+                        58,
+                        62,
+                        76,
+                        86,
+                        100,
+                        101,
+                        150,
+                        151,
+                    ]
+                else:
+                    traffic_light_blocks = [0, 8, 14, 26, 31, 37, 42, 51]
+                if next_block not in traffic_light_blocks:
+                    return False  # No traffic light at next block
+                # Find traffic light index
+                traffic_light_index = traffic_light_blocks.index(next_block)
+                bit_index = traffic_light_index * 2
+                # Read 2 bits
+                if bit_index + 1 < len(lights_array):
+                    bit1 = lights_array[bit_index]
+                    bit2 = lights_array[bit_index + 1]
+                    # Check if RED (11)
+                    if bit1 == 1 and bit2 == 1:
+                        return True  # RED LIGHT!
+                return False
+            except Exception as e:
+                self._print(f"❌ Error checking red light: {e}", "#ed4245")
+                return False
+
+    def _get_failure_index(self, block_num):
+        """Get the failure array index for a given block number (with +1 offset)"""
+        return (block_num - 1) * 3
+
     def __init__(self, root):
         self.root = root
         self.root.title("🚂 TRACK MODEL TEST - ENHANCED")
@@ -27,6 +190,72 @@ class TrackModelTestUI:
         self.train_model_file = os.path.join(
             base_dir, "..", "track_model_Train_Model.json"
         )
+
+        # === Traffic light handling state ===
+        # Add to __init__ after self.authority_zeroed = {}
+        self.saved_speeds = (
+            {}
+        )  # Store original speeds before red/yellow light: {train_key: speed_value}
+        self.speed_reduced = (
+            {}
+        )  # Track which trains have reduced speed: {train_key: "RED" or "YELLOW"}
+
+        # === Zero out all failures and occupancy at program start ===
+        try:
+            if os.path.exists(self.track_io_file):
+                with open(self.track_io_file, "r") as f:
+                    data = json.load(f)
+            else:
+                data = {}
+            # Zero out failures and occupancy for both lines (assuming 152 blocks max)
+            for prefix in ["G", "R"]:
+                # Failures: 3 bits per block
+                arr_len_fail = len(data.get(f"{prefix}-Failures", []))
+                if arr_len_fail < 1:
+                    arr_len_fail = 456
+                data[f"{prefix}-Failures"] = [0] * arr_len_fail
+                # Occupancy: 1 bit per block
+                arr_len_occ = len(data.get(f"{prefix}-Occupancy", []))
+                if arr_len_occ < 1:
+                    arr_len_occ = 152
+                data[f"{prefix}-Occupancy"] = [0] * arr_len_occ
+            with open(self.track_io_file, "w") as f:
+                json.dump(data, f, indent=4)
+        except Exception as e:
+            print(f"❌ Error zeroing failures/occupancy at startup: {e}")
+
+        # === Failure handling state ===
+        # Store original authority before zeroing: {train_key: authority_value}
+        self.saved_authorities = {}
+        # Track which trains have zeroed authority: {train_key: True/False}
+        self.authority_zeroed = {}
+
+        # === Green Line topology exceptions (non-sequential blocks) ===
+        self.GREEN_EXCEPTIONS = {
+            100: 85,  # 100 → 85 (not 101)
+            150: 28,  # 150 → 28 (reverse direction)
+            # Switches handled by branch points
+        }
+
+        # === Red Line topology exceptions ===
+        self.RED_EXCEPTIONS = {
+            # Red line is mostly sequential, switches handled separately
+        }
+
+        # === Store current switch state ===
+        self.current_switch_settings = {
+            "Green": {},  # {block_num: target_block}
+            "Red": {},
+        }
+
+        # === Track last known block for each train (for occupancy assignment) ===
+        self.train_last_known_blocks = {
+            "G_train_1": 0,
+            "G_train_2": 0,
+            "G_train_3": 0,
+            "R_train_4": 0,
+            "R_train_5": 0,
+        }
 
         # Initialize train physics engines
         self.trains = {}
@@ -108,23 +337,43 @@ class TrackModelTestUI:
         # Launch Track Model UI (after console is initialized)
         self._launch_track_model_ui()
 
-        # === Failure handling state ===
-        # Store original authority before zeroing: {train_key: authority_value}
-        self.saved_authorities = {}
-        # Track which trains have zeroed authority: {train_key: True/False}
-        self.authority_zeroed = {}
-
-        # === Green Line topology exceptions (non-sequential blocks) ===
-        self.GREEN_EXCEPTIONS = {
-            100: 85,  # 100 → 85 (not 101)
-            150: 28,  # 150 → 28 (reverse direction)
-            # Switches handled by branch points
-        }
-
-        # === Red Line topology exceptions ===
-        self.RED_EXCEPTIONS = {
-            # Red line is mostly sequential, switches handled separately
-        }
+    def _update_train_blocks_from_occupancy(self, line):
+        """
+        Read occupancy array and assign occupied blocks to trains based on proximity.
+        Updates train_last_known_blocks for the given line.
+        """
+        try:
+            with open(self.track_io_file, "r") as f:
+                data = json.load(f)
+            prefix = "G" if line == "Green" else "R"
+            occupancy_array = data.get(f"{prefix}-Occupancy", [])
+            # Find all occupied blocks
+            occupied_blocks = []
+            for block_num, occupied in enumerate(occupancy_array):
+                if occupied == 1:
+                    occupied_blocks.append(block_num)
+            if not occupied_blocks:
+                return  # No trains on track
+            # Get trains for this line
+            if line == "Green":
+                train_keys = ["G_train_1", "G_train_2", "G_train_3"]
+            else:
+                train_keys = ["R_train_4", "R_train_5"]
+            # Assign each occupied block to nearest train based on last known position
+            for block_num in occupied_blocks:
+                closest_train = None
+                min_distance = float("inf")
+                for train_key in train_keys:
+                    last_block = self.train_last_known_blocks.get(train_key, 0)
+                    distance = abs(block_num - last_block)
+                    if distance < min_distance:
+                        min_distance = distance
+                        closest_train = train_key
+                # Update closest train's position
+                if closest_train:
+                    self.train_last_known_blocks[closest_train] = block_num
+        except Exception as e:
+            pass
 
     def _launch_track_model_ui(self):
         """Launch Track Model UI in separate process"""
@@ -203,12 +452,6 @@ class TrackModelTestUI:
                 self._print(f"❌ ERROR clearing static.json on close: {e}", "#ed4245")
         except Exception as e:
             self._print(f"❌ ERROR clearing inputs on close: {e}", "#ed4245")
-
-        # Build UI
-        self._build_ui()
-
-        # Start monitoring outputs
-        self._monitor_outputs()
 
     def _build_ui(self):
         """Build interface"""
@@ -670,6 +913,17 @@ class TrackModelTestUI:
         for i in range(len(crossings)):
             gates_grid.columnconfigure(i, weight=1)
 
+        # Initialize switch settings to default (first target)
+        switches = self.GREEN_SWITCHES if line == "Green" else self.RED_SWITCHES
+        for sw in switches:
+            # Default to first target
+            default_target = sw["targets"][0]
+            if default_target == "Yard":
+                default_target = 0
+            else:
+                default_target = int(default_target)
+            self.current_switch_settings[line][sw["block"]] = default_target
+
     def _build_outputs(self, parent):
         """Build output display"""
         right = tk.LabelFrame(
@@ -784,11 +1038,8 @@ class TrackModelTestUI:
             line = self.line_var.get()
             speed = float(self.speed_entry.get())
             authority = float(self.auth_entry.get())
-
-            # Read track_io.json
             with open(self.track_io_file, "r") as f:
                 data = json.load(f)
-
             prefix = "G" if line == "Green" else "R"
 
             # === COMMANDED SPEED & AUTHORITY ===
@@ -811,35 +1062,32 @@ class TrackModelTestUI:
             data[f"{prefix}-Train"]["commanded speed"][array_idx] = speed
             data[f"{prefix}-Train"]["commanded authority"][array_idx] = authority
 
-            # === SWITCHES ===
+            # === SWITCHES - STORE LOCALLY ===
             switches = []
-            for var in self.switch_vars:
-                # Extract index from "→ target" format
-                val = var.get()
-                if "→" in val:
-                    switches.append(
-                        0
-                        if val.split("→")[1].strip()
-                        in [
-                            "12",
-                            "29",
-                            "58",
-                            "64",
-                            "78",
-                            "85",
-                            "10",
-                            "17",
-                            "28",
-                            "34",
-                            "39",
-                            "45",
-                            "53",
-                        ]
-                        else 1
-                    )
-                else:
-                    switches.append(0)
-
+            switch_blocks = (
+                self.GREEN_SWITCHES if line == "Green" else self.RED_SWITCHES
+            )
+            for i, sw in enumerate(switch_blocks):
+                if i < len(self.switch_vars):
+                    var_value = self.switch_vars[i].get()
+                    # Parse target from "→ target" format
+                    if "→" in var_value:
+                        target_str = var_value.split("→")[1].strip()
+                        # Convert "Yard" to 0
+                        if target_str.lower() == "yard":
+                            target = 0
+                        else:
+                            target = int(target_str)
+                        # STORE the switch setting locally
+                        self.current_switch_settings[line][sw["block"]] = target
+                        # Fix: compare int to int for switch_pos
+                        first_target_str = sw["targets"][0]
+                        if first_target_str.lower() == "yard":
+                            first_target = 0
+                        else:
+                            first_target = int(first_target_str)
+                        switch_pos = 0 if target == first_target else 1
+                        switches.append(switch_pos)
             data[f"{prefix}-switches"] = switches
 
             # === GATES ===
@@ -916,6 +1164,40 @@ class TrackModelTestUI:
             next_blocks.append(block)
         return next_blocks
 
+    def _get_next_blocks_with_switches(
+        self, current_block, line, previous_block=None, num_blocks=2
+    ):
+        """Get next blocks based on switches WE set (stored locally) AND direction"""
+        switch_settings = self.current_switch_settings.get(line, {})
+        next_blocks = []
+        block = current_block
+        prev = previous_block
+        for _ in range(num_blocks):
+            if line == "Green":
+                next_block = self._get_green_line_next_block_logic(block, prev)
+            else:
+                next_block = self._get_red_line_next_block_logic(block, prev)
+            next_blocks.append(next_block)
+            prev = block
+            block = next_block
+        return next_blocks
+
+    # Example placeholder for routing logic (replace with your actual logic)
+    def _get_green_line_next_block_logic(self, current, previous):
+        # TODO: Implement actual routing logic using current and previous
+        # For now, fallback to switch or +1
+        switch_settings = self.current_switch_settings.get("Green", {})
+        if current in switch_settings:
+            return switch_settings[current]
+        return current + 1
+
+    def _get_red_line_next_block_logic(self, current, previous):
+        # TODO: Implement actual routing logic using current and previous
+        switch_settings = self.current_switch_settings.get("Red", {})
+        if current in switch_settings:
+            return switch_settings[current]
+        return current + 1
+
     def _check_failures_ahead(self, train_id, line, current_block):
         """Check if there are failures in next 2 blocks"""
         try:
@@ -923,76 +1205,126 @@ class TrackModelTestUI:
                 data = json.load(f)
             prefix = "G" if line == "Green" else "R"
             failures_array = data.get(f"{prefix}-Failures", [])
-            next_blocks = self._get_next_blocks(current_block, line, 2)
+            # DEBUG
+            print(
+                f"🔍 Checking failures for Train {train_id}, current block {current_block}"
+            )
+            train_key = f"{line[0]}_train_{train_id}"
+            previous_block = self.train_last_known_blocks.get(train_key, None)
+            next_blocks = self._get_next_blocks_with_switches(
+                current_block, line, previous_block, 2
+            )
+            # print(f"🔍 Next blocks to check: {next_blocks}")
             for block_num in next_blocks:
-                block_idx = block_num * 3  # 3 bits per block: power, circuit, broken
-                if block_idx + 2 < len(failures_array):
-                    if any(failures_array[block_idx : block_idx + 3]):
-                        self._print(
-                            f"🚨 FAILURE DETECTED in Block {block_num} (ahead of Train {train_id})",
-                            "#ed4245",
-                        )
+                idx = self._get_failure_index(block_num)
+                if idx + 2 < len(failures_array):
+                    failure_bits = failures_array[idx : idx + 3]
+                    # print(f"🔍 Block {block_num} (idx {idx}): bits={failure_bits}")
+                    if any(failure_bits):
+                        # print(f"🔍 FAILURE FOUND in block {block_num}!")
                         return True
+            # print(f"🔍 No failures detected")
             return False
         except Exception as e:
-            self._print(f"❌ Error checking failures: {e}", "#ed4245")
+            self._print(f"🔍 CHECK FAILURE ERROR: {e}", "#ed4245")
             return False
 
-    def _zero_authority_for_failure(self, train_id, line):
-        """Zero authority immediately due to failure ahead"""
+    def _handle_red_light(self, train_id, line):
+        """Stop train immediately for RED light (speed only, not authority)"""
         try:
             prefix = "G" if line == "Green" else "R"
             train_key = f"{prefix}_train_{train_id}"
             array_idx = (train_id - 1) if line == "Green" else (train_id - 4)
+            # Only act if not already stopped for red light
+            if self.speed_reduced.get(train_key) == "RED":
+                return  # Already stopped for red light
             with open(self.track_io_file, "r") as f:
                 data = json.load(f)
-            current_auth = (
-                data.get(f"{prefix}-Train", {}).get("commanded authority", [])[
-                    array_idx
-                ]
+            # Save original speed
+            current_speed = (
+                data.get(f"{prefix}-Train", {}).get("commanded speed", [])[array_idx]
                 if array_idx
-                < len(data.get(f"{prefix}-Train", {}).get("commanded authority", []))
+                < len(data.get(f"{prefix}-Train", {}).get("commanded speed", []))
                 else 0
             )
-            if train_key not in self.saved_authorities:
-                self.saved_authorities[train_key] = current_auth
-                self._print(
-                    f"💾 Saved authority {current_auth} yds for Train {train_id}",
-                    "#faa61a",
-                )
+            self.saved_speeds[train_key] = current_speed
+            # Set speed to 0 ONLY (not authority!)
             if f"{prefix}-Train" not in data:
                 data[f"{prefix}-Train"] = {
                     "commanded speed": [],
                     "commanded authority": [],
                 }
-            while len(data[f"{prefix}-Train"]["commanded authority"]) <= array_idx:
-                data[f"{prefix}-Train"]["commanded authority"].append(0)
-            data[f"{prefix}-Train"]["commanded authority"][array_idx] = 0
+            while len(data[f"{prefix}-Train"]["commanded speed"]) <= array_idx:
+                data[f"{prefix}-Train"]["commanded speed"].append(0)
+            data[f"{prefix}-Train"]["commanded speed"][array_idx] = 0
             with open(self.track_io_file, "w") as f:
                 json.dump(data, f, indent=4)
-            self.authority_zeroed[train_key] = True
-            self._print(
-                f"🛑 EMERGENCY: Authority ZEROED for Train {train_id} (failure ahead)",
-                "#ed4245",
-            )
+            self.speed_reduced[train_key] = "RED"
+            self._print(f"🚦 RED LIGHT! Train {train_id} STOPPED (speed=0)", "#ed4245")
         except Exception as e:
-            self._print(f"❌ Error zeroing authority: {e}", "#ed4245")
+            self._print(f"❌ Error stopping for red light: {e}", "#ed4245")
 
-    def _restore_authority_after_failure(self, train_id, line):
-        """Restore original authority when failures clear"""
+    def _handle_yellow_light(self, train_id, line):
+        """Slow down train for YELLOW light"""
         try:
             prefix = "G" if line == "Green" else "R"
             train_key = f"{prefix}_train_{train_id}"
             array_idx = (train_id - 1) if line == "Green" else (train_id - 4)
-            if train_key not in self.saved_authorities:
-                return
+            # Only act if not already slowed
+            if self.speed_reduced.get(train_key) == "YELLOW":
+                return  # Already slowed for yellow
             with open(self.track_io_file, "r") as f:
                 data = json.load(f)
+            if f"{prefix}-Train" not in data:
+                return
+            current_speed = (
+                data[f"{prefix}-Train"]["commanded speed"][array_idx]
+                if array_idx < len(data[f"{prefix}-Train"]["commanded speed"])
+                else 0
+            )
+            # Save original speed and reduce to half
+            self.saved_speeds[train_key] = current_speed
+            new_speed = current_speed / 2.0
+            data[f"{prefix}-Train"]["commanded speed"][array_idx] = new_speed
+            with open(self.track_io_file, "w") as f:
+                json.dump(data, f, indent=4)
+            self.speed_reduced[train_key] = "YELLOW"
+            self._print(
+                f"🚦 YELLOW LIGHT! Train {train_id} slowing to {new_speed:.1f} mph",
+                "#faa61a",
+            )
+        except Exception as e:
+            self._print(f"❌ Error slowing for yellow light: {e}", "#ed4245")
+
+    def _restore_speed_after_light(self, train_id, line):
+        """Restore original speed when light clears (GREEN or Super GREEN)"""
+        try:
+            prefix = "G" if line == "Green" else "R"
+            train_key = f"{prefix}_train_{train_id}"
+            array_idx = (train_id - 1) if line == "Green" else (train_id - 4)
+            if train_key not in self.saved_speeds:
+                return  # No saved speed to restore
+            with open(self.track_io_file, "r") as f:
+                data = json.load(f)
+            restored_speed = self.saved_speeds[train_key]
             if f"{prefix}-Train" not in data:
                 data[f"{prefix}-Train"] = {
                     "commanded speed": [],
                     "commanded authority": [],
                 }
+            while len(data[f"{prefix}-Train"]["commanded speed"]) <= array_idx:
+                data[f"{prefix}-Train"]["commanded speed"].append(0)
+            data[f"{prefix}-Train"]["commanded speed"][array_idx] = restored_speed
+            with open(self.track_io_file, "w") as f:
+                json.dump(data, f, indent=4)
+            del self.saved_speeds[train_key]
+            del self.speed_reduced[train_key]
+            self._print(
+                f"✅ Light CLEARED! Train {train_id} speed restored to {restored_speed:.1f} mph",
+                "#3ba55d",
+            )
+        except Exception as e:
+            self._print(f"❌ Error restoring speed: {e}", "#ed4245")
             while len(data[f"{prefix}-Train"]["commanded authority"]) <= array_idx:
                 data[f"{prefix}-Train"]["commanded authority"].append(0)
             restored_auth = self.saved_authorities[train_key]
@@ -1005,6 +1337,7 @@ class TrackModelTestUI:
                 f"✅ Authority RESTORED to {restored_auth} yds for Train {train_id} (failure cleared)",
                 "#3ba55d",
             )
+            # print(f"🔍 RESTORE: Authority restored successfully!", "#3ba55d")
         except Exception as e:
             self._print(f"❌ Error restoring authority: {e}", "#ed4245")
 
@@ -1013,6 +1346,9 @@ class TrackModelTestUI:
         try:
             train_id = int(self.train_var.get())
             line = self.line_var.get()
+
+            # Update all train blocks from occupancy first
+            self._update_train_blocks_from_occupancy(line)
 
             if os.path.exists(self.train_model_file):
                 with open(self.train_model_file, "r") as f:
@@ -1041,21 +1377,28 @@ class TrackModelTestUI:
                         text=f"{block.get('commanded authority', 0):.2f}"
                     )
 
-                    self.output_labels["beacon_limit"].config(
-                        text=f"{beacon.get('speed limit', 0):.1f}"
-                    )
-                    self.output_labels["beacon_door"].config(
-                        text=beacon.get("side_door", "N/A")
-                    )
-                    self.output_labels["beacon_curr"].config(
-                        text=beacon.get("current station", "N/A")
-                    )
-                    self.output_labels["beacon_next"].config(
-                        text=beacon.get("next station", "N/A")
-                    )
-                    self.output_labels["beacon_pass"].config(
-                        text=str(beacon.get("passengers_boarding", 0))
-                    )
+                    # Beacon field mapping: UI key -> beacon dict key, formatter
+                    beacon_fields = {
+                        "beacon_limit": ("speed limit", lambda v: f"{v:.1f}"),
+                        "beacon_door": ("side_door", str),
+                        "beacon_curr": ("current station", str),
+                        "beacon_next": ("next station", str),
+                        "beacon_pass": ("passengers_boarding", lambda v: str(v)),
+                    }
+                    for label_key, (beacon_key, formatter) in beacon_fields.items():
+                        value = beacon.get(
+                            beacon_key,
+                            (
+                                "N/A"
+                                if label_key != "beacon_limit"
+                                and label_key != "beacon_pass"
+                                else 0
+                            ),
+                        )
+                        try:
+                            self.output_labels[label_key].config(text=formatter(value))
+                        except Exception:
+                            self.output_labels[label_key].config(text="N/A")
 
                     if os.path.exists(self.track_io_file):
                         with open(self.track_io_file, "r") as f:
@@ -1063,14 +1406,15 @@ class TrackModelTestUI:
 
                         failures_array = io_data.get(f"{prefix}-Failures", [])
                         active_failures = []
-                        for i in range(0, len(failures_array), 3):
-                            if i + 2 < len(failures_array):
-                                block_num = i // 3
-                                if failures_array[i] != 0:
+                        # Use unified failure index logic for display
+                        for block_num in range(len(failures_array) // 3):
+                            idx = self._get_failure_index(block_num)
+                            if idx + 2 < len(failures_array):
+                                if failures_array[idx] != 0:
                                     active_failures.append(f"Block {block_num} Power")
-                                if failures_array[i + 1] != 0:
+                                if failures_array[idx + 1] != 0:
                                     active_failures.append(f"Block {block_num} Circuit")
-                                if failures_array[i + 2] != 0:
+                                if failures_array[idx + 2] != 0:
                                     active_failures.append(f"Block {block_num} Broken")
 
                         if active_failures:
@@ -1090,18 +1434,39 @@ class TrackModelTestUI:
                     else:
                         self.output_labels["motion"].config(fg="#faa61a")
 
+                    # Use assigned block from occupancy proximity logic
+                    current_block = self.train_last_known_blocks.get(train_key, 0)
                     failure_detected = self._check_failures_ahead(
-                        train_id, line, motion.get("current_block", 0)
+                        train_id, line, current_block
                     )
-                    if failure_detected and train_key not in self.authority_zeroed:
+                    is_zeroed = self.authority_zeroed.get(train_key, False)
+                    # Check traffic light ahead
+                    light_status = self._check_traffic_light_ahead(
+                        train_id, line, current_block
+                    )
+                    prefix = "G" if line == "Green" else "R"
+                    train_key = f"{prefix}_train_{train_id}"
+                    is_speed_reduced = self.speed_reduced.get(train_key, None)
+                    if light_status == "RED" and is_speed_reduced != "RED":
+                        self._handle_red_light(train_id, line)
+                    elif light_status == "YELLOW" and is_speed_reduced != "YELLOW":
+                        self._handle_yellow_light(train_id, line)
+                    elif light_status is None and is_speed_reduced:
+                        # Light cleared (GREEN or Super GREEN) - restore speed
+                        self._restore_speed_after_light(train_id, line)
+                    # DEBUG PRINTS
+                    print(
+                        f"🔍 Train {train_id}: current_block={current_block}, failure={failure_detected}, zeroed={is_zeroed}"
+                    )
+                    if failure_detected and not is_zeroed:
+                        # print(f"🔍 Entering ZERO branch")
                         self._zero_authority_for_failure(train_id, line)
-                    elif not failure_detected and self.authority_zeroed.get(
-                        train_key, False
-                    ):
+                    elif not failure_detected and is_zeroed:
+                        # print(f"🔍 Entering RESTORE branch")
                         self._restore_authority_after_failure(train_id, line)
 
         except Exception as e:
-            pass
+            self._print(f"🔍 MONITOR ERROR: {e}", "#ed4245")
 
         self.root.after(100, self._monitor_outputs)
 
